@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
+import { createSingleUser } from '../utils/createUsers'
 
 const Login = () => {
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [createUserLoading, setCreateUserLoading] = useState(false)
+  const [createUserResult, setCreateUserResult] = useState('')
   const { user, signIn, loading: authLoading } = useApp()
 
   // 既にログイン済みの場合はダッシュボードにリダイレクト
@@ -31,6 +34,31 @@ const Login = () => {
       setError('ログイン中にエラーが発生しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 開発用：テストユーザー作成
+  const handleCreateTestUser = async () => {
+    if (!loginId) {
+      setCreateUserResult('ログインIDを入力してからユーザー作成ボタンを押してください')
+      return
+    }
+
+    setCreateUserLoading(true)
+    setCreateUserResult('')
+
+    try {
+      const result = await createSingleUser(loginId)
+      
+      if (result.success) {
+        setCreateUserResult(`✅ ユーザー「${loginId}@hostclub.local」を作成しました！`)
+      } else {
+        setCreateUserResult(`❌ エラー: ${result.error}`)
+      }
+    } catch (err) {
+      setCreateUserResult(`❌ エラー: ${err.message}`)
+    } finally {
+      setCreateUserLoading(false)
     }
   }
 
@@ -105,6 +133,25 @@ const Login = () => {
             >
               {loading ? 'ログイン中...' : 'ログイン'}
             </button>
+          </div>
+
+          {/* 開発用：テストユーザー作成ボタン */}
+          <div className="border-t pt-4">
+            <p className="text-center text-xs text-gray-500 mb-2">開発用機能</p>
+            <button
+              type="button"
+              onClick={handleCreateTestUser}
+              disabled={createUserLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {createUserLoading ? 'ユーザー作成中...' : 'テストユーザー作成'}
+            </button>
+            
+            {createUserResult && (
+              <div className="mt-2 p-2 text-xs text-center bg-gray-50 rounded border">
+                {createUserResult}
+              </div>
+            )}
           </div>
         </form>
       </div>
