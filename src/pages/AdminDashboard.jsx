@@ -1,62 +1,150 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
-import { mockStores, mockVisitRecords, mockMonthlyInvoices, getStoreById } from '../lib/types'
+import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement'
 
 const AdminDashboard = () => {
   const [showStoreModal, setShowStoreModal] = useState(false)
+  const [stores, setStores] = useState([])
+  const [loadingStores, setLoadingStores] = useState(true)
   const [newStore, setNewStore] = useState({
     name: '',
-    subdomain: '',
-    base_fee: 30000,
-    guaranteed_count: 8,
-    guaranteed_penalty: 5000
+    store_id: '',
+    open_time: '20:00',
+    close_time: '23:30',
+    base_price: 0,
+    id_required: '顔＝保険証＋キャッシュ',
+    male_price: 0,
+    panel_fee: 120000,
+    guarantee_count: 25,
+    penalty_fee: 20000,
+    unit_price: 1000,
+    is_transfer: false
   })
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('') // 'success', 'error', 'warning'
+
+  // 店舗データを取得
+  useEffect(() => {
+    loadStores()
+  }, [])
+
+  const loadStores = async () => {
+    setLoadingStores(true)
+    try {
+      const result = await getAllStores()
+      if (result.success) {
+        setStores(result.data)
+      } else {
+        console.error('Failed to load stores:', result.error)
+        setMessage('店舗データの読み込みに失敗しました')
+        setMessageType('error')
+      }
+    } catch (error) {
+      console.error('Error loading stores:', error)
+      setMessage('店舗データの読み込み中にエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoadingStores(false)
+    }
+  }
 
   // 統計計算
-  const totalVisits = mockVisitRecords.filter(record => !record.deleted).length
-  const totalRevenue = mockMonthlyInvoices.reduce((sum, invoice) => sum + invoice.total, 0)
-  const activeStores = mockStores.length
+  const activeStores = stores.length
+  const totalVisits = 0 // TODO: 案内記録データベースと連携
+  const totalRevenue = 0 // TODO: 請求データベースと連携
   
-  // 各店舗の実績計算
-  const storeStats = mockStores.map(store => {
-    const storeVisits = mockVisitRecords.filter(record => record.store_id === store.id && !record.deleted)
-    const totalVisitors = storeVisits.reduce((sum, record) => sum + record.visitor_count, 0)
-    
-    return {
-      ...store,
-      visitCount: storeVisits.length,
-      totalVisitors,
-      monthlyRevenue: store.base_fee + Math.max(0, storeVisits.length - store.guaranteed_count) * 3000
-    }
-  })
+  // 各店舗の実績計算（現在は基本情報のみ）
+  const storeStats = stores.map(store => ({
+    ...store,
+    visitCount: 0, // TODO: 案内記録と連携
+    totalVisitors: 0, // TODO: 案内記録と連携
+    monthlyRevenue: store.panel_fee || 0 // TODO: 実際の売上計算
+  }))
 
   const handleAddStore = async () => {
-    if (!newStore.name || !newStore.subdomain) {
-      alert('店舗名とサブドメインを入力してください')
+    // 基本バリデーション
+    if (!newStore.name || !newStore.store_id) {
+      setMessage('店舗名と店舗IDは必須です')
+      setMessageType('error')
       return
     }
 
     setLoading(true)
+    setMessage('')
+    
     try {
-      // 実際のアプリではSupabaseに送信
-      console.log('新規店舗追加:', newStore)
-      alert(`✅ ${newStore.name} を追加しました！サブドメイン: ${newStore.subdomain}.example.com`)
+      // 店舗IDの重複チェック
+      const exists = await checkStoreIdExists(newStore.store_id)
+      if (exists) {
+        setMessage('この店舗IDは既に使用されています')
+        setMessageType('error')
+        return
+      }
+
+      // 新店舗追加実行
+      const result = await addNewStore(newStore)
       
-      setNewStore({
-        name: '',
-        subdomain: '',
-        base_fee: 30000,
-        guaranteed_count: 8,
-        guaranteed_penalty: 5000
-      })
-      setShowStoreModal(false)
+      if (result.success) {
+        setMessage(result.message || `✅ ${newStore.name} を追加しました！`)
+        setMessageType('success')
+        
+        // 警告がある場合は表示
+        if (result.warning) {
+          setTimeout(() => {
+            setMessage(result.warning)
+            setMessageType('warning')
+          }, 2000)
+        }
+        
+        // フォームリセット
+        setNewStore({
+          name: '',
+          store_id: '',
+          open_time: '20:00',
+          close_time: '23:30',
+          base_price: 0,
+          id_required: '顔＝保険証＋キャッシュ',
+          male_price: 0,
+          panel_fee: 120000,
+          guarantee_count: 25,
+          penalty_fee: 20000,
+          unit_price: 1000,
+          is_transfer: false
+        })
+        
+        // 店舗リストを更新
+        loadStores()
+        
+        // モーダルを閉じる（成功の場合のみ）
+        setTimeout(() => {
+          setShowStoreModal(false)
+          setMessage('')
+          setMessageType('')
+        }, 3000)
+        
+      } else {
+        setMessage(`❌ エラー: ${result.error}`)
+        setMessageType('error')
+      }
+      
     } catch (error) {
-      alert('❌ 店舗追加に失敗しました。')
+      console.error('Store addition error:', error)
+      setMessage('❌ 店舗追加中に予期しないエラーが発生しました')
+      setMessageType('error')
     } finally {
       setLoading(false)
     }
+  }
+
+  // 店舗名から店舗IDを自動生成
+  const handleNameChange = (name) => {
+    setNewStore({
+      ...newStore, 
+      name,
+      store_id: newStore.store_id || generateStoreId(name)
+    })
   }
 
   return (
@@ -149,32 +237,54 @@ const AdminDashboard = () => {
             </div>
             
             <div className="space-y-3">
-              {storeStats.map((store) => (
-                <div key={store.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <h4 className="font-medium text-gray-900">{store.name}</h4>
-                        <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                          {store.subdomain}.example.com
-                        </span>
+              {loadingStores ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">店舗データを読み込み中...</p>
+                </div>
+              ) : storeStats.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">登録された店舗がありません</p>
+                  <button
+                    onClick={() => setShowStoreModal(true)}
+                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    最初の店舗を追加
+                  </button>
+                </div>
+              ) : (
+                storeStats.map((store) => (
+                  <div key={store.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <h4 className="font-medium text-gray-900">{store.name}</h4>
+                          <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                            {store.store_id}.susukino-hostclub-guide.online
+                          </span>
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600">
+                          営業時間: {store.open_time} - {store.close_time} | 
+                          パネル料: ¥{(store.panel_fee || 0).toLocaleString()} | 
+                          保証本数: {store.guarantee_count}本
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {store.id_required} | 
+                          振込: {store.is_transfer ? '可能' : '不可'}
+                        </div>
                       </div>
-                      <div className="mt-1 text-sm text-gray-600">
-                        基本料金: ¥{store.base_fee.toLocaleString()} | 
-                        保証本数: {store.guaranteed_count}本
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        {store.visitCount}件 ({store.totalVisitors}名)
-                      </div>
-                      <div className="text-sm text-green-600">
-                        ¥{store.monthlyRevenue.toLocaleString()}
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          {store.visitCount}件 ({store.totalVisitors}名)
+                        </div>
+                        <div className="text-sm text-green-600">
+                          ¥{store.monthlyRevenue.toLocaleString()}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -221,34 +331,42 @@ const AdminDashboard = () => {
             </h3>
             
             <div className="space-y-4">
-              {mockMonthlyInvoices.map((invoice) => {
-                const store = getStoreById(invoice.store_id)
-                return (
-                  <div key={invoice.id} className="p-4 bg-gray-50 rounded-lg">
+              {storeStats.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>店舗が登録されていません</p>
+                </div>
+              ) : (
+                storeStats.slice(0, 5).map((store) => (
+                  <div key={store.id} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-gray-900">{store?.name}</div>
-                        <div className="text-sm text-gray-600">{invoice.month}</div>
+                        <div className="font-medium text-gray-900">{store.name}</div>
+                        <div className="text-sm text-gray-600">今月</div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-lg text-blue-600">
-                          ¥{invoice.total.toLocaleString()}
+                          ¥{(store.panel_fee || 0).toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-600">
-                          案内: {invoice.total_introductions}件
+                          パネル料（基本）
                         </div>
                       </div>
                     </div>
                   </div>
-                )
-              })}
+                ))
+              )}
             </div>
             
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex justify-between font-bold text-lg">
-                <span>合計売上</span>
-                <span className="text-green-600">¥{totalRevenue.toLocaleString()}</span>
+                <span>月額パネル料合計</span>
+                <span className="text-green-600">
+                  ¥{storeStats.reduce((sum, store) => sum + (store.panel_fee || 0), 0).toLocaleString()}
+                </span>
               </div>
+              <p className="text-sm text-gray-500 mt-1">
+                ※ 実際の案内件数による変動は含まれていません
+              </p>
             </div>
           </div>
 
@@ -295,68 +413,202 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* メッセージ表示 */}
+      {message && (
+        <div className={`fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg ${
+          messageType === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
+          messageType === 'warning' ? 'bg-yellow-100 border border-yellow-200 text-yellow-800' :
+          'bg-red-100 border border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center">
+            <div className="flex-1">{message}</div>
+            <button
+              onClick={() => setMessage('')}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 新規店舗追加モーダル */}
       <Modal
         isOpen={showStoreModal}
         onClose={() => setShowStoreModal(false)}
         title="新規店舗追加"
-        size="md"
+        size="lg"
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              店舗名
-            </label>
-            <input
-              type="text"
-              value={newStore.name}
-              onChange={(e) => setNewStore({...newStore, name: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例: クラブプレミアム"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              サブドメイン
-            </label>
-            <div className="flex">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                店舗名 <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
-                value={newStore.subdomain}
-                onChange={(e) => setNewStore({...newStore, subdomain: e.target.value})}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="premium"
+                value={newStore.name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="例: クラブプレミアム"
               />
-              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500">
-                .example.com
-              </span>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                店舗ID <span className="text-red-500">*</span>
+              </label>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={newStore.store_id}
+                  onChange={(e) => setNewStore({...newStore, store_id: e.target.value})}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="premium"
+                />
+                <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 text-sm">
+                  .susukino-hostclub-guide.online
+                </span>
+              </div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                基本料金
+                営業開始時間
               </label>
               <input
-                type="number"
-                value={newStore.base_fee}
-                onChange={(e) => setNewStore({...newStore, base_fee: parseInt(e.target.value)})}
+                type="time"
+                value={newStore.open_time}
+                onChange={(e) => setNewStore({...newStore, open_time: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                保証本数
+                営業終了時間
+              </label>
+              <input
+                type="time"
+                value={newStore.close_time}
+                onChange={(e) => setNewStore({...newStore, close_time: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                基本料金
               </label>
               <input
                 type="number"
-                value={newStore.guaranteed_count}
-                onChange={(e) => setNewStore({...newStore, guaranteed_count: parseInt(e.target.value)})}
+                value={newStore.base_price}
+                onChange={(e) => setNewStore({...newStore, base_price: parseInt(e.target.value) || 0})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
               />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                男性料金
+              </label>
+              <input
+                type="number"
+                value={newStore.male_price}
+                onChange={(e) => setNewStore({...newStore, male_price: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                1人あたり単価
+              </label>
+              <input
+                type="number"
+                value={newStore.unit_price}
+                onChange={(e) => setNewStore({...newStore, unit_price: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="1000"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                パネル月額料
+              </label>
+              <input
+                type="number"
+                value={newStore.panel_fee}
+                onChange={(e) => setNewStore({...newStore, panel_fee: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="120000"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                保証人数
+              </label>
+              <input
+                type="number"
+                value={newStore.guarantee_count}
+                onChange={(e) => setNewStore({...newStore, guarantee_count: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="25"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                保証割れペナルティ
+              </label>
+              <input
+                type="number"
+                value={newStore.penalty_fee}
+                onChange={(e) => setNewStore({...newStore, penalty_fee: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="20000"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                必要身分証
+              </label>
+              <select
+                value={newStore.id_required}
+                onChange={(e) => setNewStore({...newStore, id_required: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="顔＝保険証＋キャッシュ">顔＝保険証＋キャッシュ</option>
+                <option value="顔＝保険証＋クレジット">顔＝保険証＋クレジット</option>
+                <option value="顔必須">顔必須</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                振込可能
+              </label>
+              <select
+                value={newStore.is_transfer}
+                onChange={(e) => setNewStore({...newStore, is_transfer: e.target.value === 'true'})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={false}>不可</option>
+                <option value={true}>可能</option>
+              </select>
             </div>
           </div>
           

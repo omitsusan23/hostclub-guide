@@ -57,3 +57,11 @@ register-users.js
 package-user-registration.json
 stores.csv
 USER-REGISTRATION-README.md
+test-login.js
+add-new-store.md
+
+# Store management functions (contains database operations)
+src/utils/storeManagement.js
+
+# Supabase Edge Functions (contains sensitive keys)
+supabase/functions/
