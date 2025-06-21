@@ -20,8 +20,8 @@ const Login = () => {
     setLoading(true)
 
     try {
-      // IDをダミーメールアドレスに変換
-      const email = `${loginId}@dummy.email`
+      // IDをホストクラブメールアドレスに変換
+      const email = `${loginId}@hostclub.local`
       const { error } = await signIn(email, password)
       
       if (error) {
