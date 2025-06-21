@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { getStoreById } from '../lib/types'
+import PasswordChange from './PasswordChange'
 
 const Layout = ({ children }) => {
   const { user, signOut, getUserRole, getUserStoreId } = useApp()
+  const [showPasswordChange, setShowPasswordChange] = useState(false)
   
   const role = getUserRole()
   const storeId = getUserStoreId()
@@ -83,6 +85,12 @@ const Layout = ({ children }) => {
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={() => setShowPasswordChange(true)}
+                  className="px-3 py-2 bg-white bg-opacity-20 text-white rounded-md hover:bg-opacity-30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-sm"
+                >
+                  🔑 パスワード変更
+                </button>
                 <button
                   onClick={handleSignOut}
                   className="px-4 py-2 bg-white bg-opacity-20 text-white rounded-md hover:bg-opacity-30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
@@ -166,6 +174,11 @@ const Layout = ({ children }) => {
           </div>
         </div>
       </footer>
+
+      {/* パスワード変更モーダル */}
+      {showPasswordChange && (
+        <PasswordChange onClose={() => setShowPasswordChange(false)} />
+      )}
     </div>
   )
 }

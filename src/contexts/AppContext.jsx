@@ -13,22 +13,44 @@ export const useApp = () => {
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // サブドメインからstore_idを取得する関数
+  const getStoreIdFromSubdomain = () => {
+    const hostname = window.location.hostname
+    
+    // 開発環境の場合
+    if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('192.168.')) {
+      // クエリパラメータから取得
+      const urlParams = new URLSearchParams(window.location.search)
+      return urlParams.get('store_id') || 'demo-store'
+    }
+    
+    // 本番環境の場合はサブドメインを取得
+    const subdomain = hostname.split('.')[0]
+    
+    // 管理者・スタッフページの場合はnullを返す
+    if (subdomain === 'admin' || subdomain === 'staff') {
+      return null
+    }
+    
+    return subdomain
+  }
 
   // サブドメインからロールを判定する関数
   const getRoleFromSubdomain = () => {
     const hostname = window.location.hostname
-    const subdomain = hostname.split('.')[0]
     
-    // 開発環境用の分岐
-    if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-      // URLのクエリパラメータからロールを取得（開発用）
+    // 開発環境の場合
+    if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('192.168.')) {
       const urlParams = new URLSearchParams(window.location.search)
-      return urlParams.get('role') || 'admin'
+      return urlParams.get('role') || 'customer'
     }
     
-    // 本番環境用のサブドメイン判定
+    // 本番環境のサブドメイン判定
+    const subdomain = hostname.split('.')[0]
+    
     switch (subdomain) {
       case 'admin':
         return 'admin'
@@ -40,23 +62,26 @@ export const AppProvider = ({ children }) => {
     }
   }
 
-  // ユーザーの認証状態を確認
+  // 認証状態の変更を監視
   useEffect(() => {
-    // 初回の認証状態チェック
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 現在のセッションを取得
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-    })
+    }
 
-    // 認証状態の変更を監視
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    getSession()
+
+    // 認証状態の変更をリッスン
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
 
     return () => subscription.unsubscribe()
   }, [])
@@ -87,6 +112,21 @@ export const AppProvider = ({ children }) => {
     }
   }
 
+  // パスワード更新
+  const updatePassword = async (newPassword) => {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+      
+      if (error) throw error
+      
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error }
+    }
+  }
+
   // ユーザーのロールを取得
   const getUserRole = () => {
     if (!user) return null
@@ -98,7 +138,28 @@ export const AppProvider = ({ children }) => {
   // ユーザーの店舗IDを取得
   const getUserStoreId = () => {
     if (!user) return null
-    return user.user_metadata?.store_id || null
+    
+    // user_metadataからstore_idを取得、なければサブドメインから取得
+    return user.user_metadata?.store_id || getStoreIdFromSubdomain()
+  }
+
+  // アクセス権限チェック（customerロールの場合のみstore_idをチェック）
+  const hasAccess = () => {
+    const role = getUserRole()
+    const userStoreId = getUserStoreId()
+    const currentStoreId = getStoreIdFromSubdomain()
+
+    // 管理者とスタッフは常にアクセス可能
+    if (role === 'admin' || role === 'staff') {
+      return true
+    }
+
+    // customerの場合はstore_idが一致する必要がある
+    if (role === 'customer') {
+      return userStoreId === currentStoreId
+    }
+
+    return false
   }
 
   const value = {
@@ -107,9 +168,12 @@ export const AppProvider = ({ children }) => {
     loading,
     signIn,
     signOut,
+    updatePassword,
     getUserRole,
     getUserStoreId,
+    getStoreIdFromSubdomain,
     getRoleFromSubdomain,
+    hasAccess,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
