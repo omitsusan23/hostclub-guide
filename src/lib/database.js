@@ -144,6 +144,19 @@ export const saveVisitRecord = async (visitData) => {
   }
 }
 
+// 案内記録の論理削除
+export const softDeleteVisitRecord = async (recordId) => {
+  const { error } = await supabase
+    .rpc('soft_delete_visit_record', { record_id: recordId })
+  
+  if (error) {
+    console.error('案内記録削除エラー:', error)
+    throw error
+  }
+  
+  return { success: true }
+}
+
 // リアルタイム状況取得
 export const getLatestStoreStatus = async (storeId) => {
   const { data, error } = await supabase

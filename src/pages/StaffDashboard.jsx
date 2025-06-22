@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
+import DeleteConfirmModal from '../components/DeleteConfirmModal'
+import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import { useApp } from '../contexts/AppContext'
 import { 
   getStores,
   getTodaysVisitRecords,
   getStoreById,
-  saveVisitRecord
+  saveVisitRecord,
+  softDeleteVisitRecord
 } from '../lib/database'
 
 const StaffDashboard = () => {
@@ -18,6 +21,7 @@ const StaffDashboard = () => {
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
 
   // 今日の日付を取得する関数
   const getTodayDateString = () => {
@@ -105,6 +109,38 @@ const StaffDashboard = () => {
     }
   }
 
+  // 削除確認モーダルを開く
+  const handleDeleteRequest = (record, storeName) => {
+    setDeleteModal({
+      isOpen: true,
+      record: record,
+      storeName: storeName
+    })
+  }
+
+  // 削除実行
+  const handleConfirmDelete = async () => {
+    try {
+      await softDeleteVisitRecord(deleteModal.record.id)
+      
+      // ローカル状態から削除
+      setVisitRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
+      
+      // モーダルを閉じる
+      setDeleteModal({ isOpen: false, record: null, storeName: '' })
+      
+      alert('✅ 案内記録を削除しました')
+    } catch (error) {
+      console.error('削除エラー:', error)
+      alert('❌ 削除に失敗しました')
+    }
+  }
+
+  // 削除キャンセル
+  const handleCancelDelete = () => {
+    setDeleteModal({ isOpen: false, record: null, storeName: '' })
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -167,23 +203,14 @@ const StaffDashboard = () => {
               ) : (
                 visitRecords.map((record) => {
                   const store = stores.find(s => s.store_id === record.store_id)
-                  const time = new Date(record.visited_at).toLocaleTimeString('ja-JP', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
                   
                   return (
-                    <div key={record.id} className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
-                      <div className="font-medium text-sm min-w-0 flex-shrink-0">
-                        {store?.name || record.store_id}
-                      </div>
-                      <div className="text-sm text-gray-600 flex-shrink-0">
-                        {record.visitor_count}名 - {time}
-                      </div>
-                      <div className="text-sm text-gray-500 ml-auto flex-shrink-0">
-                        担当: {record.staff_display_name || '不明'}
-                      </div>
-                    </div>
+                    <SwipeableVisitItem
+                      key={record.id}
+                      record={record}
+                      store={store}
+                      onDelete={handleDeleteRequest}
+                    />
                   )
                 })
               )}
@@ -283,6 +310,14 @@ const StaffDashboard = () => {
           }}
         />
       )}
+
+      {/* 削除確認モーダル */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        itemName={deleteModal.storeName}
+      />
     </Layout>
   )
 }
