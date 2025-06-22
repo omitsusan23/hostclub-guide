@@ -28,8 +28,10 @@ export const addStaffToDatabase = async (staffData) => {
 /**
  * スタッフの認証ユーザーを作成
  */
-export const createStaffUser = async (staffId, displayName, password = 'ryota123') => {
+export const createStaffUser = async (staffId, displayName, password) => {
   try {
+    console.log('🔐 createStaffUser called with:', { staffId, displayName, passwordLength: password?.length });
+    
     const email = `${staffId}@hostclub.local`
     
     // Supabase Edge Functionを呼び出し
@@ -60,9 +62,10 @@ export const createStaffUser = async (staffId, displayName, password = 'ryota123
     }
 
     const result = await response.json()
+    console.log('✅ createStaffUser result:', result);
     return { success: true, data: result }
   } catch (error) {
-    console.error('Staff user creation error:', error)
+    console.error('❌ Staff user creation error:', error)
     return { success: false, error: error.message }
   }
 }
@@ -72,21 +75,37 @@ export const createStaffUser = async (staffId, displayName, password = 'ryota123
  */
 export const addNewStaff = async (formData) => {
   try {
+    console.log('🚀 addNewStaff called with formData:', formData);
+
     // バリデーション
     if (!formData.staff_id || !formData.display_name) {
       return { success: false, error: 'スタッフIDと表示名は必須です' }
     }
 
+    // パスワードの処理
+    const password = formData.password && formData.password.trim() !== '' 
+      ? formData.password.trim() 
+      : 'ryota123';
+    
+    console.log('🔐 Password processing:', { 
+      originalPassword: formData.password, 
+      finalPassword: password,
+      passwordChanged: password !== 'ryota123'
+    });
+
     // 1. 認証ユーザーを作成
+    console.log('👤 Creating user with password:', password);
     const userResult = await createStaffUser(
       formData.staff_id, 
       formData.display_name, 
-      formData.password || 'ryota123'
+      password
     )
     
     if (!userResult.success) {
       return { success: false, error: `ユーザー作成エラー: ${userResult.error}` }
     }
+
+    console.log('✅ User created successfully:', userResult.data.user.id);
 
     // 2. staffsテーブルにデータを追加
     const staffResult = await addStaffToDatabase({
@@ -104,6 +123,8 @@ export const addNewStaff = async (formData) => {
       }
     }
 
+    console.log('✅ Staff added to database successfully:', staffResult.data);
+
     return { 
       success: true, 
       message: `✅ スタッフ「${formData.display_name}」が正常に追加されました！`,
@@ -111,7 +132,7 @@ export const addNewStaff = async (formData) => {
       user: userResult.data
     }
   } catch (error) {
-    console.error('Complete staff addition error:', error)
+    console.error('❌ Complete staff addition error:', error)
     return { success: false, error: `予期しないエラー: ${error.message}` }
   }
 }
@@ -187,6 +208,43 @@ export const checkStaffIdExistsForEdit = async (staffId, currentId) => {
 }
 
 /**
+ * スタッフのパスワードを更新
+ */
+export const updateStaffPassword = async (userId, newPassword) => {
+  try {
+    console.log('🔐 updateStaffPassword called with:', { userId, passwordLength: newPassword.length });
+    
+    // Supabase Edge Functionを呼び出し
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const functionUrl = `${supabaseUrl}/functions/v1/update-user-password`
+    
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        new_password: newPassword
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to update password')
+    }
+
+    const result = await response.json()
+    console.log('✅ Password update result:', result);
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('❌ Password update error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
  * スタッフ情報を更新
  */
 export const updateStaff = async (staffId, formData) => {
@@ -207,6 +265,20 @@ export const updateStaff = async (staffId, formData) => {
       return { success: false, error: 'このスタッフIDは既に他のスタッフで使用されています' }
     }
 
+    // 現在のスタッフ情報を取得
+    const { data: currentStaff, error: fetchError } = await supabase
+      .from('staffs')
+      .select('*')
+      .eq('id', staffId)
+      .single()
+
+    if (fetchError) {
+      console.error('❌ Failed to fetch current staff:', fetchError);
+      return { success: false, error: 'スタッフ情報の取得に失敗しました' }
+    }
+
+    console.log('📋 Current staff data:', currentStaff);
+
     // データベース更新のためのデータを準備
     const updateData = {
       staff_id: formData.staff_id,
@@ -217,6 +289,23 @@ export const updateStaff = async (staffId, formData) => {
     };
 
     console.log('📝 Update data prepared:', updateData);
+
+    // パスワードが変更された場合は認証ユーザーのパスワードも更新
+    if (formData.password && formData.password.trim() !== '' && currentStaff.user_id) {
+      console.log('🔐 Password change detected, updating auth user password...');
+      const passwordResult = await updateStaffPassword(currentStaff.user_id, formData.password.trim())
+      
+      if (!passwordResult.success) {
+        console.error('❌ Password update failed:', passwordResult.error);
+        return { success: false, error: `パスワード更新エラー: ${passwordResult.error}` }
+      }
+      
+      console.log('✅ Password updated successfully');
+    } else if (formData.password !== undefined) {
+      console.log('🔐 Password field present but empty, skipping password update');
+    } else {
+      console.log('🔐 No password field provided, skipping password update');
+    }
 
     // データベースを更新
     const { data, error } = await supabase

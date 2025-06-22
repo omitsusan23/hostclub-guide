@@ -4,7 +4,7 @@ const StaffEditModal = ({ isOpen, staff, onSave, onDelete, onClose, loading }) =
   const [formData, setFormData] = useState({
     staff_id: '',
     display_name: '',
-    password: 'ryota123',
+    password: '',
     notes: '',
     is_active: true
   });
@@ -16,7 +16,7 @@ const StaffEditModal = ({ isOpen, staff, onSave, onDelete, onClose, loading }) =
       const newFormData = {
         staff_id: staff.staff_id || '',
         display_name: staff.display_name || '',
-        password: 'ryota123', // パスワードは初期値のまま
+        password: '',
         notes: staff.notes || '',
         is_active: staff.is_active !== undefined ? staff.is_active : true
       };
@@ -28,7 +28,17 @@ const StaffEditModal = ({ isOpen, staff, onSave, onDelete, onClose, loading }) =
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('📝 StaffEditModal form submitted with data:', formData);
-    onSave(formData);
+    
+    // パスワードが空の場合は除外して送信
+    const submitData = { ...formData };
+    if (!submitData.password || submitData.password.trim() === '') {
+      delete submitData.password;
+      console.log('🔐 Password field empty, excluding from update');
+    } else {
+      console.log('🔐 Password field has value, including in update');
+    }
+    
+    onSave(submitData);
   };
 
   const handleDelete = () => {
@@ -106,10 +116,10 @@ const StaffEditModal = ({ isOpen, staff, onSave, onDelete, onClose, loading }) =
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="ryota123"
+                    placeholder="新しいパスワードを入力してください"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    変更する場合のみ入力してください
+                    パスワードを変更する場合のみ入力してください（空欄の場合は変更されません）
                   </p>
                 </div>
                 <div>
@@ -151,7 +161,7 @@ const StaffEditModal = ({ isOpen, staff, onSave, onDelete, onClose, loading }) =
               <div className="space-y-2 text-sm text-gray-600">
                 <div>📧 メールアドレス: {formData.staff_id ? `${formData.staff_id}@hostclub.local` : '（スタッフIDを入力してください）'}</div>
                 <div>🌐 ログインURL: https://staff.susukino-hostclub-guide.online</div>
-                <div>🔑 現在のパスワード: {formData.password}</div>
+                <div>🔑 パスワード: {formData.password ? `${formData.password}（新しいパスワード）` : '（変更されません）'}</div>
                 <div>📱 ステータス: 
                   <span className={`ml-1 px-2 py-1 text-xs rounded-full ${
                     formData.is_active 
