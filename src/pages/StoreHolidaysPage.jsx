@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
-import { AppContext } from '../contexts/AppContext';
+import React from 'react';
+import { useApp } from '../contexts/AppContext';
 import Layout from '../components/Layout';
 import HolidayCalendar from '../components/HolidayCalendar';
 
 const StoreHolidaysPage = () => {
-  const { user } = useContext(AppContext);
+  const { user } = useApp();
 
   // customerロール以外はアクセス不可
   if (user?.app_metadata?.role !== 'customer') {

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { AppContext } from '../contexts/AppContext';
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 
 const HolidayCalendar = () => {
-  const { user } = useContext(AppContext);
+  const { user } = useApp();
   const [holidays, setHolidays] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
