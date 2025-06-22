@@ -173,17 +173,15 @@ const StaffDashboard = () => {
                   })
                   
                   return (
-                    <div key={record.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <div className="font-medium">{store?.name || record.store_id}</div>
-                        <div className="text-sm text-gray-600">
-                          {record.visitor_count}名 - {time}
-                        </div>
+                    <div key={record.id} className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
+                      <div className="font-medium text-sm min-w-0 flex-shrink-0">
+                        {store?.name || record.store_id}
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500">
-                          担当: {record.staff_display_name || '不明'}
-                        </div>
+                      <div className="text-sm text-gray-600 flex-shrink-0">
+                        {record.visitor_count}名 - {time}
+                      </div>
+                      <div className="text-sm text-gray-500 ml-auto flex-shrink-0">
+                        担当: {record.staff_display_name || '不明'}
                       </div>
                     </div>
                   )
