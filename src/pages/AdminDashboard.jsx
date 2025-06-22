@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
-import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement'
-import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement'
+import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement.js'
+import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement.js'
 
 const AdminDashboard = () => {
   const [showStoreModal, setShowStoreModal] = useState(false)
