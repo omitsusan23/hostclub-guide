@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
+import StoreHolidaysPage from './pages/StoreHolidaysPage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
@@ -76,6 +77,16 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <CustomerDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 店休日設定ページ */}
+        <Route 
+          path="/customer/holidays" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <StoreHolidaysPage />
             </ProtectedRoute>
           } 
         />

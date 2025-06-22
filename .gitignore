@@ -60,8 +60,15 @@ USER-REGISTRATION-README.md
 test-login.js
 add-new-store.md
 
+# Admin user creation scripts (contains admin credentials)
+create-admin-user.js
+admin-user.csv
+
 # Store management functions (contains database operations)
 src/utils/storeManagement.js
 
 # Supabase Edge Functions (contains sensitive keys)
 supabase/functions/
+
+# Staff management files (contains authentication data)
+add-new-staff.js

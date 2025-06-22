@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement'
+import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement'
 
 const AdminDashboard = () => {
   const [showStoreModal, setShowStoreModal] = useState(false)
+  const [showStaffModal, setShowStaffModal] = useState(false)
   const [stores, setStores] = useState([])
+  const [staffs, setStaffs] = useState([])
   const [loadingStores, setLoadingStores] = useState(true)
+  const [loadingStaffs, setLoadingStaffs] = useState(true)
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -21,6 +25,12 @@ const AdminDashboard = () => {
     unit_price: 1000,
     is_transfer: false
   })
+  const [newStaff, setNewStaff] = useState({
+    staff_id: '',
+    display_name: '',
+    password: 'ryota123',
+    notes: ''
+  })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('') // 'success', 'error', 'warning'
@@ -28,6 +38,7 @@ const AdminDashboard = () => {
   // 店舗データを取得
   useEffect(() => {
     loadStores()
+    loadStaffs()
   }, [])
 
   const loadStores = async () => {
@@ -47,6 +58,26 @@ const AdminDashboard = () => {
       setMessageType('error')
     } finally {
       setLoadingStores(false)
+    }
+  }
+
+  const loadStaffs = async () => {
+    setLoadingStaffs(true)
+    try {
+      const result = await getAllStaffs()
+      if (result.success) {
+        setStaffs(result.data)
+      } else {
+        console.error('Failed to load staffs:', result.error)
+        setMessage('スタッフデータの読み込みに失敗しました')
+        setMessageType('error')
+      }
+    } catch (error) {
+      console.error('Error loading staffs:', error)
+      setMessage('スタッフデータの読み込み中にエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoadingStaffs(false)
     }
   }
 
@@ -147,6 +178,83 @@ const AdminDashboard = () => {
     })
   }
 
+  // スタッフ追加処理
+  const handleAddStaff = async () => {
+    // 基本バリデーション
+    if (!newStaff.staff_id || !newStaff.display_name) {
+      setMessage('スタッフIDと表示名は必須です')
+      setMessageType('error')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+    
+    try {
+      // スタッフIDの重複チェック
+      const exists = await checkStaffIdExists(newStaff.staff_id)
+      if (exists) {
+        setMessage('このスタッフIDは既に使用されています')
+        setMessageType('error')
+        return
+      }
+
+      // 新スタッフ追加実行
+      const result = await addNewStaff(newStaff)
+      
+      if (result.success) {
+        setMessage(result.message || `✅ ${newStaff.display_name} を追加しました！`)
+        setMessageType('success')
+        
+        // 警告がある場合は表示
+        if (result.warning) {
+          setTimeout(() => {
+            setMessage(result.warning)
+            setMessageType('warning')
+          }, 2000)
+        }
+        
+        // フォームリセット
+        setNewStaff({
+          staff_id: '',
+          display_name: '',
+          password: 'ryota123',
+          notes: ''
+        })
+        
+        // スタッフリストを更新
+        loadStaffs()
+        
+        // モーダルを閉じる（成功の場合のみ）
+        setTimeout(() => {
+          setShowStaffModal(false)
+          setMessage('')
+          setMessageType('')
+        }, 3000)
+        
+      } else {
+        setMessage(`❌ エラー: ${result.error}`)
+        setMessageType('error')
+      }
+      
+    } catch (error) {
+      console.error('Staff addition error:', error)
+      setMessage('❌ スタッフ追加中に予期しないエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 表示名からスタッフIDを自動生成
+  const handleDisplayNameChange = (displayName) => {
+    setNewStaff({
+      ...newStaff, 
+      display_name: displayName,
+      staff_id: newStaff.staff_id || generateStaffId(displayName)
+    })
+  }
+
   return (
     <Layout>
       {/* ヘッダー */}
@@ -207,12 +315,12 @@ const AdminDashboard = () => {
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-purple-100 text-purple-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">平均成約率</p>
-              <p className="text-2xl font-bold text-gray-900">78%</p>
+              <p className="text-sm font-medium text-gray-600">登録スタッフ数</p>
+              <p className="text-2xl font-bold text-gray-900">{staffs.length}</p>
             </div>
           </div>
         </div>
@@ -279,6 +387,76 @@ const AdminDashboard = () => {
                         </div>
                         <div className="text-sm text-green-600">
                           ¥{store.monthlyRevenue.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* スタッフ管理 */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                👥 スタッフ管理
+              </h3>
+              <button
+                onClick={() => setShowStaffModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              >
+                新規スタッフ追加
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {loadingStaffs ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">スタッフデータを読み込み中...</p>
+                </div>
+              ) : staffs.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">登録されたスタッフがいません</p>
+                  <button
+                    onClick={() => setShowStaffModal(true)}
+                    className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                  >
+                    最初のスタッフを追加
+                  </button>
+                </div>
+              ) : (
+                staffs.map((staff) => (
+                  <div key={staff.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <h4 className="font-medium text-gray-900">{staff.display_name}</h4>
+                          <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                            staff.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {staff.is_active ? 'アクティブ' : '無効'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600">
+                          スタッフID: {staff.staff_id} | 
+                          メール: {staff.email}
+                        </div>
+                        {staff.notes && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            備考: {staff.notes}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">
+                          登録日: {new Date(staff.created_at).toLocaleDateString('ja-JP')}
+                        </div>
+                        <div className="text-xs text-blue-600">
+                          {staff.staff_id}@hostclub.local
                         </div>
                       </div>
                     </div>
@@ -625,6 +803,105 @@ const AdminDashboard = () => {
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? '追加中...' : '店舗を追加'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 新規スタッフ追加モーダル */}
+      <Modal
+        isOpen={showStaffModal}
+        onClose={() => setShowStaffModal(false)}
+        title="新規スタッフ追加"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                表示名 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newStaff.display_name}
+                onChange={(e) => handleDisplayNameChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="例: 田中 太郎"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                スタッフID <span className="text-red-500">*</span>
+              </label>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={newStaff.staff_id}
+                  onChange={(e) => setNewStaff({...newStaff, staff_id: e.target.value})}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="tanaka"
+                />
+                <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 text-sm">
+                  @hostclub.local
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              パスワード
+            </label>
+            <input
+              type="text"
+              value={newStaff.password}
+              onChange={(e) => setNewStaff({...newStaff, password: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="ryota123"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              スタッフがログインに使用するパスワードです
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              備考（任意）
+            </label>
+            <textarea
+              value={newStaff.notes}
+              onChange={(e) => setNewStaff({...newStaff, notes: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="役職、担当エリア、その他メモなど"
+              rows={3}
+            />
+          </div>
+          
+          {/* プレビュー */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">作成される情報</h4>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div>📧 メール: {newStaff.staff_id ? `${newStaff.staff_id}@hostclub.local` : '（スタッフIDを入力してください）'}</div>
+              <div>👤 表示名: {newStaff.display_name || '（表示名を入力してください）'}</div>
+              <div>🔑 パスワード: {newStaff.password}</div>
+              <div>🌐 アクセスURL: https://staff.susukino-hostclub-guide.online</div>
+            </div>
+          </div>
+          
+          <div className="flex space-x-3 pt-4">
+            <button
+              onClick={() => setShowStaffModal(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleAddStaff}
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+            >
+              {loading ? '追加中...' : 'スタッフを追加'}
             </button>
           </div>
         </div>

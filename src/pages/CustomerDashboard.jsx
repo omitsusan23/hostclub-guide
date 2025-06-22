@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { 
@@ -14,7 +15,6 @@ const CustomerDashboard = () => {
   const storeId = getUserStoreId() || 'store-1' // デモ用にデフォルト値
   const store = getStoreById(storeId)
   
-  const [selectedDates, setSelectedDates] = useState(new Set())
   const [currentStatus, setCurrentStatus] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,59 +30,6 @@ const CustomerDashboard = () => {
   const totalAmount = baseAmount + bonusAmount
   const taxAmount = totalAmount * 0.1
   const finalAmount = Math.floor(totalAmount + taxAmount)
-
-  // カレンダー用の日付生成（今月）
-  const generateCalendarDates = () => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const firstDayOfWeek = new Date(year, month, 1).getDay()
-    
-    const dates = []
-    
-    // 前月の末尾日付
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      const date = new Date(year, month, -i)
-      dates.push({ date, isCurrentMonth: false })
-    }
-    
-    // 今月の日付
-    for (let i = 1; i <= daysInMonth; i++) {
-      const date = new Date(year, month, i)
-      dates.push({ date, isCurrentMonth: true })
-    }
-    
-    return dates
-  }
-
-  const calendarDates = generateCalendarDates()
-
-  const handleDateToggle = (date) => {
-    const dateString = date.toISOString().split('T')[0]
-    const newSelectedDates = new Set(selectedDates)
-    
-    if (newSelectedDates.has(dateString)) {
-      newSelectedDates.delete(dateString)
-    } else {
-      newSelectedDates.add(dateString)
-    }
-    
-    setSelectedDates(newSelectedDates)
-  }
-
-  const handleSaveCalendar = async () => {
-    setLoading(true)
-    try {
-      // 実際のアプリではSupabaseに送信
-      console.log('休業日設定:', Array.from(selectedDates))
-      alert('✅ 営業カレンダーを更新しました！')
-    } catch (error) {
-      alert('❌ 更新に失敗しました。')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleStatusUpdate = async () => {
     if (!currentStatus) {
@@ -127,71 +74,35 @@ const CustomerDashboard = () => {
 
       {/* メインコンテンツ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 左側：営業カレンダー */}
+        {/* 左側：クイックアクション */}
         <div className="space-y-6">
-          {/* 営業カレンダー */}
+          {/* 店休日設定へのナビゲーション */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                📅 営業カレンダー
-              </h3>
-              <button
-                onClick={handleSaveCalendar}
-                disabled={loading}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                {loading ? '保存中...' : '保存'}
-              </button>
+            <div className="flex items-center mb-4">
+              <div className="text-2xl mr-3">📅</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  店休日設定
+                </h3>
+                <p className="text-sm text-gray-600">
+                  営業カレンダーの設定・変更
+                </p>
+              </div>
             </div>
             
             <p className="text-sm text-gray-600 mb-4">
-              休業日をクリックして選択してください
+              3ヶ月分の店休日をカレンダー形式で設定できます。設定した休業日は予約システムに自動反映されます。
             </p>
             
-            {/* カレンダーグリッド */}
-            <div className="grid grid-cols-7 gap-1 text-center text-sm">
-              {['日', '月', '火', '水', '木', '金', '土'].map(day => (
-                <div key={day} className="py-2 font-medium text-gray-500">
-                  {day}
-                </div>
-              ))}
-              
-              {calendarDates.map((item, index) => {
-                const dateString = item.date.toISOString().split('T')[0]
-                const isSelected = selectedDates.has(dateString)
-                const isToday = dateString === new Date().toISOString().split('T')[0]
-                
-                return (
-                  <button
-                    key={index}
-                    onClick={() => item.isCurrentMonth && handleDateToggle(item.date)}
-                    disabled={!item.isCurrentMonth}
-                    className={`py-2 rounded transition-colors ${
-                      !item.isCurrentMonth
-                        ? 'text-gray-300 cursor-not-allowed'
-                        : isSelected
-                        ? 'bg-red-500 text-white'
-                        : isToday
-                        ? 'bg-blue-500 text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    {item.date.getDate()}
-                  </button>
-                )
-              })}
-            </div>
-            
-            <div className="mt-4 flex items-center space-x-4 text-sm">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-                <span>今日</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                <span>休業日</span>
-              </div>
-            </div>
+            <Link
+              to="/customer/holidays"
+              className="w-full inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              店休日設定ページへ
+            </Link>
           </div>
 
           {/* リアルタイム状況発信 */}
