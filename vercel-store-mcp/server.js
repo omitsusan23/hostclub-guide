@@ -4,8 +4,10 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createClient } from '@supabase/supabase-js';
 import {
-  ListToolsRequestSchema,
   CallToolRequestSchema,
+  ErrorCode,
+  ListToolsRequestSchema,
+  McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 
 // 環境変数の読み込み
@@ -140,86 +142,74 @@ async function createStoreUser(storeId, storeName) {
   }
 }
 
-// MCPサーバーの作成
-const server = new Server(
-  {
-    name: 'vercel-store-mcp',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
+const server = new Server({
+  name: "vercel-store-mcp",
+  version: "1.0.0",
+}, {
+  capabilities: {
+    tools: {}
   }
-);
+});
 
-// ツールリストの定義
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: 'create_store_with_subdomain',
-        description: '新規店舗を作成し、自動的にサブドメインをセットアップします',
+        name: "create_store_with_subdomain",
+        description: "新規店舗を作成し、自動的にサブドメインをセットアップします",
         inputSchema: {
-          type: 'object',
+          type: "object",
           properties: {
             store_name: {
-              type: 'string',
-              description: '店舗名'
+              type: "string",
+              description: "店舗名"
             },
             store_id: {
-              type: 'string', 
-              description: '店舗ID（サブドメインに使用）'
+              type: "string", 
+              description: "店舗ID（サブドメインに使用）"
             },
             open_time: {
-              type: 'string',
-              description: '営業開始時間 (HH:MM形式)',
-              default: '20:00'
+              type: "string",
+              description: "営業開始時間 (HH:MM形式)"
             },
             close_time: {
-              type: 'string',
-              description: '営業終了時間 (HH:MM形式)', 
-              default: '23:30'
+              type: "string",
+              description: "営業終了時間 (HH:MM形式)"
             },
             base_price: {
-              type: 'number',
-              description: '基本料金',
-              default: 0
+              type: "number",
+              description: "基本料金"
             },
             vercel_project_id: {
-              type: 'string',
-              description: 'VercelプロジェクトID',
-              default: 'prj_o42FtuXjf8sKIY0ifhgUedEGuehB'
+              type: "string",
+              description: "VercelプロジェクトID"
             }
           },
-          required: ['store_name', 'store_id']
+          required: ["store_name", "store_id"]
         }
       },
       {
-        name: 'check_subdomain_status',
-        description: '指定したサブドメインの状況を確認します',
+        name: "check_subdomain_status",
+        description: "指定したサブドメインの状況を確認します",
         inputSchema: {
-          type: 'object',
+          type: "object",
           properties: {
             store_id: {
-              type: 'string',
-              description: '店舗ID'
+              type: "string",
+              description: "店舗ID"
             }
           },
-          required: ['store_id']
+          required: ["store_id"]
         }
       }
     ]
   };
 });
 
-// ツール実行ハンドラー
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  if (name === 'create_store_with_subdomain') {
+  if (request.params.name === "create_store_with_subdomain") {
     try {
-      const { store_name, store_id, open_time, close_time, base_price, vercel_project_id } = args;
+      const { store_name, store_id, open_time, close_time, base_price, vercel_project_id } = request.params.arguments;
 
       console.error(`🚀 Starting store creation process for: ${store_name} (${store_id})`);
       
@@ -228,8 +218,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [
             {
-              type: 'text',
-              text: '❌ Supabase環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_URLとSUPABASE_SERVICE_ROLE_KEYを設定してください。'
+              type: "text",
+              text: "❌ Supabase環境変数が設定されていません。NEXT_PUBLIC_SUPABASE_URLとSUPABASE_SERVICE_ROLE_KEYを設定してください。"
             }
           ]
         };
@@ -239,8 +229,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [
             {
-              type: 'text',
-              text: '❌ Vercel API Tokenが設定されていません。VERCEL_TOKENを設定してください。'
+              type: "text",
+              text: "❌ Vercel API Tokenが設定されていません。VERCEL_TOKENを設定してください。"
             }
           ]
         };
@@ -259,7 +249,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [
             {
-              type: 'text',
+              type: "text",
               text: `❌ 店舗データの追加に失敗しました: ${storeResult.error}`
             }
           ]
@@ -276,7 +266,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [
             {
-              type: 'text',
+              type: "text",
               text: `⚠️ 店舗は作成されましたが、サブドメインの作成に失敗しました: ${subdomainResult.error}`
             }
           ]
@@ -308,7 +298,7 @@ ${userResult.success ? '- ユーザー作成: ✅' : `- ユーザー作成: ❌ 
       return {
         content: [
           {
-            type: 'text',
+            type: "text",
             text: responseText
           }
         ]
@@ -319,7 +309,7 @@ ${userResult.success ? '- ユーザー作成: ✅' : `- ユーザー作成: ❌ 
       return {
         content: [
           {
-            type: 'text',
+            type: "text",
             text: `❌ 予期しないエラーが発生しました: ${error.message}`
           }
         ]
@@ -327,9 +317,9 @@ ${userResult.success ? '- ユーザー作成: ✅' : `- ユーザー作成: ❌ 
     }
   }
 
-  if (name === 'check_subdomain_status') {
+  if (request.params.name === "check_subdomain_status") {
     try {
-      const { store_id } = args;
+      const { store_id } = request.params.arguments;
       const subdomain = `${store_id}.${baseDomain}`;
       
       // AbortControllerでタイムアウトを設定
@@ -347,7 +337,7 @@ ${userResult.success ? '- ユーザー作成: ✅' : `- ユーザー作成: ❌ 
       return {
         content: [
           {
-            type: 'text',
+            type: "text",
             text: `🌐 サブドメイン状況: ${subdomain}\nステータス: ${status}`
           }
         ]
@@ -356,25 +346,16 @@ ${userResult.success ? '- ユーザー作成: ✅' : `- ユーザー作成: ❌ 
       return {
         content: [
           {
-            type: 'text',
-            text: `⏳ サブドメイン ${args.store_id}.${baseDomain} は設定中です`
+            type: "text",
+            text: `⏳ サブドメイン ${request.params.arguments.store_id}.${baseDomain} は設定中です`
           }
         ]
       };
     }
   }
 
-  throw new Error(`Unknown tool: ${name}`);
+  throw new McpError(ErrorCode.ToolNotFound, `Unknown tool: ${request.params.name}`);
 });
 
-// サーバー起動
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('Vercel Store MCP Server started');
-}
-
-main().catch((error) => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-}); 
+const transport = new StdioServerTransport();
+await server.connect(transport); 
