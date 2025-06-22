@@ -2,7 +2,7 @@ import React from 'react'
 import { useApp } from '../contexts/AppContext'
 
 const Layout = ({ children }) => {
-  const { user, signOut } = useApp()
+  const { user, signOut, getUserRole } = useApp()
 
   const handleLogout = async () => {
     try {
@@ -26,9 +26,9 @@ const Layout = ({ children }) => {
               </h1>
               {user && (
                 <span className="ml-4 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                  {user.app_metadata?.role === 'admin' && '管理者'}
-                  {user.app_metadata?.role === 'staff' && 'スタッフ'}
-                  {user.app_metadata?.role === 'customer' && '店舗'}
+                  {getUserRole() === 'admin' && '管理者'}
+                  {getUserRole() === 'staff' && 'スタッフ'}
+                  {getUserRole() === 'customer' && '店舗'}
                 </span>
               )}
             </div>
