@@ -5,7 +5,8 @@ import { useApp } from '../contexts/AppContext'
 import { 
   getStores,
   getTodaysVisitRecords,
-  getStoreById
+  getStoreById,
+  saveVisitRecord
 } from '../lib/database'
 
 const StaffDashboard = () => {
@@ -17,6 +18,15 @@ const StaffDashboard = () => {
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+
+  // 今日の日付を取得する関数
+  const getTodayDateString = () => {
+    const today = new Date()
+    const month = today.getMonth() + 1
+    const day = today.getDate()
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][today.getDay()]
+    return `${month}/${day}(${dayOfWeek})`
+  }
 
   // データ取得
   useEffect(() => {
@@ -47,20 +57,19 @@ const StaffDashboard = () => {
 
   const handleVisitSubmit = async (visitData) => {
     try {
-      // TODO: 実際のSupabaseへの案内記録保存
-      console.log('案内記録保存:', visitData)
+      // ryotaユーザーのstaff_idを取得（208b1ea1-6e52-4d8b-b6c0-69a2cd597cd8）
+      const staffId = '208b1ea1-6e52-4d8b-b6c0-69a2cd597cd8' // ryotaのstaff ID
       
-      // 一時的にローカル状態を更新
-      const newRecord = {
-        id: Date.now().toString(),
+      // Supabaseに案内記録を保存
+      const savedRecord = await saveVisitRecord({
         store_id: visitData.storeId,
-        staff_id: user?.email || 'スタッフ',
+        staff_id: staffId,
         visitor_count: visitData.guestCount,
-        visited_at: new Date().toISOString(),
-        deleted: false
-      }
+        notes: visitData.notes || null
+      })
       
-      setVisitRecords(prev => [newRecord, ...prev])
+      // ローカル状態を更新
+      setVisitRecords(prev => [savedRecord, ...prev])
       setShowVisitForm(false)
       setSelectedStore(null)
       
@@ -147,7 +156,7 @@ const StaffDashboard = () => {
           {/* 今日の案内記録一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📊 本日の案内実績
+              📊 本日の案内実績 {getTodayDateString()}
             </h3>
             
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -173,7 +182,7 @@ const StaffDashboard = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-gray-500">
-                          担当: {record.staff_id}
+                          担当: {record.staff_display_name || '不明'}
                         </div>
                       </div>
                     </div>

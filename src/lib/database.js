@@ -45,27 +45,33 @@ export const getStoreBySubdomain = async (subdomain) => {
   return data
 }
 
-// 案内記録取得（staff_logs）
+// 案内記録取得（特定店舗）
 export const getVisitRecordsByStoreId = async (storeId) => {
   const { data, error } = await supabase
-    .from('staff_logs')
-    .select('*')
+    .from('visit_records')
+    .select(`
+      *,
+      staffs!visit_records_staff_id_fkey (
+        display_name,
+        staff_id
+      )
+    `)
     .eq('store_id', storeId)
-    .order('guided_at', { ascending: false })
+    .order('visited_at', { ascending: false })
   
   if (error) {
     console.error('案内記録取得エラー:', error)
     return []
   }
   
-  // 既存のモックデータ形式に合わせてデータ変換
   return data.map(record => ({
     id: record.id,
     store_id: record.store_id,
-    staff_id: record.staff_name,
-    visitor_count: record.guest_count,
-    visited_at: record.guided_at,
-    deleted: false
+    staff_id: record.staff_id,
+    staff_display_name: record.staffs?.display_name || '不明',
+    visitor_count: record.visitor_count,
+    visited_at: record.visited_at,
+    notes: record.notes
   }))
 }
 
@@ -74,11 +80,17 @@ export const getTodaysVisitRecords = async () => {
   const today = new Date().toISOString().split('T')[0]
   
   const { data, error } = await supabase
-    .from('staff_logs')
-    .select('*')
-    .gte('guided_at', `${today}T00:00:00`)
-    .lt('guided_at', `${today}T23:59:59`)
-    .order('guided_at', { ascending: false })
+    .from('visit_records')
+    .select(`
+      *,
+      staffs!visit_records_staff_id_fkey (
+        display_name,
+        staff_id
+      )
+    `)
+    .gte('visited_at', `${today}T00:00:00`)
+    .lt('visited_at', `${today}T23:59:59`)
+    .order('visited_at', { ascending: false })
   
   if (error) {
     console.error('今日の案内記録取得エラー:', error)
@@ -88,11 +100,48 @@ export const getTodaysVisitRecords = async () => {
   return data.map(record => ({
     id: record.id,
     store_id: record.store_id,
-    staff_id: record.staff_name,
-    visitor_count: record.guest_count,
-    visited_at: record.guided_at,
-    deleted: false
+    staff_id: record.staff_id,
+    staff_display_name: record.staffs?.display_name || '不明',
+    visitor_count: record.visitor_count,
+    visited_at: record.visited_at,
+    notes: record.notes
   }))
+}
+
+// 案内記録保存
+export const saveVisitRecord = async (visitData) => {
+  const { data, error } = await supabase
+    .from('visit_records')
+    .insert({
+      store_id: visitData.store_id,
+      staff_id: visitData.staff_id,
+      visitor_count: visitData.visitor_count,
+      notes: visitData.notes,
+      visited_at: visitData.visited_at || new Date().toISOString()
+    })
+    .select(`
+      *,
+      staffs!visit_records_staff_id_fkey (
+        display_name,
+        staff_id
+      )
+    `)
+    .single()
+  
+  if (error) {
+    console.error('案内記録保存エラー:', error)
+    throw error
+  }
+  
+  return {
+    id: data.id,
+    store_id: data.store_id,
+    staff_id: data.staff_id,
+    staff_display_name: data.staffs?.display_name || '不明',
+    visitor_count: data.visitor_count,
+    visited_at: data.visited_at,
+    notes: data.notes
+  }
 }
 
 // リアルタイム状況取得
