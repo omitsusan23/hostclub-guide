@@ -1,9 +1,10 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading, getUserRole, hasAccess } = useApp()
+  const { user, loading, getUserRole, hasAccess, signOut } = useApp()
+  const navigate = useNavigate()
 
   if (loading) {
     return (
@@ -31,7 +32,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">アクセス権限がありません</h2>
           <p className="text-gray-600 mb-4">このページにアクセスする権限がありません。</p>
           <button 
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => navigate('/dashboard', { replace: true })}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             ダッシュボードに戻る
@@ -53,7 +54,18 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
             正しい店舗URLでアクセスしてください。
           </p>
           <button 
-            onClick={() => window.location.href = '/login'}
+            onClick={async () => {
+              try {
+                // ログアウト処理を実行
+                await signOut();
+                // ログイン画面に遷移
+                navigate('/login', { replace: true });
+              } catch (error) {
+                console.error('ログアウトエラー:', error);
+                // エラーが発生してもログイン画面に遷移
+                navigate('/login', { replace: true });
+              }
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             ログイン画面に戻る
