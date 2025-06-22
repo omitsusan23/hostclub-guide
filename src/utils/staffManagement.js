@@ -164,4 +164,127 @@ export const checkStaffIdExists = async (staffId) => {
     console.error('Check staff ID error:', error)
     return true // エラーの場合は重複ありとして安全側に倒す
   }
+}
+
+/**
+ * スタッフIDの重複チェック（編集時 - 自分以外）
+ */
+export const checkStaffIdExistsForEdit = async (staffId, currentId) => {
+  try {
+    const { data, error } = await supabase
+      .from('staffs')
+      .select('staff_id')
+      .eq('staff_id', staffId)
+      .neq('id', currentId)
+      .limit(1)
+
+    if (error) throw error
+    return data && data.length > 0
+  } catch (error) {
+    console.error('Check staff ID for edit error:', error)
+    return true // エラーの場合は重複ありとして安全側に倒す
+  }
+}
+
+/**
+ * スタッフ情報を更新
+ */
+export const updateStaff = async (staffId, formData) => {
+  try {
+    console.log('🔄 updateStaff called with:', { staffId, formData });
+
+    // バリデーション
+    if (!formData.staff_id || !formData.display_name) {
+      console.log('❌ Validation failed: staff_id or display_name missing');
+      return { success: false, error: 'スタッフIDと表示名は必須です' }
+    }
+
+    // スタッフIDの重複チェック（自分以外）
+    console.log('🔍 Checking staff_id exists for edit...');
+    const exists = await checkStaffIdExistsForEdit(formData.staff_id, staffId)
+    if (exists) {
+      console.log('❌ Staff ID already exists');
+      return { success: false, error: 'このスタッフIDは既に他のスタッフで使用されています' }
+    }
+
+    // データベース更新のためのデータを準備
+    const updateData = {
+      staff_id: formData.staff_id,
+      display_name: formData.display_name,
+      email: `${formData.staff_id}@hostclub.local`,
+      notes: formData.notes || '',
+      is_active: formData.is_active !== undefined ? formData.is_active : true
+    };
+
+    console.log('📝 Update data prepared:', updateData);
+
+    // データベースを更新
+    const { data, error } = await supabase
+      .from('staffs')
+      .update(updateData)
+      .eq('id', staffId)
+      .select()
+
+    console.log('📤 Supabase update result:', { data, error });
+
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.error('❌ No data returned from update');
+      throw new Error('更新されたデータが返されませんでした');
+    }
+
+    console.log('✅ Staff updated successfully:', data[0]);
+
+    return { 
+      success: true, 
+      message: `✅ ${formData.display_name} の情報を更新しました！`,
+      data: data[0]
+    }
+  } catch (error) {
+    console.error('❌ Staff update error:', error)
+    return { success: false, error: `更新エラー: ${error.message}` }
+  }
+}
+
+/**
+ * スタッフを削除（論理削除）
+ */
+export const deleteStaff = async (staffId) => {
+  try {
+    console.log('🗑️ deleteStaff called with:', staffId);
+
+    // is_activeをfalseに設定（論理削除）
+    const { data, error } = await supabase
+      .from('staffs')
+      .update({ is_active: false })
+      .eq('id', staffId)
+      .select()
+
+    console.log('📤 Supabase delete result:', { data, error });
+
+    if (error) {
+      console.error('❌ Supabase delete error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.error('❌ No data returned from delete');
+      throw new Error('削除対象のスタッフが見つかりませんでした');
+    }
+
+    console.log('✅ Staff deleted successfully:', data[0]);
+
+    return { 
+      success: true, 
+      message: `✅ ${data[0].display_name} を削除しました`,
+      data: data[0]
+    }
+  } catch (error) {
+    console.error('❌ Staff delete error:', error)
+    return { success: false, error: `削除エラー: ${error.message}` }
+  }
 } 

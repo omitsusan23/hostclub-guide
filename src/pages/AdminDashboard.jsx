@@ -3,9 +3,10 @@ import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import StoreDetailModal from '../components/StoreDetailModal'
 import StoreEditModal from '../components/StoreEditModal'
+import StaffEditModal from '../components/StaffEditModal'
 import { useApp } from '../contexts/AppContext'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
-import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement.js'
+import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 
 const AdminDashboard = () => {
   const { user, getUserRole, getUserStoreId } = useApp()
@@ -43,6 +44,8 @@ const AdminDashboard = () => {
   const [selectedStore, setSelectedStore] = useState(null)
   const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
   const [showStoreEditModal, setShowStoreEditModal] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState(null)
+  const [showStaffEditModal, setShowStaffEditModal] = useState(false)
 
   // 店舗データを取得
   useEffect(() => {
@@ -342,6 +345,119 @@ const AdminDashboard = () => {
     }
   }
 
+  // スタッフ編集モーダルを開く
+  const handleEditStaff = (staff) => {
+    setSelectedStaff(staff)
+    setShowStaffEditModal(true)
+  }
+
+  // スタッフ編集モーダルを閉じる
+  const handleCloseStaffEdit = () => {
+    setSelectedStaff(null)
+    setShowStaffEditModal(false)
+  }
+
+  // スタッフ更新処理
+  const handleUpdateStaff = async (formData) => {
+    console.log('🚀 handleUpdateStaff called with formData:', formData);
+    console.log('📍 selectedStaff:', selectedStaff);
+    
+    if (!selectedStaff) {
+      console.error('❌ No selectedStaff');
+      return;
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      console.log('📞 Calling updateStaff...');
+      const result = await updateStaff(selectedStaff.id, formData)
+      console.log('📝 updateStaff result:', result);
+      
+      if (result.success) {
+        console.log('✅ Update successful');
+        setMessage(result.message || `✅ ${formData.display_name} を更新しました！`)
+        setMessageType('success')
+        
+        // スタッフリストを再読み込み
+        console.log('🔄 Reloading staffs...');
+        loadStaffs()
+        
+        // モーダルを閉じる
+        setTimeout(() => {
+          console.log('🚪 Closing modal...');
+          setShowStaffEditModal(false)
+          setSelectedStaff(null)
+          setMessage('')
+          setMessageType('')
+        }, 2000)
+        
+      } else {
+        console.error('❌ Update failed:', result.error);
+        setMessage(`❌ エラー: ${result.error}`)
+        setMessageType('error')
+      }
+      
+    } catch (error) {
+      console.error('❌ handleUpdateStaff error:', error)
+      setMessage('❌ スタッフ更新中に予期しないエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // スタッフ削除処理
+  const handleDeleteStaff = async (staffId) => {
+    console.log('🗑️ handleDeleteStaff called with staffId:', staffId);
+    
+    if (!staffId) {
+      console.error('❌ No staffId');
+      return;
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      console.log('📞 Calling deleteStaff...');
+      const result = await deleteStaff(staffId)
+      console.log('📝 deleteStaff result:', result);
+      
+      if (result.success) {
+        console.log('✅ Delete successful');
+        setMessage(result.message || `✅ スタッフを削除しました`)
+        setMessageType('success')
+        
+        // スタッフリストを再読み込み
+        console.log('🔄 Reloading staffs...');
+        loadStaffs()
+        
+        // モーダルを閉じる
+        setTimeout(() => {
+          console.log('🚪 Closing modal...');
+          setShowStaffEditModal(false)
+          setSelectedStaff(null)
+          setMessage('')
+          setMessageType('')
+        }, 2000)
+        
+      } else {
+        console.error('❌ Delete failed:', result.error);
+        setMessage(`❌ エラー: ${result.error}`)
+        setMessageType('error')
+      }
+      
+    } catch (error) {
+      console.error('❌ handleDeleteStaff error:', error)
+      setMessage('❌ スタッフ削除中に予期しないエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Layout>
       {/* ヘッダー */}
@@ -489,38 +605,48 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 staffs.map((staff) => (
-                  <div key={staff.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <h4 className="font-medium text-gray-900">{staff.display_name}</h4>
-                          <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                            staff.is_active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {staff.is_active ? 'アクティブ' : '無効'}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-sm text-gray-600">
-                          スタッフID: {staff.staff_id} | 
-                          メール: {staff.email}
-                        </div>
-                        {staff.notes && (
-                          <div className="mt-1 text-xs text-gray-500">
-                            備考: {staff.notes}
+                  <div key={staff.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <button
+                      onClick={() => handleEditStaff(staff)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <h4 className="font-medium text-gray-900 hover:text-purple-600 transition-colors">{staff.display_name}</h4>
+                            <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                              staff.is_active 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {staff.is_active ? 'アクティブ' : '無効'}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500">
-                          登録日: {new Date(staff.created_at).toLocaleDateString('ja-JP')}
+                          <div className="mt-1 text-sm text-gray-600">
+                            スタッフID: {staff.staff_id} | 
+                            メール: {staff.email}
+                          </div>
+                          {staff.notes && (
+                            <div className="mt-1 text-xs text-gray-500">
+                              備考: {staff.notes}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-blue-600">
-                          {staff.staff_id}@hostclub.local
+                        <div className="flex items-center space-x-2">
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500">
+                              登録日: {new Date(staff.created_at).toLocaleDateString('ja-JP')}
+                            </div>
+                            <div className="text-xs text-blue-600">
+                              {staff.staff_id}@hostclub.local
+                            </div>
+                          </div>
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   </div>
                 ))
               )}
@@ -1010,6 +1136,16 @@ const AdminDashboard = () => {
         store={selectedStore}
         onSave={handleUpdateStore}
         onClose={handleCloseStoreEdit}
+        loading={loading}
+      />
+
+      {/* スタッフ編集モーダル */}
+      <StaffEditModal
+        isOpen={showStaffEditModal}
+        staff={selectedStaff}
+        onSave={handleUpdateStaff}
+        onDelete={handleDeleteStaff}
+        onClose={handleCloseStaffEdit}
         loading={loading}
       />
     </Layout>
