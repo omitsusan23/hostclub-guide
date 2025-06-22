@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import StoreDetailModal from '../components/StoreDetailModal'
+import { useApp } from '../contexts/AppContext'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement.js'
 
 const AdminDashboard = () => {
+  const { user, getUserRole, getUserStoreId } = useApp()
   const [showStoreModal, setShowStoreModal] = useState(false)
   const [showStaffModal, setShowStaffModal] = useState(false)
   const [stores, setStores] = useState([])
@@ -280,6 +282,16 @@ const AdminDashboard = () => {
         <p className="text-gray-600">
           案内所運営責任者として、全店舗の管理と新規契約を行うことができます。
         </p>
+        {/* デバッグ表示 */}
+        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+          <h4 className="font-semibold text-yellow-800">🐛 デバッグ情報</h4>
+          <div className="text-sm text-yellow-700 mt-2">
+            <p>ユーザー: {user ? user.email : '未ログイン'}</p>
+            <p>ロール: {getUserRole() || '未設定'}</p>
+            <p>店舗ID: {getUserStoreId() || '未設定'}</p>
+            <p>ユーザーapp_metadata: {user ? JSON.stringify(user.app_metadata) : 'なし'}</p>
+          </div>
+        </div>
       </div>
 
       {/* 統計カード */}
