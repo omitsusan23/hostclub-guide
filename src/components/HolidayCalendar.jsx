@@ -3,7 +3,7 @@ import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 
 const HolidayCalendar = () => {
-  const { user } = useApp();
+  const { user, getUserStoreId } = useApp();
   const [holidays, setHolidays] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,7 +48,8 @@ const HolidayCalendar = () => {
 
   // 店休日データを取得
   const fetchHolidays = async () => {
-    if (!user?.app_metadata?.store_id) return;
+    const storeId = getUserStoreId();
+    if (!storeId) return;
 
     try {
       setLoading(true);
@@ -57,7 +58,7 @@ const HolidayCalendar = () => {
       const { data, error } = await supabase
         .from('store_holidays')
         .select('date')
-        .eq('store_id', user.app_metadata.store_id)
+        .eq('store_id', storeId)
         .gte('date', period.start.toISOString().split('T')[0])
         .lte('date', period.end.toISOString().split('T')[0]);
 
@@ -75,7 +76,8 @@ const HolidayCalendar = () => {
 
   // 店休日の切り替え
   const toggleHoliday = async (date) => {
-    if (!user?.app_metadata?.store_id || saving) return;
+    const storeId = getUserStoreId();
+    if (!storeId || saving) return;
 
     const dateString = date.toISOString().split('T')[0];
     const isHoliday = holidays.has(dateString);
@@ -88,7 +90,7 @@ const HolidayCalendar = () => {
         const { error } = await supabase
           .from('store_holidays')
           .delete()
-          .eq('store_id', user.app_metadata.store_id)
+          .eq('store_id', storeId)
           .eq('date', dateString);
 
         if (error) throw error;
@@ -101,7 +103,7 @@ const HolidayCalendar = () => {
         const { error } = await supabase
           .from('store_holidays')
           .insert({
-            store_id: user.app_metadata.store_id,
+            store_id: storeId,
             date: dateString
           });
 
