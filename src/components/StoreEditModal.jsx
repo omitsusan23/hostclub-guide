@@ -9,10 +9,10 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     base_price: 0,
     id_required: '顔＝保険証＋キャッシュ',
     male_price: 0,
-    panel_fee: 120000,
-    guarantee_count: 25,
-    penalty_fee: 20000,
-    unit_price: 1000,
+    panel_fee: 0,
+    guarantee_count: 0,
+    penalty_fee: 0,
+    unit_price: 0,
     is_transfer: false,
     hoshos_url: '',
     store_phone: ''
@@ -46,6 +46,14 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('📝 StoreEditModal form submitted with data:', formData);
+    console.log('🔍 Form specific values:', {
+      panel_fee: formData.panel_fee,
+      guarantee_count: formData.guarantee_count,
+      penalty_fee: formData.penalty_fee,
+      panel_fee_type: typeof formData.panel_fee,
+      guarantee_count_type: typeof formData.guarantee_count,
+      penalty_fee_type: typeof formData.penalty_fee
+    });
     onSave(formData);
   };
 
@@ -196,7 +204,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.panel_fee}
-                    onChange={(e) => setFormData({...formData, panel_fee: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Panel fee changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, panel_fee: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />
@@ -206,7 +218,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.unit_price}
-                    onChange={(e) => setFormData({...formData, unit_price: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Unit price changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, unit_price: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />
@@ -216,7 +232,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.guarantee_count}
-                    onChange={(e) => setFormData({...formData, guarantee_count: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Guarantee count changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, guarantee_count: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />
@@ -226,7 +246,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.penalty_fee}
-                    onChange={(e) => setFormData({...formData, penalty_fee: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Penalty fee changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, penalty_fee: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />

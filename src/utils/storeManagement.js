@@ -24,13 +24,13 @@ export const addStoreToDatabase = async (storeData) => {
         store_id: storeData.store_id,
         open_time: storeData.open_time || '20:00',
         close_time: storeData.close_time || '23:30',
-        base_price: storeData.base_price || 0,
+        base_price: storeData.base_price != null ? parseInt(storeData.base_price) : 0,
         id_required: storeData.id_required || '顔＝保険証＋キャッシュ',
-        male_price: storeData.male_price || 0,
-        panel_fee: storeData.panel_fee || 120000,
-        guarantee_count: storeData.guarantee_count || 25,
-        penalty_fee: storeData.penalty_fee || 20000,
-        unit_price: storeData.unit_price || 1000,
+        male_price: storeData.male_price != null ? parseInt(storeData.male_price) : 0,
+        panel_fee: storeData.panel_fee != null ? parseInt(storeData.panel_fee) : 120000,
+        guarantee_count: storeData.guarantee_count != null ? parseInt(storeData.guarantee_count) : 25,
+        penalty_fee: storeData.penalty_fee != null ? parseInt(storeData.penalty_fee) : 20000,
+        unit_price: storeData.unit_price != null ? parseInt(storeData.unit_price) : 1000,
         is_transfer: storeData.is_transfer || false,
         hoshos_url: storeData.hoshos_url || null,
         store_phone: storeData.store_phone || null
@@ -226,19 +226,27 @@ export const updateStore = async (storeId, formData) => {
       store_id: formData.store_id,
       open_time: formData.open_time || '20:00',
       close_time: formData.close_time || '23:30',
-      base_price: parseInt(formData.base_price) || 0,
+      base_price: formData.base_price != null ? parseInt(formData.base_price) : 0,
       id_required: formData.id_required || '顔＝保険証＋キャッシュ',
-      male_price: parseInt(formData.male_price) || 0,
-      panel_fee: parseInt(formData.panel_fee) || 120000,
-      guarantee_count: parseInt(formData.guarantee_count) || 25,
-      penalty_fee: parseInt(formData.penalty_fee) || 20000,
-      unit_price: parseInt(formData.unit_price) || 1000,
+      male_price: formData.male_price != null ? parseInt(formData.male_price) : 0,
+      panel_fee: formData.panel_fee != null ? parseInt(formData.panel_fee) : 120000,
+      guarantee_count: formData.guarantee_count != null ? parseInt(formData.guarantee_count) : 25,
+      penalty_fee: formData.penalty_fee != null ? parseInt(formData.penalty_fee) : 20000,
+      unit_price: formData.unit_price != null ? parseInt(formData.unit_price) : 1000,
       is_transfer: Boolean(formData.is_transfer),
       hoshos_url: formData.hoshos_url || null,
       store_phone: formData.store_phone || null
     };
 
     console.log('📝 Update data prepared:', updateData);
+    console.log('🔍 Specific values check:', {
+      panel_fee: updateData.panel_fee,
+      guarantee_count: updateData.guarantee_count,
+      penalty_fee: updateData.penalty_fee,
+      panel_fee_type: typeof updateData.panel_fee,
+      guarantee_count_type: typeof updateData.guarantee_count,
+      penalty_fee_type: typeof updateData.penalty_fee
+    });
 
     // データベースを更新
     const { data, error } = await supabase
