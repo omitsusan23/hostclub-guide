@@ -30,13 +30,30 @@ export const addStaffToDatabase = async (staffData) => {
  */
 export const createStaffUser = async (staffId, displayName, password) => {
   try {
-    console.log('🔐 createStaffUser called with:', { staffId, displayName, passwordLength: password?.length });
+    console.log('🔐 createStaffUser called with:', { 
+      staffId, 
+      displayName, 
+      password: password,  // 実際のパスワードも表示
+      passwordLength: password?.length 
+    });
     
     const email = `${staffId}@hostclub.local`
     
     // Supabase Edge Functionを呼び出し
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const functionUrl = `${supabaseUrl}/functions/v1/create-store-user`
+    
+    console.log('📡 Calling Edge Function:', functionUrl);
+    console.log('📦 Request payload:', {
+      email,
+      password,
+      user_metadata: {
+        role: 'staff',
+        staff_id: staffId,
+        display_name: displayName,
+        email_verified: true
+      }
+    });
     
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -56,13 +73,17 @@ export const createStaffUser = async (staffId, displayName, password) => {
       })
     })
 
+    console.log('📡 Response status:', response.status);
+    
     if (!response.ok) {
       const errorData = await response.json()
+      console.error('❌ Edge Function error response:', errorData);
       throw new Error(errorData.error || 'Failed to create staff user')
     }
 
     const result = await response.json()
     console.log('✅ createStaffUser result:', result);
+    console.log('👤 Created user ID:', result.user?.id);
     return { success: true, data: result }
   } catch (error) {
     console.error('❌ Staff user creation error:', error)
@@ -212,11 +233,21 @@ export const checkStaffIdExistsForEdit = async (staffId, currentId) => {
  */
 export const updateStaffPassword = async (userId, newPassword) => {
   try {
-    console.log('🔐 updateStaffPassword called with:', { userId, passwordLength: newPassword.length });
+    console.log('🔐 updateStaffPassword called with:', { 
+      userId, 
+      newPassword: newPassword,  // 実際のパスワードも表示
+      passwordLength: newPassword.length 
+    });
     
     // Supabase Edge Functionを呼び出し
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const functionUrl = `${supabaseUrl}/functions/v1/update-user-password`
+    
+    console.log('📡 Calling password update Edge Function:', functionUrl);
+    console.log('📦 Password update payload:', {
+      user_id: userId,
+      new_password: newPassword
+    });
     
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -230,8 +261,11 @@ export const updateStaffPassword = async (userId, newPassword) => {
       })
     })
 
+    console.log('📡 Password update response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json()
+      console.error('❌ Password update Edge Function error:', errorData);
       throw new Error(errorData.error || 'Failed to update password')
     }
 
@@ -376,4 +410,4 @@ export const deleteStaff = async (staffId) => {
     console.error('❌ Staff delete error:', error)
     return { success: false, error: `削除エラー: ${error.message}` }
   }
-} 
+}
