@@ -64,9 +64,6 @@ add-new-store.md
 create-admin-user.js
 admin-user.csv
 
-# Store management functions (contains database operations)
-src/utils/storeManagement.js
-
 # Supabase Edge Functions (contains sensitive keys)
 supabase/functions/
 
