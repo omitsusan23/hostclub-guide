@@ -3,6 +3,12 @@ import React from 'react';
 const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
   if (!isOpen || !store) return null;
 
+  // 時間から秒を削除する関数
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    return timeString.slice(0, 5); // "HH:MM:SS" → "HH:MM"
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -37,11 +43,11 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Open</label>
-                <p className="mt-1 text-sm text-gray-900">{store.open_time}</p>
+                <p className="mt-1 text-sm text-gray-900">{formatTime(store.open_time)}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">初回Close</label>
-                <p className="mt-1 text-sm text-gray-900">{store.close_time}</p>
+                <p className="mt-1 text-sm text-gray-900">{formatTime(store.close_time)}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">初回料金</label>
@@ -113,19 +119,6 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
                   }`}>
                     {store.is_transfer ? '振込' : '現金'}
                   </span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ウェブサイト情報 */}
-          <div className="bg-purple-50 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">🌐 ウェブサイト情報</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">案内サイトURL</label>
-                <p className="mt-1 text-sm text-blue-600">
-                  {store.store_id}.susukino-hostclub-guide.online
                 </p>
               </div>
             </div>

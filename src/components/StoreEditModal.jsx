@@ -22,11 +22,18 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
   useEffect(() => {
     if (store) {
       console.log('🏪 Setting form data from store:', store);
+      
+      // 時間から秒を削除する関数
+      const formatTime = (timeString) => {
+        if (!timeString) return '';
+        return timeString.slice(0, 5); // "HH:MM:SS" → "HH:MM"
+      };
+      
       const newFormData = {
         name: store.name || '',
         store_id: store.store_id || '',
-        open_time: store.open_time || '20:00',
-        close_time: store.close_time || '23:30',
+        open_time: formatTime(store.open_time) || '20:00',
+        close_time: formatTime(store.close_time) || '23:30',
         base_price: store.base_price != null ? parseInt(store.base_price) : 0,
         id_required: store.id_required || '顔＝保険証＋キャッシュ',
         male_price: store.male_price != null ? parseInt(store.male_price) : 0,
