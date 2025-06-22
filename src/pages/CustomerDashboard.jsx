@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { 
   getStoreById, 
+  getStoreBySubdomain,
   mockCalendars, 
   mockRealtimeStatuses, 
   getVisitRecordsByStoreId,
@@ -11,9 +12,16 @@ import {
 } from '../lib/types'
 
 const CustomerDashboard = () => {
-  const { getUserStoreId } = useApp()
-  const storeId = getUserStoreId() || 'store-1' // デモ用にデフォルト値
-  const store = getStoreById(storeId)
+  const { getUserStoreId, getStoreIdFromSubdomain } = useApp()
+  
+  // ユーザーのstore_idまたはサブドメインから店舗IDを取得
+  const storeId = getUserStoreId() || getStoreIdFromSubdomain()
+  
+  // IDで店舗を検索、見つからなければサブドメインで検索
+  let store = getStoreById(storeId)
+  if (!store) {
+    store = getStoreBySubdomain(storeId)
+  }
   
   const [currentStatus, setCurrentStatus] = useState('')
   const [loading, setLoading] = useState(false)

@@ -37,6 +37,18 @@ export const mockStores = [
     is_invoice_eligible: true,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'raize',
+    name: 'RAIZE',
+    subdomain: 'raize',
+    base_fee: 30000,
+    guaranteed_count: 8,
+    guaranteed_penalty: 5000,
+    with_tax: true,
+    is_invoice_eligible: true,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   }
 ]
 

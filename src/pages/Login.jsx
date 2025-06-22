@@ -135,9 +135,32 @@ const Login = () => {
             </button>
           </div>
 
-          {/* 開発用：テストユーザー作成ボタン */}
+          {/* 開発用：デモログインとテストユーザー作成ボタン */}
           <div className="border-t pt-4">
             <p className="text-center text-xs text-gray-500 mb-2">開発用機能</p>
+            
+            {/* デモログインボタン */}
+            <button
+              type="button"
+              onClick={() => {
+                // デモ用のユーザーデータを設定
+                const demoUser = {
+                  id: 'demo-customer-001',
+                  email: 'demo@hostclub.local',
+                  app_metadata: {
+                    role: 'customer',
+                    store_id: 'demo-store'
+                  }
+                };
+                // 直接ユーザー状態を設定（開発用）
+                window.localStorage.setItem('demo-user', JSON.stringify(demoUser));
+                window.location.reload();
+              }}
+              className="group relative w-full flex justify-center py-2 px-4 mb-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              🏪 デモ顧客でログイン（開発用）
+            </button>
+            
             <button
               type="button"
               onClick={handleCreateTestUser}
