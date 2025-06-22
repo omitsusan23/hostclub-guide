@@ -131,37 +131,27 @@ const HolidayCalendar = () => {
     
     if (newPendingChanges.has(dateString)) {
       newPendingChanges.delete(dateString);
-      console.log('店休日を削除:', dateString);
     } else {
       newPendingChanges.add(dateString);
-      console.log('店休日を追加:', dateString);
     }
     
-    console.log('現在の pending changes:', [...newPendingChanges]);
     setPendingChanges(newPendingChanges);
   };
 
   // 月の変更に対する一括更新
   const saveChanges = async () => {
-    console.log('saveChanges 開始');
     const storeId = getUserStoreId();
-    console.log('storeId:', storeId);
     
     if (!storeId || saving) {
-      console.log('storeIdがないかsaving中のため終了');
       return;
     }
 
     try {
-      console.log('更新処理開始');
       setSaving(true);
 
       // 現在のサーバー状態と変更後の状態を比較
       const originalHolidays = holidays;
       const newHolidays = pendingChanges;
-
-      console.log('元の holidays:', [...originalHolidays]);
-      console.log('新しい holidays:', [...newHolidays]);
 
       // 削除対象：サーバーにあるがローカルにない
       const toDelete = [...originalHolidays].filter(date => !newHolidays.has(date));
@@ -169,49 +159,33 @@ const HolidayCalendar = () => {
       // 追加対象：ローカルにあるがサーバーにない
       const toAdd = [...newHolidays].filter(date => !originalHolidays.has(date));
 
-      console.log('削除対象:', toDelete);
-      console.log('追加対象:', toAdd);
-
       // 削除処理
       if (toDelete.length > 0) {
-        console.log('削除処理開始');
         const { error: deleteError } = await supabase
           .from('store_holidays')
           .delete()
           .eq('store_id', storeId)
           .in('date', toDelete);
 
-        if (deleteError) {
-          console.error('削除エラー:', deleteError);
-          throw deleteError;
-        }
-        console.log('削除完了');
+        if (deleteError) throw deleteError;
       }
 
       // 追加処理
       if (toAdd.length > 0) {
-        console.log('追加処理開始');
         const insertData = toAdd.map(date => ({
           store_id: storeId,
           date: date
         }));
 
-        console.log('挿入データ:', insertData);
-
         const { error: insertError } = await supabase
           .from('store_holidays')
           .insert(insertData);
 
-        if (insertError) {
-          console.error('追加エラー:', insertError);
-          throw insertError;
-        }
-        console.log('追加完了');
+        if (insertError) throw insertError;
       }
 
       // 状態を更新
       setHolidays(new Set(pendingChanges));
-      console.log('更新成功');
       alert('店休日を更新しました');
 
     } catch (error) {
@@ -219,7 +193,6 @@ const HolidayCalendar = () => {
       alert('店休日の更新に失敗しました');
     } finally {
       setSaving(false);
-      console.log('saveChanges 終了');
     }
   };
 
@@ -228,6 +201,7 @@ const HolidayCalendar = () => {
     if (!storeCreatedAt) return false;
     
     const today = new Date();
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const targetDate = new Date(currentDate);
     targetDate.setMonth(targetDate.getMonth() - 1);
     
@@ -239,9 +213,13 @@ const HolidayCalendar = () => {
     const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1);
     if (targetDate < sixMonthsAgo) return false;
     
-    // 店休日データが存在する月のみ可能
-    const yearMonth = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
-    return availableDates.has(yearMonth);
+    // 当月以降は常に移動可能、過去の月は店休日データが存在する場合のみ
+    if (targetDate >= currentMonth) {
+      return true;
+    } else {
+      const yearMonth = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
+      return availableDates.has(yearMonth);
+    }
   };
 
   // 次月に移動可能かチェック
@@ -275,20 +253,14 @@ const HolidayCalendar = () => {
 
   // 変更があるかチェック
   const hasChanges = () => {
-    console.log('hasChanges チェック:');
-    console.log('元の holidays:', [...holidays]);
-    console.log('pending changes:', [...pendingChanges]);
-    
     // サイズが違う場合
     if (holidays.size !== pendingChanges.size) {
-      console.log('サイズが違います:', holidays.size, '→', pendingChanges.size);
       return true;
     }
     
     // holidaysにあってpendingChangesにないものをチェック
     for (let date of holidays) {
       if (!pendingChanges.has(date)) {
-        console.log('削除された日付:', date);
         return true;
       }
     }
@@ -296,12 +268,10 @@ const HolidayCalendar = () => {
     // pendingChangesにあってholidaysにないものをチェック
     for (let date of pendingChanges) {
       if (!holidays.has(date)) {
-        console.log('追加された日付:', date);
         return true;
       }
     }
     
-    console.log('変更なし');
     return false;
   };
 
@@ -447,10 +417,7 @@ const HolidayCalendar = () => {
         {/* 更新ボタン */}
         <div className="flex justify-center">
           <button
-            onClick={() => {
-              console.log('更新ボタンがクリックされました');
-              saveChanges();
-            }}
+            onClick={saveChanges}
             disabled={!hasChanges() || saving}
             className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
               hasChanges() && !saving
