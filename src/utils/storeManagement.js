@@ -235,8 +235,7 @@ export const updateStore = async (storeId, formData) => {
       unit_price: parseInt(formData.unit_price) || 1000,
       is_transfer: Boolean(formData.is_transfer),
       hoshos_url: formData.hoshos_url || null,
-      store_phone: formData.store_phone || null,
-      updated_at: new Date().toISOString()
+      store_phone: formData.store_phone || null
     };
 
     console.log('📝 Update data prepared:', updateData);
