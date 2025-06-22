@@ -31,7 +31,9 @@ export const addStoreToDatabase = async (storeData) => {
         guarantee_count: storeData.guarantee_count || 25,
         penalty_fee: storeData.penalty_fee || 20000,
         unit_price: storeData.unit_price || 1000,
-        is_transfer: storeData.is_transfer || false
+        is_transfer: storeData.is_transfer || false,
+        hoshos_url: storeData.hoshos_url || null,
+        store_phone: storeData.store_phone || null
       }])
       .select()
 
@@ -229,6 +231,8 @@ export const updateStore = async (storeId, formData) => {
         penalty_fee: formData.penalty_fee || 20000,
         unit_price: formData.unit_price || 1000,
         is_transfer: formData.is_transfer || false,
+        hoshos_url: formData.hoshos_url || null,
+        store_phone: formData.store_phone || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', storeId)

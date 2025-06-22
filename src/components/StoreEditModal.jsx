@@ -13,7 +13,9 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     guarantee_count: 25,
     penalty_fee: 20000,
     unit_price: 1000,
-    is_transfer: false
+    is_transfer: false,
+    hoshos_url: '',
+    store_phone: ''
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -31,7 +33,9 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         guarantee_count: store.guarantee_count || 25,
         penalty_fee: store.penalty_fee || 20000,
         unit_price: store.unit_price || 1000,
-        is_transfer: store.is_transfer || false
+        is_transfer: store.is_transfer || false,
+        hoshos_url: store.hoshos_url || '',
+        store_phone: store.store_phone || ''
       });
     }
   }, [store]);
@@ -99,7 +103,7 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">営業開始時間</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Open</label>
                   <input
                     type="time"
                     value={formData.open_time}
@@ -108,7 +112,7 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">営業終了時間</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">初回Close</label>
                   <input
                     type="time"
                     value={formData.close_time}
@@ -116,15 +120,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* 料金情報 */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">💰 料金情報</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">基本料金</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">初回料金</label>
                   <input
                     type="number"
                     value={formData.base_price}
@@ -144,60 +141,6 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">パネル料</label>
-                  <input
-                    type="number"
-                    value={formData.panel_fee}
-                    onChange={(e) => setFormData({...formData, panel_fee: parseInt(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">単価</label>
-                  <input
-                    type="number"
-                    value={formData.unit_price}
-                    onChange={(e) => setFormData({...formData, unit_price: parseInt(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 保証・ペナルティ情報 */}
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">⚖️ 保証・ペナルティ</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">保証本数</label>
-                  <input
-                    type="number"
-                    value={formData.guarantee_count}
-                    onChange={(e) => setFormData({...formData, guarantee_count: parseInt(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ペナルティ料金</label>
-                  <input
-                    type="number"
-                    value={formData.penalty_fee}
-                    onChange={(e) => setFormData({...formData, penalty_fee: parseInt(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* その他の設定 */}
-            <div className="bg-purple-50 rounded-lg p-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">⚙️ その他の設定</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">身分証要件</label>
                   <select
                     value={formData.id_required}
@@ -210,18 +153,87 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">振込対応</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ホスホスURL</label>
+                  <input
+                    type="url"
+                    value={formData.hoshos_url}
+                    onChange={(e) => setFormData({...formData, hoshos_url: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://hoshos.jp/shop/..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">店舗番号</label>
+                  <input
+                    type="tel"
+                    value={formData.store_phone}
+                    onChange={(e) => setFormData({...formData, store_phone: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="011-555-1234"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 契約内容 */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">📋 契約内容</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">パネル料</label>
+                  <input
+                    type="number"
+                    value={formData.panel_fee}
+                    onChange={(e) => setFormData({...formData, panel_fee: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">一人単価</label>
+                  <input
+                    type="number"
+                    value={formData.unit_price}
+                    onChange={(e) => setFormData({...formData, unit_price: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">保証本数</label>
+                  <input
+                    type="number"
+                    value={formData.guarantee_count}
+                    onChange={(e) => setFormData({...formData, guarantee_count: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">保証割れ料金</label>
+                  <input
+                    type="number"
+                    value={formData.penalty_fee}
+                    onChange={(e) => setFormData({...formData, penalty_fee: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">振込/現金</label>
                   <select
                     value={formData.is_transfer}
                     onChange={(e) => setFormData({...formData, is_transfer: e.target.value === 'true'})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value={false}>対応不可</option>
-                    <option value={true}>対応可能</option>
+                    <option value={false}>現金</option>
+                    <option value={true}>振込</option>
                   </select>
                 </div>
               </div>
             </div>
+
+
           </div>
 
           {/* フッター */}

@@ -27,7 +27,9 @@ const AdminDashboard = () => {
     guarantee_count: 25,
     penalty_fee: 20000,
     unit_price: 1000,
-    is_transfer: false
+    is_transfer: false,
+    hoshos_url: '',
+    store_phone: ''
   })
   const [newStaff, setNewStaff] = useState({
     staff_id: '',
@@ -149,7 +151,9 @@ const AdminDashboard = () => {
           guarantee_count: 25,
           penalty_fee: 20000,
           unit_price: 1000,
-          is_transfer: false
+          is_transfer: false,
+          hoshos_url: '',
+          store_phone: ''
         })
         
         // 店舗リストを更新
@@ -699,7 +703,7 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                営業開始時間
+                Open
               </label>
               <input
                 type="time"
@@ -711,7 +715,7 @@ const AdminDashboard = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                営業終了時間
+                初回Close
               </label>
               <input
                 type="time"
@@ -722,10 +726,10 @@ const AdminDashboard = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                基本料金
+                初回料金
               </label>
               <input
                 type="number"
@@ -751,14 +755,27 @@ const AdminDashboard = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                1人あたり単価
+                ホスホスURL
               </label>
               <input
-                type="number"
-                value={newStore.unit_price}
-                onChange={(e) => setNewStore({...newStore, unit_price: parseInt(e.target.value) || 0})}
+                type="url"
+                value={newStore.hoshos_url}
+                onChange={(e) => setNewStore({...newStore, hoshos_url: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="1000"
+                placeholder="https://hoshos.jp/shop/..."
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                店舗番号
+              </label>
+              <input
+                type="tel"
+                value={newStore.store_phone}
+                onChange={(e) => setNewStore({...newStore, store_phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="011-555-1234"
               />
             </div>
           </div>
@@ -766,7 +783,7 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                パネル月額料
+                パネル料
               </label>
               <input
                 type="number"
@@ -779,7 +796,20 @@ const AdminDashboard = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                保証人数
+                一人単価
+              </label>
+              <input
+                type="number"
+                value={newStore.unit_price}
+                onChange={(e) => setNewStore({...newStore, unit_price: parseInt(e.target.value) || 0})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="1000"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                保証本数
               </label>
               <input
                 type="number"
@@ -789,10 +819,12 @@ const AdminDashboard = () => {
                 placeholder="25"
               />
             </div>
-            
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                保証割れペナルティ
+                保証割れ料金
               </label>
               <input
                 type="number"
@@ -802,12 +834,26 @@ const AdminDashboard = () => {
                 placeholder="20000"
               />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                必要身分証
+                振込/現金
+              </label>
+              <select
+                value={newStore.is_transfer}
+                onChange={(e) => setNewStore({...newStore, is_transfer: e.target.value === 'true'})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={false}>現金</option>
+                <option value={true}>振込</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                身分証要件
               </label>
               <select
                 value={newStore.id_required}
@@ -817,20 +863,6 @@ const AdminDashboard = () => {
                 <option value="顔＝保険証＋キャッシュ">顔＝保険証＋キャッシュ</option>
                 <option value="顔＝保険証＋クレジット">顔＝保険証＋クレジット</option>
                 <option value="顔必須">顔必須</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                振込可能
-              </label>
-              <select
-                value={newStore.is_transfer}
-                onChange={(e) => setNewStore({...newStore, is_transfer: e.target.value === 'true'})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value={false}>不可</option>
-                <option value={true}>可能</option>
               </select>
             </div>
           </div>
