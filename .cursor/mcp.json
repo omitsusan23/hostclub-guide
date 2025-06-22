@@ -21,24 +21,10 @@
         "@modelcontextprotocol/server-everything"
       ]
     },
-    "test-mcp-server": {
-      "command": "node",
+    "working-vercel-mcp": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
       "args": [
-        "test-server.js"
-      ],
-      "cwd": "C:\\Users\\omitu\\hostclub-guide\\vercel-store-mcp"
-    },
-    "vercel-store-mcp": {
-      "command": "node",
-      "args": [
-        "server.js"
-      ],
-      "cwd": "C:\\Users\\omitu\\hostclub-guide\\vercel-store-mcp"
-    },
-    "minimal-vercel-mcp": {
-      "command": "node",
-      "args": [
-        "minimal-server.js"
+        "working-server.js"
       ],
       "cwd": "C:\\Users\\omitu\\hostclub-guide\\vercel-store-mcp"
     }
