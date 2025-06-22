@@ -653,23 +653,8 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* 新規契約・システム設定 */}
+          {/* システム設定 */}
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                📝 新規契約
-              </h3>
-              <p className="text-gray-600 mb-4">新しいホストクラブとの契約手続きを行います。</p>
-              <div className="flex space-x-2">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                  契約申込み処理
-                </button>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                  契約一覧
-                </button>
-              </div>
-            </div>
-
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 ⚙️ システム設定
