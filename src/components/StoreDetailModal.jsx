@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StoreDetailModal = ({ isOpen, store, onClose }) => {
+const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
   if (!isOpen || !store) return null;
 
   return (
@@ -144,10 +144,7 @@ const StoreDetailModal = ({ isOpen, store, onClose }) => {
             </button>
             <button
               className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-              onClick={() => {
-                // TODO: 編集画面に遷移
-                console.log('編集機能は今後実装予定')
-              }}
+              onClick={() => onEdit && onEdit(store)}
             >
               編集
             </button>

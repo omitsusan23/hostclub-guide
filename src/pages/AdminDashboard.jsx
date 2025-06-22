@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import StoreDetailModal from '../components/StoreDetailModal'
+import StoreEditModal from '../components/StoreEditModal'
 import { useApp } from '../contexts/AppContext'
-import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement.js'
+import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement.js'
 
 const AdminDashboard = () => {
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
   const [messageType, setMessageType] = useState('') // 'success', 'error', 'warning'
   const [selectedStore, setSelectedStore] = useState(null)
   const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
+  const [showStoreEditModal, setShowStoreEditModal] = useState(false)
 
   // 店舗データを取得
   useEffect(() => {
@@ -272,6 +274,58 @@ const AdminDashboard = () => {
     setShowStoreDetailModal(false)
   }
 
+  // 店舗編集モーダルを開く
+  const handleEditStore = (store) => {
+    setSelectedStore(store)
+    setShowStoreDetailModal(false) // 詳細モーダルを閉じる
+    setShowStoreEditModal(true)
+  }
+
+  // 店舗編集モーダルを閉じる
+  const handleCloseStoreEdit = () => {
+    setSelectedStore(null)
+    setShowStoreEditModal(false)
+  }
+
+  // 店舗更新処理
+  const handleUpdateStore = async (formData) => {
+    if (!selectedStore) return
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      const result = await updateStore(selectedStore.id, formData)
+      
+      if (result.success) {
+        setMessage(result.message || `✅ ${formData.name} を更新しました！`)
+        setMessageType('success')
+        
+        // 店舗リストを再読み込み
+        loadStores()
+        
+        // モーダルを閉じる
+        setTimeout(() => {
+          setShowStoreEditModal(false)
+          setSelectedStore(null)
+          setMessage('')
+          setMessageType('')
+        }, 2000)
+        
+      } else {
+        setMessage(`❌ エラー: ${result.error}`)
+        setMessageType('error')
+      }
+      
+    } catch (error) {
+      console.error('Store update error:', error)
+      setMessage('❌ 店舗更新中に予期しないエラーが発生しました')
+      setMessageType('error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Layout>
       {/* ヘッダー */}
@@ -282,16 +336,6 @@ const AdminDashboard = () => {
         <p className="text-gray-600">
           案内所運営責任者として、全店舗の管理と新規契約を行うことができます。
         </p>
-        {/* デバッグ表示 */}
-        <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
-          <h4 className="font-semibold text-yellow-800">🐛 デバッグ情報</h4>
-          <div className="text-sm text-yellow-700 mt-2">
-            <p>ユーザー: {user ? user.email : '未ログイン'}</p>
-            <p>ロール: {getUserRole() || '未設定'}</p>
-            <p>店舗ID: {getUserStoreId() || '未設定'}</p>
-            <p>ユーザーapp_metadata: {user ? JSON.stringify(user.app_metadata) : 'なし'}</p>
-          </div>
-        </div>
       </div>
 
       {/* 統計カード */}
@@ -913,6 +957,16 @@ const AdminDashboard = () => {
         isOpen={showStoreDetailModal}
         store={selectedStore}
         onClose={handleCloseStoreDetail}
+        onEdit={handleEditStore}
+      />
+
+      {/* 店舗編集モーダル */}
+      <StoreEditModal
+        isOpen={showStoreEditModal}
+        store={selectedStore}
+        onSave={handleUpdateStore}
+        onClose={handleCloseStoreEdit}
+        loading={loading}
       />
     </Layout>
   )

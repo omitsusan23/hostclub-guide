@@ -175,4 +175,74 @@ export const checkStoreIdExists = async (storeId) => {
     console.error('Check store ID error:', error)
     return true // エラーの場合は重複ありとして安全側に倒す
   }
+}
+
+/**
+ * 店舗IDの重複チェック（編集時 - 自分以外）
+ */
+export const checkStoreIdExistsForEdit = async (storeId, currentId) => {
+  try {
+    const { data, error } = await supabase
+      .from('stores')
+      .select('store_id')
+      .eq('store_id', storeId)
+      .neq('id', currentId)
+      .limit(1)
+
+    if (error) throw error
+    return data && data.length > 0
+  } catch (error) {
+    console.error('Check store ID for edit error:', error)
+    return true // エラーの場合は重複ありとして安全側に倒す
+  }
+}
+
+/**
+ * 店舗情報を更新
+ */
+export const updateStore = async (storeId, formData) => {
+  try {
+    // バリデーション
+    if (!formData.name || !formData.store_id) {
+      return { success: false, error: '店舗名と店舗IDは必須です' }
+    }
+
+    // 店舗IDの重複チェック（自分以外）
+    const exists = await checkStoreIdExistsForEdit(formData.store_id, storeId)
+    if (exists) {
+      return { success: false, error: 'この店舗IDは既に他の店舗で使用されています' }
+    }
+
+    // データベースを更新
+    const { data, error } = await supabase
+      .from('stores')
+      .update({
+        name: formData.name,
+        store_id: formData.store_id,
+        open_time: formData.open_time || '20:00',
+        close_time: formData.close_time || '23:30',
+        base_price: formData.base_price || 0,
+        id_required: formData.id_required || '顔＝保険証＋キャッシュ',
+        male_price: formData.male_price || 0,
+        panel_fee: formData.panel_fee || 120000,
+        guarantee_count: formData.guarantee_count || 25,
+        penalty_fee: formData.penalty_fee || 20000,
+        unit_price: formData.unit_price || 1000,
+        is_transfer: formData.is_transfer || false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', storeId)
+      .select()
+
+    if (error) throw error
+
+    return { 
+      success: true, 
+      message: `✅ ${formData.name} の情報を更新しました！`,
+      data: data[0]
+    }
+  } catch (error) {
+    console.error('Store update error:', error)
+    return { success: false, error: `更新エラー: ${error.message}` }
+  }
 } 
