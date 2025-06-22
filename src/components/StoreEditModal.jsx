@@ -21,27 +21,31 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
   // store propsが変更されたらフォームデータを更新
   useEffect(() => {
     if (store) {
-      setFormData({
+      console.log('🏪 Setting form data from store:', store);
+      const newFormData = {
         name: store.name || '',
         store_id: store.store_id || '',
         open_time: store.open_time || '20:00',
         close_time: store.close_time || '23:30',
-        base_price: store.base_price || 0,
+        base_price: parseInt(store.base_price) || 0,
         id_required: store.id_required || '顔＝保険証＋キャッシュ',
-        male_price: store.male_price || 0,
-        panel_fee: store.panel_fee || 120000,
-        guarantee_count: store.guarantee_count || 25,
-        penalty_fee: store.penalty_fee || 20000,
-        unit_price: store.unit_price || 1000,
-        is_transfer: store.is_transfer || false,
+        male_price: parseInt(store.male_price) || 0,
+        panel_fee: parseInt(store.panel_fee) || 120000,
+        guarantee_count: parseInt(store.guarantee_count) || 25,
+        penalty_fee: parseInt(store.penalty_fee) || 20000,
+        unit_price: parseInt(store.unit_price) || 1000,
+        is_transfer: Boolean(store.is_transfer),
         hoshos_url: store.hoshos_url || '',
         store_phone: store.store_phone || ''
-      });
+      };
+      console.log('📝 New form data:', newFormData);
+      setFormData(newFormData);
     }
   }, [store]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('📝 StoreEditModal form submitted with data:', formData);
     onSave(formData);
   };
 
@@ -125,7 +129,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.base_price}
-                    onChange={(e) => setFormData({...formData, base_price: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Base price changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, base_price: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />
@@ -135,7 +143,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <input
                     type="number"
                     value={formData.male_price}
-                    onChange={(e) => setFormData({...formData, male_price: parseInt(e.target.value) || 0})}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 Male price changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, male_price: value});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
                   />

@@ -293,23 +293,34 @@ const AdminDashboard = () => {
 
   // 店舗更新処理
   const handleUpdateStore = async (formData) => {
-    if (!selectedStore) return
+    console.log('🚀 handleUpdateStore called with formData:', formData);
+    console.log('📍 selectedStore:', selectedStore);
+    
+    if (!selectedStore) {
+      console.error('❌ No selectedStore');
+      return;
+    }
 
     setLoading(true)
     setMessage('')
 
     try {
+      console.log('📞 Calling updateStore...');
       const result = await updateStore(selectedStore.id, formData)
+      console.log('📝 updateStore result:', result);
       
       if (result.success) {
+        console.log('✅ Update successful');
         setMessage(result.message || `✅ ${formData.name} を更新しました！`)
         setMessageType('success')
         
         // 店舗リストを再読み込み
+        console.log('🔄 Reloading stores...');
         loadStores()
         
         // モーダルを閉じる
         setTimeout(() => {
+          console.log('🚪 Closing modal...');
           setShowStoreEditModal(false)
           setSelectedStore(null)
           setMessage('')
@@ -317,12 +328,13 @@ const AdminDashboard = () => {
         }, 2000)
         
       } else {
+        console.error('❌ Update failed:', result.error);
         setMessage(`❌ エラー: ${result.error}`)
         setMessageType('error')
       }
       
     } catch (error) {
-      console.error('Store update error:', error)
+      console.error('❌ handleUpdateStore error:', error)
       setMessage('❌ 店舗更新中に予期しないエラーが発生しました')
       setMessageType('error')
     } finally {

@@ -204,41 +204,63 @@ export const checkStoreIdExistsForEdit = async (storeId, currentId) => {
  */
 export const updateStore = async (storeId, formData) => {
   try {
+    console.log('🔄 updateStore called with:', { storeId, formData });
+
     // バリデーション
     if (!formData.name || !formData.store_id) {
+      console.log('❌ Validation failed: name or store_id missing');
       return { success: false, error: '店舗名と店舗IDは必須です' }
     }
 
     // 店舗IDの重複チェック（自分以外）
+    console.log('🔍 Checking store_id exists for edit...');
     const exists = await checkStoreIdExistsForEdit(formData.store_id, storeId)
     if (exists) {
+      console.log('❌ Store ID already exists');
       return { success: false, error: 'この店舗IDは既に他の店舗で使用されています' }
     }
+
+    // データベース更新のためのデータを準備
+    const updateData = {
+      name: formData.name,
+      store_id: formData.store_id,
+      open_time: formData.open_time || '20:00',
+      close_time: formData.close_time || '23:30',
+      base_price: parseInt(formData.base_price) || 0,
+      id_required: formData.id_required || '顔＝保険証＋キャッシュ',
+      male_price: parseInt(formData.male_price) || 0,
+      panel_fee: parseInt(formData.panel_fee) || 120000,
+      guarantee_count: parseInt(formData.guarantee_count) || 25,
+      penalty_fee: parseInt(formData.penalty_fee) || 20000,
+      unit_price: parseInt(formData.unit_price) || 1000,
+      is_transfer: Boolean(formData.is_transfer),
+      hoshos_url: formData.hoshos_url || null,
+      store_phone: formData.store_phone || null,
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('📝 Update data prepared:', updateData);
 
     // データベースを更新
     const { data, error } = await supabase
       .from('stores')
-      .update({
-        name: formData.name,
-        store_id: formData.store_id,
-        open_time: formData.open_time || '20:00',
-        close_time: formData.close_time || '23:30',
-        base_price: formData.base_price || 0,
-        id_required: formData.id_required || '顔＝保険証＋キャッシュ',
-        male_price: formData.male_price || 0,
-        panel_fee: formData.panel_fee || 120000,
-        guarantee_count: formData.guarantee_count || 25,
-        penalty_fee: formData.penalty_fee || 20000,
-        unit_price: formData.unit_price || 1000,
-        is_transfer: formData.is_transfer || false,
-        hoshos_url: formData.hoshos_url || null,
-        store_phone: formData.store_phone || null,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', storeId)
       .select()
 
-    if (error) throw error
+    console.log('📤 Supabase update result:', { data, error });
+
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.error('❌ No data returned from update');
+      throw new Error('更新されたデータが返されませんでした');
+    }
+
+    console.log('✅ Store updated successfully:', data[0]);
 
     return { 
       success: true, 
@@ -246,7 +268,7 @@ export const updateStore = async (storeId, formData) => {
       data: data[0]
     }
   } catch (error) {
-    console.error('Store update error:', error)
+    console.error('❌ Store update error:', error)
     return { success: false, error: `更新エラー: ${error.message}` }
   }
 } 
