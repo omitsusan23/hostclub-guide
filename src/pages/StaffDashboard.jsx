@@ -1,58 +1,112 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
-import Modal from '../components/Modal'
-import { mockVisitRecords, mockStores, mockStaffChats, getTodaysVisitRecords, getStoreById } from '../lib/types'
+import { useApp } from '../contexts/AppContext'
+import { 
+  getStores,
+  getTodaysVisitRecords,
+  getStoreById
+} from '../lib/database'
 
 const StaffDashboard = () => {
-  const [visitRecords, setVisitRecords] = useState(mockVisitRecords)
-  const [loading, setLoading] = useState(false)
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null })
+  const { user } = useApp()
+  const [showVisitForm, setShowVisitForm] = useState(false)
+  const [selectedStore, setSelectedStore] = useState(null)
+  const [stores, setStores] = useState([])
+  const [visitRecords, setVisitRecords] = useState([])
+  const [chatMessages, setChatMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const todaysRecords = getTodaysVisitRecords()
-  const totalVisitors = todaysRecords.reduce((sum, record) => sum + record.visitor_count, 0)
+  // データ取得
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        
+        // 店舗データ取得
+        const storesData = await getStores()
+        setStores(storesData)
+
+        // 今日の案内記録取得
+        const recordsData = await getTodaysVisitRecords()
+        setVisitRecords(recordsData)
+
+        // TODO: スタッフチャットデータ取得（テーブル作成後）
+        setChatMessages([])
+        
+      } catch (error) {
+        console.error('データ取得エラー:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleVisitSubmit = async (visitData) => {
-    setLoading(true)
     try {
-      // 実際のアプリではSupabaseへ送信
+      // TODO: 実際のSupabaseへの案内記録保存
+      console.log('案内記録保存:', visitData)
+      
+      // 一時的にローカル状態を更新
       const newRecord = {
-        id: `visit-${Date.now()}`,
+        id: Date.now().toString(),
         store_id: visitData.storeId,
-        staff_id: 'user-staff-1',
-        visitor_count: visitData.visitorCount,
-        visited_at: visitData.visitedAt,
+        staff_id: user?.email || 'スタッフ',
+        visitor_count: visitData.guestCount,
+        visited_at: new Date().toISOString(),
         deleted: false
       }
       
-      setVisitRecords(prev => [...prev, newRecord])
+      setVisitRecords(prev => [newRecord, ...prev])
+      setShowVisitForm(false)
+      setSelectedStore(null)
       
-      // 成功メッセージ
-      const store = getStoreById(visitData.storeId)
-      alert(`✅ ${store.name} に ${visitData.visitorCount}名の案内を登録しました！`)
+      alert('✅ 案内記録を保存しました')
     } catch (error) {
-      alert('❌ 案内登録に失敗しました。もう一度お試しください。')
-    } finally {
-      setLoading(false)
+      console.error('案内記録保存エラー:', error)
+      alert('❌ 保存に失敗しました')
     }
   }
 
-  const handleDeleteRecord = (record) => {
-    setDeleteModal({ isOpen: true, record })
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return
+
+    try {
+      // TODO: 実際のSupabaseへのチャット保存
+      console.log('チャット送信:', newMessage)
+      
+      // 一時的にローカル状態を更新
+      const newChatMessage = {
+        id: Date.now().toString(),
+        sender_id: user?.id || 'staff-1',
+        sender_name: user?.email || 'スタッフ',
+        message: newMessage,
+        created_at: new Date().toISOString()
+      }
+      
+      setChatMessages(prev => [...prev, newChatMessage])
+      setNewMessage('')
+      
+    } catch (error) {
+      console.error('チャット送信エラー:', error)
+      alert('❌ 送信に失敗しました')
+    }
   }
 
-  const confirmDelete = () => {
-    if (deleteModal.record) {
-      // 実際のアプリではSupabaseで削除フラグを更新
-      setVisitRecords(prev => 
-        prev.map(record => 
-          record.id === deleteModal.record.id 
-            ? { ...record, deleted: true }
-            : record
-        )
-      )
-    }
-    setDeleteModal({ isOpen: false, record: null })
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">データを読み込み中...</p>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
   return (
@@ -63,47 +117,47 @@ const StaffDashboard = () => {
           スタッフダッシュボード
         </h2>
         <p className="text-gray-600">
-          案内所スタッフとして、案内登録と店舗確認業務を行うことができます。
+          店舗への案内記録とスタッフ間のコミュニケーション
         </p>
       </div>
 
-      {/* メインエリア */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 左側：案内フォーム */}
-        <div className="lg:col-span-1">
-          <VisitForm onSubmit={handleVisitSubmit} loading={loading} />
-        </div>
-
-        {/* 右側：実績とチャット */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 今日の実績 */}
+      {/* メインコンテンツ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 左側：案内記録 */}
+        <div className="space-y-6">
+          {/* 新規案内記録ボタン */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📊 今日の実績
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{todaysRecords.length}</div>
-                <div className="text-sm text-gray-600">案内件数</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">{totalVisitors}</div>
-                <div className="text-sm text-gray-600">総案内人数</div>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                🏪 店舗案内記録
+              </h3>
+              <button
+                onClick={() => setShowVisitForm(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                新規記録
+              </button>
             </div>
+            
+            <p className="text-sm text-gray-600">
+              本日の案内記録: {visitRecords.length}件
+            </p>
           </div>
 
-          {/* 本日の案内履歴 */}
+          {/* 今日の案内記録一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📋 本日の案内履歴
+              📊 本日の案内実績
             </h3>
-            <div className="space-y-3">
-              {todaysRecords.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">まだ案内記録がありません</p>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {visitRecords.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  本日の案内記録はまだありません
+                </p>
               ) : (
-                todaysRecords.map((record) => {
-                  const store = getStoreById(record.store_id)
+                visitRecords.map((record) => {
+                  const store = stores.find(s => s.store_id === record.store_id)
                   const time = new Date(record.visited_at).toLocaleTimeString('ja-JP', {
                     hour: '2-digit',
                     minute: '2-digit'
@@ -111,107 +165,117 @@ const StaffDashboard = () => {
                   
                   return (
                     <div key={record.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {store.name} ({record.visitor_count}名)
-                          </div>
-                          <div className="text-sm text-gray-500">{time}</div>
+                      <div>
+                        <div className="font-medium">{store?.name || record.store_id}</div>
+                        <div className="text-sm text-gray-600">
+                          {record.visitor_count}名 - {time}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteRecord(record)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                        title="削除"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">
+                          担当: {record.staff_id}
+                        </div>
+                      </div>
                     </div>
                   )
                 })
               )}
             </div>
           </div>
+        </div>
 
+        {/* 右側：スタッフチャット */}
+        <div className="space-y-6">
           {/* スタッフチャット */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               💬 スタッフチャット
             </h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {mockStaffChats.map((chat) => {
-                const time = new Date(chat.created_at).toLocaleTimeString('ja-JP', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })
-                
-                return (
+            
+            {/* チャットメッセージ */}
+            <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+              {chatMessages.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  チャットメッセージはありません
+                </p>
+              ) : (
+                chatMessages.map((chat) => (
                   <div key={chat.id} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-900 text-sm">スタッフ</span>
-                      <span className="text-xs text-gray-500">{time}</span>
+                      <span className="font-medium text-sm">{chat.sender_name}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(chat.created_at).toLocaleTimeString('ja-JP', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
                     </div>
-                    <p className="text-gray-700">{chat.message}</p>
+                    <p className="text-sm">{chat.message}</p>
                   </div>
-                )
-              })}
+                ))
+              )}
             </div>
             
-            {/* チャット入力 */}
-            <div className="mt-4 flex space-x-2">
+            {/* メッセージ入力 */}
+            <div className="flex space-x-2">
               <input
                 type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="メッセージを入力..."
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
                 送信
               </button>
+            </div>
+          </div>
+
+          {/* 店舗一覧 */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              🏢 契約店舗一覧
+            </h3>
+            
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {stores.map((store) => (
+                <div key={store.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium">{store.name}</div>
+                    <div className="text-sm text-gray-600">ID: {store.store_id}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedStore(store)
+                      setShowVisitForm(true)
+                    }}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    案内記録
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* 削除確認モーダル */}
-      <Modal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, record: null })}
-        title="案内記録の削除"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            この案内記録を削除してもよろしいですか？
-          </p>
-          {deleteModal.record && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="font-medium">
-                {getStoreById(deleteModal.record.store_id)?.name} ({deleteModal.record.visitor_count}名)
-              </div>
-              <div className="text-sm text-gray-500">
-                {new Date(deleteModal.record.visited_at).toLocaleString('ja-JP')}
-              </div>
-            </div>
-          )}
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setDeleteModal({ isOpen: false, record: null })}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={confirmDelete}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              削除
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* 案内記録フォームモーダル */}
+      {showVisitForm && (
+        <VisitForm
+          selectedStore={selectedStore}
+          onSubmit={handleVisitSubmit}
+          onClose={() => {
+            setShowVisitForm(false)
+            setSelectedStore(null)
+          }}
+        />
+      )}
     </Layout>
   )
 }

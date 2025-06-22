@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { 
   getStoreById, 
   getStoreBySubdomain,
-  mockCalendars, 
-  mockRealtimeStatuses, 
   getVisitRecordsByStoreId,
-  mockInvoiceSettings 
-} from '../lib/types'
+  getLatestStoreStatus,
+  setStoreStatus,
+  getInvoiceSettings
+} from '../lib/database'
 
 const CustomerDashboard = () => {
   const { getUserStoreId, getStoreIdFromSubdomain } = useApp()
@@ -17,45 +17,88 @@ const CustomerDashboard = () => {
   // ユーザーのstore_idまたはサブドメインから店舗IDを取得
   const storeId = getUserStoreId() || getStoreIdFromSubdomain()
   
-  // IDで店舗を検索、見つからなければサブドメインで検索
-  let store = getStoreById(storeId)
-  if (!store) {
-    store = getStoreBySubdomain(storeId)
-  }
-  
+  const [store, setStore] = useState(null)
+  const [visitRecords, setVisitRecords] = useState([])
+  const [invoiceSettings, setInvoiceSettings] = useState(null)
   const [currentStatus, setCurrentStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [dataLoading, setDataLoading] = useState(true)
 
-  // 店舗の案内実績を取得
-  const visitRecords = getVisitRecordsByStoreId(storeId)
+  // データ取得
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!storeId) return
+
+      try {
+        setDataLoading(true)
+        
+        // 店舗データ取得
+        let storeData = await getStoreById(storeId)
+        if (!storeData) {
+          storeData = await getStoreBySubdomain(storeId)
+        }
+        setStore(storeData)
+
+        // 案内記録取得
+        const records = await getVisitRecordsByStoreId(storeId)
+        setVisitRecords(records)
+
+        // 請求設定取得
+        const settings = await getInvoiceSettings(storeId)
+        setInvoiceSettings(settings)
+
+      } catch (error) {
+        console.error('データ取得エラー:', error)
+      } finally {
+        setDataLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [storeId])
+
+  // 総案内人数を計算
   const totalVisitors = visitRecords.reduce((sum, record) => sum + record.visitor_count, 0)
   
   // 請求情報を計算
-  const invoiceSetting = mockInvoiceSettings.find(setting => setting.store_id === storeId)
   const monthlyIntroductions = visitRecords.length
-  const baseAmount = invoiceSetting?.base_fee || 30000
-  const bonusAmount = Math.max(0, monthlyIntroductions - (invoiceSetting?.guaranteed_count || 8)) * 3000
+  const baseAmount = invoiceSettings?.base_fee || 30000
+  const guaranteedCount = invoiceSettings?.guaranteed_count || 8
+  const bonusAmount = Math.max(0, monthlyIntroductions - guaranteedCount) * (invoiceSettings?.price_per_introduction || 3000)
   const totalAmount = baseAmount + bonusAmount
-  const taxAmount = totalAmount * 0.1
+  const taxAmount = invoiceSettings?.with_tax ? totalAmount * 0.1 : 0
   const finalAmount = Math.floor(totalAmount + taxAmount)
 
   const handleStatusUpdate = async () => {
-    if (!currentStatus) {
+    if (!currentStatus || !storeId) {
       alert('状況を選択してください')
       return
     }
     
     setLoading(true)
     try {
-      // 実際のアプリではSupabaseに送信
-      console.log('状況更新:', currentStatus)
+      await setStoreStatus(storeId, currentStatus)
       alert(`✅ 「${currentStatus}」を発信しました！`)
       setCurrentStatus('')
     } catch (error) {
+      console.error('状況更新エラー:', error)
       alert('❌ 発信に失敗しました。')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (dataLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">店舗データを読み込み中...</p>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
   if (!store) {
@@ -63,6 +106,7 @@ const CustomerDashboard = () => {
       <Layout>
         <div className="text-center py-8">
           <p className="text-gray-500">店舗情報が見つかりません。</p>
+          <p className="text-sm text-gray-400 mt-2">店舗ID: {storeId}</p>
         </div>
       </Layout>
     )
@@ -171,9 +215,9 @@ const CustomerDashboard = () => {
             </div>
             
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">保証本数: {store.guaranteed_count}本</div>
+              <div className="text-sm text-gray-600">保証本数: {guaranteedCount}本</div>
               <div className="text-sm text-gray-600">
-                追加ボーナス: {Math.max(0, visitRecords.length - store.guaranteed_count)}本
+                追加ボーナス: {Math.max(0, visitRecords.length - guaranteedCount)}本
               </div>
             </div>
           </div>
@@ -202,10 +246,12 @@ const CustomerDashboard = () => {
                 <span className="font-medium">¥{totalAmount.toLocaleString()}</span>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-gray-600">税額（10%）</span>
-                <span className="font-medium">¥{taxAmount.toLocaleString()}</span>
-              </div>
+              {invoiceSettings?.with_tax && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">税額（10%）</span>
+                  <span className="font-medium">¥{taxAmount.toLocaleString()}</span>
+                </div>
+              )}
               
               <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-bold">
@@ -230,7 +276,7 @@ const CustomerDashboard = () => {
               <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
               <div>
                 <div className="font-medium text-green-800">営業中</div>
-                <div className="text-sm text-green-600">18:00 - 03:00 | 空席あり</div>
+                <div className="text-sm text-green-600">18:00 - 03:00 | 実際のデータ使用中</div>
               </div>
             </div>
           </div>

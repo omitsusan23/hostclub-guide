@@ -1,99 +1,47 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useApp } from '../contexts/AppContext'
-import { getStoreById } from '../lib/types'
-import PasswordChange from './PasswordChange'
 
 const Layout = ({ children }) => {
-  const { user, signOut, getUserRole, getUserStoreId } = useApp()
-  const [showPasswordChange, setShowPasswordChange] = useState(false)
-  
-  const role = getUserRole()
-  const storeId = getUserStoreId()
-  const store = storeId ? getStoreById(storeId) : null
+  const { user, signOut } = useApp()
 
-  const handleSignOut = async () => {
-    await signOut()
-  }
-
-  const getRoleDisplayName = (role) => {
-    switch (role) {
-      case 'admin':
-        return '案内所管理者'
-      case 'staff':
-        return '案内所スタッフ'
-      case 'customer':
-        return 'ホストクラブ担当者'
-      default:
-        return 'ユーザー'
-    }
-  }
-
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'admin':
-        return '👑'
-      case 'staff':
-        return '👨‍💼'
-      case 'customer':
-        return '🏢'
-      default:
-        return '👤'
-    }
-  }
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'admin':
-        return 'from-purple-600 to-purple-800'
-      case 'staff':
-        return 'from-blue-600 to-blue-800'
-      case 'customer':
-        return 'from-green-600 to-green-800'
-      default:
-        return 'from-gray-600 to-gray-800'
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      // ログアウト後は自動的にログインページにリダイレクトされる
+    } catch (error) {
+      console.error('ログアウトエラー:', error)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
-      <header className={`bg-gradient-to-r ${getRoleColor(role)} shadow-lg`}>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">🏢</div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
-                  ホストクラブ案内所システム
-                </h1>
-                <div className="text-sm text-gray-200">
-                  すすきの案内所 業務管理システム
-                </div>
-              </div>
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* ロゴ・タイトル */}
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-900">
+                すすきの ホストクラブ案内所
+              </h1>
+              {user && (
+                <span className="ml-4 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  {user.app_metadata?.role === 'admin' && '管理者'}
+                  {user.app_metadata?.role === 'staff' && 'スタッフ'}
+                  {user.app_metadata?.role === 'customer' && '店舗'}
+                </span>
+              )}
             </div>
-            
+
+            {/* ユーザー情報・ログアウト */}
             {user && (
               <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <div className="flex items-center text-white">
-                    <span className="mr-2">{getRoleIcon(role)}</span>
-                    <span className="font-medium">{getRoleDisplayName(role)}</span>
-                  </div>
-                  {store && (
-                    <div className="text-sm text-gray-200">
-                      {store.name}
-                    </div>
-                  )}
-                </div>
+                <span className="text-sm text-gray-700">
+                  {user.email}
+                </span>
                 <button
-                  onClick={() => setShowPasswordChange(true)}
-                  className="px-3 py-2 bg-white bg-opacity-20 text-white rounded-md hover:bg-opacity-30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-sm"
-                >
-                  🔑 パスワード変更
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 bg-white bg-opacity-20 text-white rounded-md hover:bg-opacity-30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                   ログアウト
                 </button>
@@ -104,81 +52,18 @@ const Layout = ({ children }) => {
       </header>
 
       {/* メインコンテンツ */}
-      <main className="flex-1 py-8">
-        <div className="container mx-auto px-4">
-          {children}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
       </main>
 
-      {/* フッター（ロール別） */}
-      <footer className="bg-gray-800 text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            {role === 'admin' && (
-              <div className="mb-3">
-                <div className="flex justify-center items-center space-x-6 text-sm">
-                  <div className="flex items-center space-x-1">
-                    <span>🏪</span>
-                    <span>全店舗管理</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>📝</span>
-                    <span>新規契約</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>⚙️</span>
-                    <span>システム設定</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            {role === 'staff' && (
-              <div className="mb-3">
-                <div className="flex justify-center items-center space-x-6 text-sm">
-                  <div className="flex items-center space-x-1">
-                    <span>👥</span>
-                    <span>案内登録</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>🏢</span>
-                    <span>店舗確認</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>💬</span>
-                    <span>チャット</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            {role === 'customer' && (
-              <div className="mb-3">
-                <div className="flex justify-center items-center space-x-6 text-sm">
-                  <div className="flex items-center space-x-1">
-                    <span>📅</span>
-                    <span>営業日設定</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>💰</span>
-                    <span>請求確認</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span>📡</span>
-                    <span>リアルタイム状況</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="text-xs text-gray-400 border-t border-gray-700 pt-3">
-              © 2024 ホストクラブ案内所システム - すべての権利を保有します
-            </div>
+      {/* フッター */}
+      <footer className="bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center text-sm text-gray-500">
+            © 2024 すすきの ホストクラブ案内所 - 実際のSupabaseデータを使用中
           </div>
         </div>
       </footer>
-
-      {/* パスワード変更モーダル */}
-      {showPasswordChange && (
-        <PasswordChange onClose={() => setShowPasswordChange(false)} />
-      )}
     </div>
   )
 }

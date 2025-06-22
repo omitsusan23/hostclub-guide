@@ -1,147 +1,158 @@
-import React, { useState } from 'react'
-import { mockStores, isStoreClosed } from '../lib/types'
+import React, { useState, useEffect } from 'react'
+import { getStores } from '../lib/database'
 
-const VisitForm = ({ onSubmit, loading = false }) => {
-  const [selectedStore, setSelectedStore] = useState('')
-  const [visitorCount, setVisitorCount] = useState(1)
+const VisitForm = ({ selectedStore, onSubmit, onClose }) => {
+  const [stores, setStores] = useState([])
+  const [storeId, setStoreId] = useState(selectedStore?.store_id || '')
+  const [guestCount, setGuestCount] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [dataLoading, setDataLoading] = useState(true)
 
-  const handleSubmit = (e) => {
+  // 店舗データ取得
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        setDataLoading(true)
+        const storesData = await getStores()
+        setStores(storesData)
+      } catch (error) {
+        console.error('店舗データ取得エラー:', error)
+      } finally {
+        setDataLoading(false)
+      }
+    }
+
+    fetchStores()
+  }, [])
+
+  // 選択された店舗が変更された場合の処理
+  useEffect(() => {
+    if (selectedStore) {
+      setStoreId(selectedStore.store_id)
+    }
+  }, [selectedStore])
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedStore) {
-      alert('店舗を選択してください')
+    
+    if (!storeId || guestCount < 1) {
+      alert('店舗と人数を正しく入力してください')
       return
     }
-    
-    onSubmit({
-      storeId: selectedStore,
-      visitorCount,
-      visitedAt: new Date().toISOString()
-    })
-    
-    // フォームリセット
-    setSelectedStore('')
-    setVisitorCount(1)
+
+    setLoading(true)
+    try {
+      await onSubmit({
+        storeId,
+        guestCount: parseInt(guestCount),
+        visitedAt: new Date().toISOString()
+      })
+      
+      // フォームリセット
+      setStoreId('')
+      setGuestCount(1)
+    } catch (error) {
+      console.error('案内記録エラー:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  if (dataLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">店舗データを読み込み中...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        📝 案内登録
-      </h3>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* 店舗選択 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            案内先店舗
-          </label>
-          <div className="grid grid-cols-1 gap-3">
-            {mockStores.map((store) => {
-              const isClosed = isStoreClosed(store.id, today)
-              return (
-                <div
-                  key={store.id}
-                  className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedStore === store.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : isClosed
-                      ? 'border-gray-200 bg-gray-50 opacity-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => !isClosed && setSelectedStore(store.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="store"
-                        value={store.id}
-                        checked={selectedStore === store.id}
-                        onChange={() => !isClosed && setSelectedStore(store.id)}
-                        disabled={isClosed}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                      />
-                      <div className="ml-3">
-                        <div className="flex items-center">
-                          <span className="font-medium text-gray-900">
-                            {store.name}
-                          </span>
-                          {isClosed && (
-                            <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                              休業中
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          基本料金: ¥{store.base_fee.toLocaleString()} | 
-                          保証本数: {store.guaranteed_count}本
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* 営業状況インジケーター */}
-                    <div className={`w-3 h-3 rounded-full ${
-                      isClosed ? 'bg-red-400' : 'bg-green-400'
-                    }`}></div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* 人数選択 */}
-        {selectedStore && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              案内人数
-            </label>
-            <div className="flex space-x-2">
-              {[1, 2, 3, 4, 5, 6].map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  onClick={() => setVisitorCount(count)}
-                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-                    visitorCount === count
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {count}名
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 送信ボタン */}
-        <div className="pt-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">
+            🏪 案内記録追加
+          </h3>
           <button
-            type="submit"
-            disabled={!selectedStore || loading}
-            className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
-              !selectedStore || loading
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-            }`}
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                案内登録中...
-              </div>
-            ) : (
-              `${mockStores.find(s => s.id === selectedStore)?.name || '店舗'} に ${visitorCount}名案内完了`
-            )}
+            ✕
           </button>
         </div>
-      </form>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 店舗選択 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              案内先店舗 <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={storeId}
+              onChange={(e) => setStoreId(e.target.value)}
+              required
+              disabled={!!selectedStore}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">店舗を選択してください</option>
+              {stores.map((store) => (
+                <option key={store.id} value={store.store_id}>
+                  {store.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 人数入力 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              案内人数 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={guestCount}
+              onChange={(e) => setGuestCount(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 現在時刻の表示 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              案内時刻
+            </label>
+            <div className="px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-600">
+              {new Date().toLocaleString('ja-JP')}
+            </div>
+          </div>
+
+          {/* ボタン */}
+          <div className="flex space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !storeId || guestCount < 1}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? '保存中...' : '案内記録を保存'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

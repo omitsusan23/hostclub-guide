@@ -66,21 +66,6 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     // 現在のセッションを取得
     const getSession = async () => {
-      // 開発環境でのデモユーザーチェック
-      const demoUser = localStorage.getItem('demo-user')
-      if (demoUser) {
-        try {
-          const parsedUser = JSON.parse(demoUser)
-          setUser(parsedUser)
-          setSession({ user: parsedUser })
-          setLoading(false)
-          return
-        } catch (e) {
-          console.error('デモユーザーの解析に失敗:', e)
-          localStorage.removeItem('demo-user')
-        }
-      }
-
       const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
       setUser(session?.user ?? null)
@@ -120,9 +105,6 @@ export const AppProvider = ({ children }) => {
   // ログアウト
   const signOut = async () => {
     try {
-      // デモユーザーのクリア
-      localStorage.removeItem('demo-user')
-      
       const { error } = await supabase.auth.signOut()
       if (error) throw error
     } catch (error) {
