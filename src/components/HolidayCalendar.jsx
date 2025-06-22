@@ -9,6 +9,8 @@ const HolidayCalendar = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date()); // 現在表示中の月
+  const [storeCreatedAt, setStoreCreatedAt] = useState(null); // ストア作成日（契約開始月）
+  const [availableDates, setAvailableDates] = useState(new Set()); // 利用可能な月（店休日データが存在する月）
 
   // 指定月のカレンダーデータを生成
   const generateCalendarData = (year, month) => {
@@ -34,6 +36,60 @@ const HolidayCalendar = () => {
     }
 
     return calendar;
+  };
+
+  // ストア情報の取得（契約開始月確認用）
+  const fetchStoreInfo = async () => {
+    const storeId = getUserStoreId();
+    if (!storeId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('created_at')
+        .eq('store_id', storeId)
+        .single();
+
+      if (error) throw error;
+      
+      setStoreCreatedAt(new Date(data.created_at));
+    } catch (error) {
+      console.error('ストア情報の取得に失敗しました:', error);
+    }
+  };
+
+  // 利用可能な月を取得（店休日データが存在する月）
+  const fetchAvailableDates = async () => {
+    const storeId = getUserStoreId();
+    if (!storeId) return;
+
+    try {
+      // 6ヶ月分の範囲で店休日データを取得
+      const today = new Date();
+      const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1);
+      const sixMonthsLater = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+
+      const { data, error } = await supabase
+        .from('store_holidays')
+        .select('date')
+        .eq('store_id', storeId)
+        .gte('date', sixMonthsAgo.toISOString().split('T')[0])
+        .lte('date', sixMonthsLater.toISOString().split('T')[0]);
+
+      if (error) throw error;
+
+      // 年月のセットを作成
+      const availableMonths = new Set();
+      data.forEach(item => {
+        const date = new Date(item.date);
+        const yearMonth = `${date.getFullYear()}-${date.getMonth()}`;
+        availableMonths.add(yearMonth);
+      });
+
+      setAvailableDates(availableMonths);
+    } catch (error) {
+      console.error('利用可能な月の取得に失敗しました:', error);
+    }
   };
 
   // 店休日データを取得（表示中の月のみ）
@@ -75,24 +131,37 @@ const HolidayCalendar = () => {
     
     if (newPendingChanges.has(dateString)) {
       newPendingChanges.delete(dateString);
+      console.log('店休日を削除:', dateString);
     } else {
       newPendingChanges.add(dateString);
+      console.log('店休日を追加:', dateString);
     }
     
+    console.log('現在の pending changes:', [...newPendingChanges]);
     setPendingChanges(newPendingChanges);
   };
 
   // 月の変更に対する一括更新
   const saveChanges = async () => {
+    console.log('saveChanges 開始');
     const storeId = getUserStoreId();
-    if (!storeId || saving) return;
+    console.log('storeId:', storeId);
+    
+    if (!storeId || saving) {
+      console.log('storeIdがないかsaving中のため終了');
+      return;
+    }
 
     try {
+      console.log('更新処理開始');
       setSaving(true);
 
       // 現在のサーバー状態と変更後の状態を比較
       const originalHolidays = holidays;
       const newHolidays = pendingChanges;
+
+      console.log('元の holidays:', [...originalHolidays]);
+      console.log('新しい holidays:', [...newHolidays]);
 
       // 削除対象：サーバーにあるがローカルにない
       const toDelete = [...originalHolidays].filter(date => !newHolidays.has(date));
@@ -100,33 +169,49 @@ const HolidayCalendar = () => {
       // 追加対象：ローカルにあるがサーバーにない
       const toAdd = [...newHolidays].filter(date => !originalHolidays.has(date));
 
+      console.log('削除対象:', toDelete);
+      console.log('追加対象:', toAdd);
+
       // 削除処理
       if (toDelete.length > 0) {
+        console.log('削除処理開始');
         const { error: deleteError } = await supabase
           .from('store_holidays')
           .delete()
           .eq('store_id', storeId)
           .in('date', toDelete);
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('削除エラー:', deleteError);
+          throw deleteError;
+        }
+        console.log('削除完了');
       }
 
       // 追加処理
       if (toAdd.length > 0) {
+        console.log('追加処理開始');
         const insertData = toAdd.map(date => ({
           store_id: storeId,
           date: date
         }));
 
+        console.log('挿入データ:', insertData);
+
         const { error: insertError } = await supabase
           .from('store_holidays')
           .insert(insertData);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('追加エラー:', insertError);
+          throw insertError;
+        }
+        console.log('追加完了');
       }
 
       // 状態を更新
       setHolidays(new Set(pendingChanges));
+      console.log('更新成功');
       alert('店休日を更新しました');
 
     } catch (error) {
@@ -134,11 +219,46 @@ const HolidayCalendar = () => {
       alert('店休日の更新に失敗しました');
     } finally {
       setSaving(false);
+      console.log('saveChanges 終了');
     }
+  };
+
+  // 前月に移動可能かチェック
+  const canGoToPreviousMonth = () => {
+    if (!storeCreatedAt) return false;
+    
+    const today = new Date();
+    const targetDate = new Date(currentDate);
+    targetDate.setMonth(targetDate.getMonth() - 1);
+    
+    // 契約開始月より前は不可
+    const storeCreatedMonth = new Date(storeCreatedAt.getFullYear(), storeCreatedAt.getMonth(), 1);
+    if (targetDate < storeCreatedMonth) return false;
+    
+    // 6ヶ月より前は不可
+    const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1);
+    if (targetDate < sixMonthsAgo) return false;
+    
+    // 店休日データが存在する月のみ可能
+    const yearMonth = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
+    return availableDates.has(yearMonth);
+  };
+
+  // 次月に移動可能かチェック
+  const canGoToNextMonth = () => {
+    const today = new Date();
+    const targetDate = new Date(currentDate);
+    targetDate.setMonth(targetDate.getMonth() + 1);
+    
+    // 6ヶ月より先は不可
+    const sixMonthsLater = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+    return targetDate <= sixMonthsLater;
   };
 
   // 前月へ移動
   const goToPreviousMonth = () => {
+    if (!canGoToPreviousMonth()) return;
+    
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() - 1);
     setCurrentDate(newDate);
@@ -146,6 +266,8 @@ const HolidayCalendar = () => {
 
   // 次月へ移動
   const goToNextMonth = () => {
+    if (!canGoToNextMonth()) return;
+    
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + 1);
     setCurrentDate(newDate);
@@ -153,10 +275,33 @@ const HolidayCalendar = () => {
 
   // 変更があるかチェック
   const hasChanges = () => {
-    if (holidays.size !== pendingChanges.size) return true;
-    for (let date of holidays) {
-      if (!pendingChanges.has(date)) return true;
+    console.log('hasChanges チェック:');
+    console.log('元の holidays:', [...holidays]);
+    console.log('pending changes:', [...pendingChanges]);
+    
+    // サイズが違う場合
+    if (holidays.size !== pendingChanges.size) {
+      console.log('サイズが違います:', holidays.size, '→', pendingChanges.size);
+      return true;
     }
+    
+    // holidaysにあってpendingChangesにないものをチェック
+    for (let date of holidays) {
+      if (!pendingChanges.has(date)) {
+        console.log('削除された日付:', date);
+        return true;
+      }
+    }
+    
+    // pendingChangesにあってholidaysにないものをチェック
+    for (let date of pendingChanges) {
+      if (!holidays.has(date)) {
+        console.log('追加された日付:', date);
+        return true;
+      }
+    }
+    
+    console.log('変更なし');
     return false;
   };
 
@@ -190,6 +335,14 @@ const HolidayCalendar = () => {
 
     return baseClasses;
   };
+
+  // 初期化時にストア情報と利用可能な月を取得
+  useEffect(() => {
+    if (user) {
+      fetchStoreInfo();
+      fetchAvailableDates();
+    }
+  }, [user]);
 
   // 月が変更されたときに店休日データを再取得
   useEffect(() => {
@@ -232,7 +385,12 @@ const HolidayCalendar = () => {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={goToPreviousMonth}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors duration-200"
+            disabled={!canGoToPreviousMonth()}
+            className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+              canGoToPreviousMonth()
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+            }`}
           >
             ← 前月
           </button>
@@ -243,7 +401,12 @@ const HolidayCalendar = () => {
           
           <button
             onClick={goToNextMonth}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors duration-200"
+            disabled={!canGoToNextMonth()}
+            className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+              canGoToNextMonth()
+                ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+            }`}
           >
             次月 →
           </button>
@@ -284,7 +447,10 @@ const HolidayCalendar = () => {
         {/* 更新ボタン */}
         <div className="flex justify-center">
           <button
-            onClick={saveChanges}
+            onClick={() => {
+              console.log('更新ボタンがクリックされました');
+              saveChanges();
+            }}
             disabled={!hasChanges() || saving}
             className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
               hasChanges() && !saving
