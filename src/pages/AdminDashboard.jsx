@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
+import StoreDetailModal from '../components/StoreDetailModal'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists } from '../utils/staffManagement.js'
 
@@ -34,6 +35,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('') // 'success', 'error', 'warning'
+  const [selectedStore, setSelectedStore] = useState(null)
+  const [showStoreDetailModal, setShowStoreDetailModal] = useState(false)
 
   // 店舗データを取得
   useEffect(() => {
@@ -255,6 +258,18 @@ const AdminDashboard = () => {
     })
   }
 
+  // 店舗詳細モーダルを開く
+  const handleStoreClick = (store) => {
+    setSelectedStore(store)
+    setShowStoreDetailModal(true)
+  }
+
+  // 店舗詳細モーダルを閉じる
+  const handleCloseStoreDetail = () => {
+    setSelectedStore(null)
+    setShowStoreDetailModal(false)
+  }
+
   return (
     <Layout>
       {/* ヘッダー */}
@@ -353,43 +368,23 @@ const AdminDashboard = () => {
               ) : storeStats.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-600">登録された店舗がありません</p>
-                  <button
-                    onClick={() => setShowStoreModal(true)}
-                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    最初の店舗を追加
-                  </button>
                 </div>
               ) : (
                 storeStats.map((store) => (
-                  <div key={store.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <h4 className="font-medium text-gray-900">{store.name}</h4>
-                          <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                            {store.store_id}.susukino-hostclub-guide.online
-                          </span>
-                        </div>
-                        <div className="mt-1 text-sm text-gray-600">
-                          営業時間: {store.open_time} - {store.close_time} | 
-                          パネル料: ¥{(store.panel_fee || 0).toLocaleString()} | 
-                          保証本数: {store.guarantee_count}本
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {store.id_required} | 
-                          振込: {store.is_transfer ? '可能' : '不可'}
-                        </div>
+                  <div key={store.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <button
+                      onClick={() => handleStoreClick(store)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                          {store.name}
+                        </h4>
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">
-                          {store.visitCount}件 ({store.totalVisitors}名)
-                        </div>
-                        <div className="text-sm text-green-600">
-                          ¥{store.monthlyRevenue.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
+                    </button>
                   </div>
                 ))
               )}
@@ -419,12 +414,6 @@ const AdminDashboard = () => {
               ) : staffs.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-600">登録されたスタッフがいません</p>
-                  <button
-                    onClick={() => setShowStaffModal(true)}
-                    className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                  >
-                    最初のスタッフを追加
-                  </button>
                 </div>
               ) : (
                 staffs.map((staff) => (
@@ -906,6 +895,13 @@ const AdminDashboard = () => {
           </div>
         </div>
       </Modal>
+
+      {/* 店舗詳細モーダル */}
+      <StoreDetailModal
+        isOpen={showStoreDetailModal}
+        store={selectedStore}
+        onClose={handleCloseStoreDetail}
+      />
     </Layout>
   )
 }
