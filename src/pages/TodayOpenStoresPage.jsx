@@ -249,20 +249,25 @@ const TodayOpenStoresPage = () => {
                             )}
                           </div>
 
-                          {/* 保証実績と店舗状況 */}
+                          {/* 当月紹介数と店舗状況 */}
                           <div className="ml-3 flex-shrink-0 flex flex-col items-end">
-                            {/* 保証実績 */}
-                            {store.guarantee_count > 0 && (
+                            {/* 当月紹介数 */}
+                            <div className="text-xs text-gray-500 mb-0.5">当月紹介数</div>
+                            {store.guarantee_count > 0 ? (
                               <div className="text-base font-bold mb-1">
-                                <span className="text-gray-900">{store.monthlyIntroductions}</span>
+                                <span className="text-gray-900">{store.monthlyIntroductions || 0}</span>
                                 <span className="text-gray-400">/</span>
                                 <span className={
-                                  store.monthlyIntroductions >= store.guarantee_count 
+                                  (store.monthlyIntroductions || 0) >= store.guarantee_count 
                                     ? 'text-blue-600' 
                                     : 'text-red-600'
                                 }>
                                   {store.guarantee_count}
                                 </span>
+                              </div>
+                            ) : (
+                              <div className="text-base font-bold mb-1 text-gray-900">
+                                {store.monthlyIntroductions || 0}
                               </div>
                             )}
                             
