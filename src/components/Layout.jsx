@@ -18,15 +18,15 @@ const Layout = ({ children }) => {
       {/* ヘッダー */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex justify-between items-center h-12 sm:h-16">
             {/* ロゴ・タイトル */}
             <div className="flex items-center">
-              <h1 className="text-base sm:text-xl font-bold text-gray-900">
+              <h1 className="text-sm sm:text-xl font-bold text-gray-900">
                 <span className="hidden sm:inline">すすきの ホストクラブ案内所</span>
                 <span className="sm:hidden">すすきのホストクラブ案内所</span>
               </h1>
               {user && (
-                <span className="ml-2 sm:ml-4 px-2 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded-full">
+                <span className="ml-1 sm:ml-4 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                   {getUserRole() === 'admin' && '管理者'}
                   {getUserRole() === 'staff' && 'スタッフ'}
                   {getUserRole() === 'customer' && '店舗'}
@@ -36,13 +36,13 @@ const Layout = ({ children }) => {
 
             {/* ユーザー情報・ログアウト */}
             {user && (
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <span className="text-xs sm:text-sm text-gray-700 truncate max-w-[100px] sm:max-w-none">
+              <div className="flex items-center space-x-1 sm:space-x-4">
+                <span className="text-xs text-gray-700 truncate max-w-[60px] sm:max-w-none">
                   {user.user_metadata?.display_name || user.email?.split('@')[0] || 'ユーザー'}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                   ログアウト
                 </button>

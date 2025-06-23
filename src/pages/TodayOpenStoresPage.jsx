@@ -139,35 +139,35 @@ const TodayOpenStoresPage = () => {
         {!loading && !error && (
           <>
             {/* 統計情報 */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-green-500">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <div className="text-green-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">🏪</div>
-                  <div className="text-center sm:text-left">
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-white rounded-lg shadow-md p-2 border-l-4 border-green-500">
+                <div className="flex flex-col items-center">
+                  <div className="text-green-600 text-base mb-1">🏪</div>
+                  <div className="text-center">
                     <p className="text-xs font-medium text-gray-600">営業中</p>
-                    <p className="text-lg sm:text-xl font-bold text-gray-900">{openStores.length}</p>
+                    <p className="text-base font-bold text-gray-900">{openStores.length}</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-yellow-500">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <div className="text-yellow-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">⚠️</div>
-                  <div className="text-center sm:text-left">
+              <div className="bg-white rounded-lg shadow-md p-2 border-l-4 border-yellow-500">
+                <div className="flex flex-col items-center">
+                  <div className="text-yellow-600 text-base mb-1">⚠️</div>
+                  <div className="text-center">
                     <p className="text-xs font-medium text-gray-600">未更新</p>
-                    <p className="text-lg sm:text-xl font-bold text-gray-900">
+                    <p className="text-base font-bold text-gray-900">
                       {openStores.filter(store => !store.hasMonthlyUpdate).length}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-blue-500">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <div className="text-blue-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">✅</div>
-                  <div className="text-center sm:text-left">
+              <div className="bg-white rounded-lg shadow-md p-2 border-l-4 border-blue-500">
+                <div className="flex flex-col items-center">
+                  <div className="text-blue-600 text-base mb-1">✅</div>
+                  <div className="text-center">
                     <p className="text-xs font-medium text-gray-600">更新済み</p>
-                    <p className="text-lg sm:text-xl font-bold text-gray-900">
+                    <p className="text-base font-bold text-gray-900">
                       {openStores.filter(store => store.hasMonthlyUpdate).length}
                     </p>
                   </div>
@@ -202,28 +202,28 @@ const TodayOpenStoresPage = () => {
                     return (
                       <div 
                         key={store.id} 
-                        className="pt-3 px-4 pb-2 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="pt-2 px-3 pb-1.5 hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => handleStoreClick(store)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             {/* 店舗名と更新状況 */}
-                            <div className="flex items-center mb-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mr-3">
+                            <div className="flex items-center mb-0.5">
+                              <h3 className="text-base font-semibold text-gray-900 mr-2">
                                 {store.name}
                               </h3>
                               
                               {/* 店休日更新状況マーク */}
                               {!store.hasMonthlyUpdate && (
-                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-md border border-yellow-200 flex items-center">
+                                <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded border border-yellow-200 flex items-center">
                                   ⚠️ 当月未更新
                                 </span>
                               )}
                             </div>
 
                             {/* 営業時間 */}
-                            <div className="flex items-center text-sm text-gray-600 mb-1">
-                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <div className="flex items-center text-xs text-gray-600 mb-0.5">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                               </svg>
                               営業時間: {store.open_time ? store.open_time.slice(0, 5) : '20:00'} - {store.close_time ? store.close_time.slice(0, 5) : '23:30'}
@@ -231,7 +231,7 @@ const TodayOpenStoresPage = () => {
 
                             {/* 料金情報（管理者のみ表示） */}
                             {userRole === 'admin' && (
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-1">
                                 <div className="text-gray-600">
                                   <span className="font-medium">基本料金:</span>
                                   <div className="text-gray-900">{(store.base_price || 0).toLocaleString()}円</div>
@@ -253,12 +253,12 @@ const TodayOpenStoresPage = () => {
                           </div>
 
                           {/* 店舗状況 */}
-                          <div className="ml-6 flex-shrink-0">
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusStyle(statusType)}`}>
+                          <div className="ml-3 flex-shrink-0">
+                            <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(statusType)}`}>
                               {getStatusText(statusType)}
                             </div>
                             {latestStatus && (
-                              <div className="text-xs text-gray-500 mt-1 text-right">
+                              <div className="text-xs text-gray-500 mt-0.5 text-right">
                                 {new Date(latestStatus.created_at).toLocaleString('ja-JP', {
                                   month: 'short',
                                   day: 'numeric',
