@@ -285,7 +285,7 @@ const HolidayCalendar = () => {
 
   // 日付の表示スタイルを取得
   const getDateStyle = (date, currentMonth) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatLocalDate(date);
     const isHoliday = pendingChanges.has(dateString); // ローカル状態を参照
     const isCurrentMonth = date.getMonth() === currentMonth;
     const isToday = date.toDateString() === new Date().toDateString();
