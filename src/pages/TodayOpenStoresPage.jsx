@@ -260,9 +260,10 @@ const TodayOpenStoresPage = () => {
                                   {store.monthlyIntroductions || 0}
                                 </div>
                               ) : (
-                                // 保証未達成：現在数/残り必要数（赤字）
-                                <div className="text-base font-bold mb-1 text-red-600">
-                                  {store.monthlyIntroductions || 0}/{store.guarantee_count - (store.monthlyIntroductions || 0)}
+                                // 保証未達成：現在数（黒字）/残り必要数（赤字）
+                                <div className="text-base font-bold mb-1">
+                                  <span className="text-gray-900">{store.monthlyIntroductions || 0}</span>
+                                  <span className="text-red-600">/{store.guarantee_count - (store.monthlyIntroductions || 0)}</span>
                                 </div>
                               )
                             ) : (
