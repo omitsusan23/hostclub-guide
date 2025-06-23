@@ -99,7 +99,7 @@ export const getTodayOpenStores = async () => {
     const guaranteedStores = openStores.filter(store => store.guarantee_count > 0)
     const nonGuaranteedStores = openStores.filter(store => store.guarantee_count === 0)
 
-    // 保証あり店舗は保証割れが大きい順でソート
+    // 保証あり店舗は残り必要数が多い順でソート（保証達成店舗は末尾）
     guaranteedStores.sort((a, b) => b.guaranteeShortfall - a.guaranteeShortfall)
 
     // 保証なし店舗はア行順でソート
