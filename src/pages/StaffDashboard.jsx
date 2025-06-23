@@ -24,12 +24,19 @@ const StaffDashboard = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
 
-  // 今日の日付を取得する関数
+  // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
-    const today = new Date()
-    const month = today.getMonth() + 1
-    const day = today.getDate()
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][today.getDay()]
+    const now = new Date()
+    const businessDate = new Date(now)
+    
+    // 1時未満の場合は前日扱い
+    if (now.getHours() < 1) {
+      businessDate.setDate(businessDate.getDate() - 1)
+    }
+    
+    const month = businessDate.getMonth() + 1
+    const day = businessDate.getDate()
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][businessDate.getDay()]
     return `${month}/${day}(${dayOfWeek})`
   }
 

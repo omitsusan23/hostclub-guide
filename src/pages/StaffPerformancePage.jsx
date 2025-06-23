@@ -1,36 +1,45 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getTodayVisitRecords, getMonthlyVisitRecords } from '../lib/database'
+import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord } from '../lib/database'
+import SwipeableVisitItem from '../components/SwipeableVisitItem'
+import DeleteConfirmModal from '../components/DeleteConfirmModal'
 
 const StaffPerformancePage = () => {
   const { user } = useApp()
   const [todayRecords, setTodayRecords] = useState([])
   const [monthlyRecords, setMonthlyRecords] = useState([])
+  const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
 
-  // 今日の日付を取得する関数
+  // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
-    const today = new Date()
-    const month = today.getMonth() + 1
-    const day = today.getDate()
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][today.getDay()]
+    const now = new Date()
+    const businessDate = new Date(now)
+    
+    // 1時未満の場合は前日扱い
+    if (now.getHours() < 1) {
+      businessDate.setDate(businessDate.getDate() - 1)
+    }
+    
+    const month = businessDate.getMonth() + 1
+    const day = businessDate.getDate()
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][businessDate.getDay()]
     return `${month}/${day}(${dayOfWeek})`
   }
 
-  // 今月の日付を取得する関数
-  const getCurrentMonthString = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth() + 1
-    return `${year}年${month}月`
-  }
+
 
   // データ取得
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
+        
+        // 店舗データ取得
+        const storesData = await getStores()
+        setStores(storesData)
         
         // 今日の案内記録取得
         const todayData = await getTodayVisitRecords()
@@ -56,6 +65,38 @@ const StaffPerformancePage = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
+  // 削除確認モーダルを開く
+  const handleDeleteRequest = (record, storeName) => {
+    setDeleteModal({
+      isOpen: true,
+      record: record,
+      storeName: storeName
+    })
+  }
+
+  // 削除実行
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteVisitRecord(deleteModal.record.id)
+      
+      // ローカル状態から削除
+      setTodayRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
+      
+      // モーダルを閉じる
+      setDeleteModal({ isOpen: false, record: null, storeName: '' })
+      
+      alert('✅ 案内記録を削除しました')
+    } catch (error) {
+      console.error('削除エラー:', error)
+      alert('❌ 削除に失敗しました')
+    }
+  }
+
+  // 削除キャンセル
+  const handleCancelDelete = () => {
+    setDeleteModal({ isOpen: false, record: null, storeName: '' })
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -74,12 +115,9 @@ const StaffPerformancePage = () => {
       <div className="max-w-4xl mx-auto p-4">
         {/* ヘッダー */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900">
             📊 案内実績
           </h1>
-          <p className="text-gray-600">
-            あなたの案内実績を確認できます
-          </p>
         </div>
 
         {/* 実績カード */}
@@ -118,30 +156,31 @@ const StaffPerformancePage = () => {
           </div>
         </div>
 
-        {/* 詳細情報 */}
+        {/* 本日の案内実績 */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            📈 詳細情報
+            📋 本日の案内実績 {getTodayDateString()}
           </h3>
           
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-700 mb-2">
-                本日の実績 {getTodayDateString()}
-              </h4>
-              <div className="text-sm text-gray-600">
-                案内件数: {todayRecords.length}件 | 総案内人数: {todayCount}名
-              </div>
-            </div>
-            
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-700 mb-2">
-                {getCurrentMonthString()}の実績
-              </h4>
-              <div className="text-sm text-gray-600">
-                案内件数: {monthlyRecords.length}件 | 総案内人数: {monthlyCount}名
-              </div>
-            </div>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {todayRecords.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">
+                本日の案内記録はまだありません
+              </p>
+            ) : (
+              todayRecords.map((record) => {
+                const store = stores.find(s => s.store_id === record.store_id)
+                
+                return (
+                  <SwipeableVisitItem
+                    key={record.id}
+                    record={record}
+                    store={store}
+                    onDelete={handleDeleteRequest}
+                  />
+                )
+              })
+            )}
           </div>
         </div>
 
@@ -155,6 +194,14 @@ const StaffPerformancePage = () => {
           </a>
         </div>
       </div>
+
+      {/* 削除確認モーダル */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        itemName={deleteModal.storeName}
+      />
     </Layout>
   )
 }

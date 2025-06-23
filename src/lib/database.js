@@ -23,10 +23,28 @@ const formatLocalDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+// 業務日（25時切り替わり）を取得する関数
+const getBusinessDate = () => {
+  const now = new Date();
+  const businessDate = new Date(now);
+  
+  // 1時未満の場合は前日扱い
+  if (now.getHours() < 1) {
+    businessDate.setDate(businessDate.getDate() - 1);
+  }
+  
+  return businessDate;
+};
+
+// 業務日ベースで今日の日付文字列を取得
+const getBusinessToday = () => {
+  return formatLocalDate(getBusinessDate());
+};
+
 // 本日の営業店舗データを取得（admin/staff用）
 export const getTodayOpenStores = async () => {
   try {
-    const today = formatLocalDate(new Date()); // YYYY-MM-DD形式
+    const today = getBusinessToday(); // 業務日ベースの今日（25時切り替わり）
 
     // 全店舗を取得
     const { data: stores, error: storesError } = await supabase
@@ -174,11 +192,11 @@ export const getVisitRecords = async (storeId = null, startDate = null, endDate 
   return data || []
 }
 
-// 今日の案内記録を取得
+// 今日の案内記録を取得（業務日ベース - 25時切り替わり）
 export const getTodayVisitRecords = async (storeId = null) => {
-  const today = new Date()
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
+  const businessDate = getBusinessDate()
+  const startOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate(), 1).toISOString() // 1時から開始
+  const endOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate() + 1, 1).toISOString() // 翌日1時まで
   
   return await getVisitRecords(storeId, startOfDay, endOfDay)
 }
