@@ -26,20 +26,22 @@ const Layout = ({ children }) => {
                 <span className="sm:hidden">すすきのホストクラブ案内所</span>
               </h1>
               {user && (
-                <span className="ml-1 sm:ml-4 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                  {getUserRole() === 'admin' && '管理者'}
-                  {getUserRole() === 'staff' && 'スタッフ'}
-                  {getUserRole() === 'customer' && '店舗'}
-                </span>
+                <div className="flex items-center ml-1 sm:ml-4">
+                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    {getUserRole() === 'admin' && '管理者'}
+                    {getUserRole() === 'staff' && 'スタッフ'}
+                    {getUserRole() === 'customer' && '店舗'}
+                  </span>
+                  <span className="ml-1 text-xs text-gray-700 truncate max-w-[60px]">
+                    {user.user_metadata?.display_name || user.email?.split('@')[0] || 'ユーザー'}
+                  </span>
+                </div>
               )}
             </div>
 
             {/* ユーザー情報・ログアウト */}
             {user && (
-              <div className="flex items-center space-x-1 sm:space-x-4">
-                <span className="text-xs text-gray-700 truncate max-w-[60px] sm:max-w-none">
-                  {user.user_metadata?.display_name || user.email?.split('@')[0] || 'ユーザー'}
-                </span>
+              <div className="flex items-center">
                 <button
                   onClick={handleLogout}
                   className="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"

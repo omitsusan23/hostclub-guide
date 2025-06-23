@@ -45,8 +45,6 @@ const TodayOpenStoresPage = () => {
           throw new Error(storesResult.error)
         }
 
-        console.log('取得したstoresデータ:', storesResult.data)
-        console.log('取得したstatusesデータ:', statusesResult)
         
         setOpenStores(storesResult.data)
         setStoreStatuses(statusesResult)
@@ -86,7 +84,6 @@ const TodayOpenStoresPage = () => {
 
   // 店舗詳細モーダルを開く
   const handleStoreClick = (store) => {
-    console.log('クリックされた店舗データ:', store)
     setSelectedStore(store)
     setShowStoreModal(true)
   }
@@ -215,8 +212,8 @@ const TodayOpenStoresPage = () => {
                               
                               {/* 店休日更新状況マーク */}
                               {!store.hasMonthlyUpdate && (
-                                <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded border border-yellow-200 flex items-center">
-                                  ⚠️ 当月未更新
+                                <span className="px-1 py-0.5 bg-yellow-100 text-yellow-800 rounded border border-yellow-200 flex items-center" style={{fontSize: '9px'}}>
+                                  ⚠未更新
                                 </span>
                               )}
                             </div>

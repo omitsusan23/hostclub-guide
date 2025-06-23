@@ -19,7 +19,6 @@ export const getStores = async () => {
 export const getTodayOpenStores = async () => {
   try {
     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD形式
-    console.log('本日の日付:', today)
 
     // 全店舗を取得
     const { data: stores, error: storesError } = await supabase
@@ -28,7 +27,6 @@ export const getTodayOpenStores = async () => {
       .order('name')
 
     if (storesError) throw storesError
-    console.log('取得した店舗数:', stores?.length || 0)
 
     // 本日の店休日データを取得
     const { data: todayHolidays, error: holidaysError } = await supabase
@@ -82,9 +80,6 @@ export const getTodayOpenStores = async () => {
         ...store,
         hasMonthlyUpdate: updateStatusMap.get(store.store_id) || false
       }))
-
-    console.log('本日営業中の店舗数:', openStores.length)
-    console.log('営業中店舗:', openStores.map(s => ({ name: s.name, store_id: s.store_id })))
 
     return { success: true, data: openStores }
   } catch (error) {
