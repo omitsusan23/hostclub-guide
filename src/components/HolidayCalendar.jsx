@@ -73,8 +73,8 @@ const HolidayCalendar = () => {
         .from('store_holidays')
         .select('date')
         .eq('store_id', storeId)
-        .gte('date', sixMonthsAgo.toISOString().split('T')[0])
-        .lte('date', sixMonthsLater.toISOString().split('T')[0]);
+        .gte('date', formatLocalDate(sixMonthsAgo))
+        .lte('date', formatLocalDate(sixMonthsLater));
 
       if (error) throw error;
 
@@ -108,8 +108,8 @@ const HolidayCalendar = () => {
         .from('store_holidays')
         .select('date')
         .eq('store_id', storeId)
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0]);
+        .gte('date', formatLocalDate(startDate))
+        .lte('date', formatLocalDate(endDate));
 
       if (error) throw error;
 
@@ -124,9 +124,17 @@ const HolidayCalendar = () => {
     }
   };
 
+  // ローカル日付を正しいフォーマットに変換する関数
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // ローカルでの店休日切り替え（即座に更新しない）
   const toggleHolidayLocal = (date) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatLocalDate(date);
     const newPendingChanges = new Set(pendingChanges);
     
     if (newPendingChanges.has(dateString)) {

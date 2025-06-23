@@ -15,10 +15,18 @@ export const getStores = async () => {
   return data || []
 }
 
+// ローカル日付を正しいフォーマットに変換する関数
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // 本日の営業店舗データを取得（admin/staff用）
 export const getTodayOpenStores = async () => {
   try {
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD形式
+    const today = formatLocalDate(new Date()); // YYYY-MM-DD形式
 
     // 全店舗を取得
     const { data: stores, error: storesError } = await supabase
@@ -41,8 +49,8 @@ export const getTodayOpenStores = async () => {
 
     // 今月の範囲を計算
     const now = new Date()
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+    const currentMonthStart = formatLocalDate(new Date(now.getFullYear(), now.getMonth(), 1))
+    const currentMonthEnd = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))
 
     // 各店舗の今月の店休日更新状況をチェック
     const storeHolidayUpdates = await Promise.all(
