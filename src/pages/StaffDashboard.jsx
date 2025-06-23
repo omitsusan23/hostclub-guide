@@ -167,9 +167,8 @@ const StaffDashboard = () => {
 
   return (
     <Layout>
-
-
-      {/* クイックアクション */}
+      <div className="pb-24">
+        {/* クイックアクション */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -194,21 +193,18 @@ const StaffDashboard = () => {
             </p>
           </a>
 
-          {/* 新規案内記録 */}
-          <button
-            onClick={() => setShowVisitForm(true)}
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all group text-left"
-          >
+          {/* 空のプレースホルダー */}
+          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
             <div className="flex items-center mb-2">
               <div className="text-2xl mr-3">📝</div>
-              <h4 className="font-medium text-gray-900 group-hover:text-green-600">
-                新規案内記録
+              <h4 className="font-medium text-gray-500">
+                案内実績グラフ
               </h4>
             </div>
-            <p className="text-sm text-gray-600">
-              お客様の案内記録を迅速に登録
+            <p className="text-sm text-gray-500">
+              近日公開予定
             </p>
-          </button>
+          </div>
 
           {/* 今後の機能用プレースホルダー */}
           <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -229,19 +225,11 @@ const StaffDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* 左側：案内記録 */}
         <div className="space-y-6">
-          {/* 新規案内記録ボタン */}
+          {/* 案内記録統計 */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                🏪 店舗案内記録
-              </h3>
-              <button
-                onClick={() => setShowVisitForm(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                新規記録
-              </button>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              🏪 店舗案内記録
+            </h3>
             
             <p className="text-sm text-gray-600">
               本日の案内記録: {visitRecords.length}件
@@ -337,25 +325,15 @@ const StaffDashboard = () => {
             
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {stores.map((store) => (
-                <div key={store.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <div className="font-medium">{store.name}</div>
-                    <div className="text-sm text-gray-600">ID: {store.store_id}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedStore(store)
-                      setShowVisitForm(true)
-                    }}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    案内記録
-                  </button>
+                <div key={store.id} className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{store.name}</div>
+                  <div className="text-sm text-gray-600">ID: {store.store_id}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* 案内記録フォームモーダル */}
@@ -377,6 +355,16 @@ const StaffDashboard = () => {
         onCancel={handleCancelDelete}
         itemName={deleteModal.storeName}
       />
+
+      {/* 固定フッター：案内報告ボタン */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-50">
+        <button
+          onClick={() => setShowVisitForm(true)}
+          className="w-full max-w-sm mx-auto block px-6 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-md"
+        >
+          📝 案内報告
+        </button>
+      </div>
     </Layout>
   )
 }
