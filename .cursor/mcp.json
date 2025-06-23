@@ -26,7 +26,13 @@
       "args": [
         "working-server.js"
       ],
-      "cwd": "C:\\Users\\omitu\\hostclub-guide\\vercel-store-mcp"
+      "cwd": "C:\\Users\\omitu\\hostclub-guide\\vercel-store-mcp",
+      "env": {
+        "NEXT_PUBLIC_SUPABASE_URL": "https://syabkrxefyqyfypsdezx.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5YWJrcnhlZnlxeWZ5cHNkZXp4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDQzMTI5MywiZXhwIjoyMDY2MDA3MjkzfQ.Pze2bfb9_8S_7P2P0b-A5Dr5onmpgEvNr0UZHXGFcOs",
+        "VERCEL_TOKEN": "C2fd7WllnNuomzPvWAEmgVV2",
+        "BASE_DOMAIN": "susukino-hostclub-guide.online"
+      }
     }
   }
 }
