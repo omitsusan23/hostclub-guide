@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import Modal from '../components/Modal'
 import { useApp } from '../contexts/AppContext'
 import { getTodayOpenStores, getAllStoresLatestStatus } from '../lib/database'
 
@@ -9,6 +10,8 @@ const TodayOpenStoresPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [storeStatuses, setStoreStatuses] = useState({})
+  const [selectedStore, setSelectedStore] = useState(null)
+  const [showStoreModal, setShowStoreModal] = useState(false)
 
   // admin と staff 以外はアクセス不可
   const userRole = getUserRole()
@@ -75,7 +78,19 @@ const TodayOpenStoresPage = () => {
 
   // 店舗状況の表示テキスト
   const getStatusText = (statusType) => {
-    return statusType || '状況未設定'
+    return statusType || ''
+  }
+
+  // 店舗詳細モーダルを開く
+  const handleStoreClick = (store) => {
+    setSelectedStore(store)
+    setShowStoreModal(true)
+  }
+
+  // 店舗詳細モーダルを閉じる
+  const handleCloseStoreModal = () => {
+    setSelectedStore(null)
+    setShowStoreModal(false)
   }
 
   // 今日の日付を取得
@@ -190,7 +205,8 @@ const TodayOpenStoresPage = () => {
                     return (
                       <div 
                         key={store.id} 
-                        className="p-6 hover:bg-gray-50 transition-colors"
+                        className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => handleStoreClick(store)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
@@ -219,25 +235,27 @@ const TodayOpenStoresPage = () => {
                               営業時間: {store.open_time || '20:00'} - {store.close_time || '23:30'}
                             </div>
 
-                            {/* 料金情報 */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                              <div className="text-gray-600">
-                                <span className="font-medium">基本料金:</span>
-                                <div className="text-gray-900">{(store.base_price || 0).toLocaleString()}円</div>
+                            {/* 料金情報（管理者のみ表示） */}
+                            {userRole === 'admin' && (
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div className="text-gray-600">
+                                  <span className="font-medium">基本料金:</span>
+                                  <div className="text-gray-900">{(store.base_price || 0).toLocaleString()}円</div>
+                                </div>
+                                <div className="text-gray-600">
+                                  <span className="font-medium">パネル代:</span>
+                                  <div className="text-gray-900">{(store.panel_fee || 0).toLocaleString()}円</div>
+                                </div>
+                                <div className="text-gray-600">
+                                  <span className="font-medium">保証本数:</span>
+                                  <div className="text-gray-900">{store.guarantee_count || 0}本</div>
+                                </div>
+                                <div className="text-gray-600">
+                                  <span className="font-medium">単価:</span>
+                                  <div className="text-gray-900">{(store.unit_price || 0).toLocaleString()}円</div>
+                                </div>
                               </div>
-                              <div className="text-gray-600">
-                                <span className="font-medium">パネル代:</span>
-                                <div className="text-gray-900">{(store.panel_fee || 0).toLocaleString()}円</div>
-                              </div>
-                              <div className="text-gray-600">
-                                <span className="font-medium">保証本数:</span>
-                                <div className="text-gray-900">{store.guarantee_count || 0}本</div>
-                              </div>
-                              <div className="text-gray-600">
-                                <span className="font-medium">単価:</span>
-                                <div className="text-gray-900">{(store.unit_price || 0).toLocaleString()}円</div>
-                              </div>
-                            </div>
+                            )}
                           </div>
 
                           {/* 店舗状況 */}
@@ -289,9 +307,72 @@ const TodayOpenStoresPage = () => {
             </div>
           </>
         )}
-      </div>
-    </Layout>
-  )
-}
+              </div>
 
-export default TodayOpenStoresPage 
+        {/* 店舗詳細モーダル */}
+        {selectedStore && (
+          <Modal
+            isOpen={showStoreModal}
+            onClose={handleCloseStoreModal}
+            title={selectedStore.name}
+          >
+            <div className="space-y-4">
+              {/* 基本情報 */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">基本情報</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">住所:</span>
+                    <div className="text-gray-900">{selectedStore.address}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">電話番号:</span>
+                    <div className="text-gray-900">{selectedStore.phone}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">営業時間:</span>
+                    <div className="text-gray-900">{selectedStore.opening_hours}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">ホームページ:</span>
+                    <div className="text-gray-900">
+                      {selectedStore.website ? (
+                        <a 
+                          href={selectedStore.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {selectedStore.website}
+                        </a>
+                      ) : '未設定'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 詳細情報 */}
+              {selectedStore.description && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">詳細情報</h3>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedStore.description}</p>
+                </div>
+              )}
+
+              {/* ボタン */}
+              <div className="flex justify-end">
+                <button
+                  onClick={handleCloseStoreModal}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+      </Layout>
+    )
+  }
+
+  export default TodayOpenStoresPage 
