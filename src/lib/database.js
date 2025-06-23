@@ -15,6 +15,79 @@ export const getStores = async () => {
   return data || []
 }
 
+// 本日の営業店舗データを取得（admin/staff用）
+export const getTodayOpenStores = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD形式
+
+    // 全店舗を取得
+    const { data: stores, error: storesError } = await supabase
+      .from('stores')
+      .select('*')
+      .order('name')
+
+    if (storesError) throw storesError
+
+    // 本日の店休日データを取得
+    const { data: todayHolidays, error: holidaysError } = await supabase
+      .from('store_holidays')
+      .select('store_id')
+      .eq('date', today)
+
+    if (holidaysError) throw holidaysError
+
+    // 店休日の店舗IDセットを作成
+    const holidayStoreIds = new Set(todayHolidays.map(h => h.store_id))
+
+    // 今月の範囲を計算
+    const now = new Date()
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+    // 各店舗の今月の店休日更新状況をチェック
+    const storeHolidayUpdates = await Promise.all(
+      stores.map(async (store) => {
+        const { data: monthlyHolidays, error } = await supabase
+          .from('store_holidays')
+          .select('date')
+          .eq('store_id', store.store_id)
+          .gte('date', currentMonthStart)
+          .lte('date', currentMonthEnd)
+
+        if (error) {
+          console.error(`店舗 ${store.store_id} の店休日取得エラー:`, error)
+          return { store_id: store.store_id, hasUpdated: false }
+        }
+
+        // 今月の店休日設定があるかチェック
+        return { 
+          store_id: store.store_id, 
+          hasUpdated: monthlyHolidays && monthlyHolidays.length > 0 
+        }
+      })
+    )
+
+    // 更新状況マップを作成
+    const updateStatusMap = new Map()
+    storeHolidayUpdates.forEach(status => {
+      updateStatusMap.set(status.store_id, status.hasUpdated)
+    })
+
+    // 営業中の店舗のみフィルタリング（本日が店休日でない店舗）
+    const openStores = stores
+      .filter(store => !holidayStoreIds.has(store.store_id))
+      .map(store => ({
+        ...store,
+        hasMonthlyUpdate: updateStatusMap.get(store.store_id) || false
+      }))
+
+    return { success: true, data: openStores }
+  } catch (error) {
+    console.error('本日の営業店舗取得エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 export const getStoreById = async (storeId) => {
   const { data, error } = await supabase
     .from('stores')
@@ -45,119 +118,110 @@ export const getStoreBySubdomain = async (subdomain) => {
   return data
 }
 
-// 案内記録取得（特定店舗）
-export const getVisitRecordsByStoreId = async (storeId) => {
-  const { data, error } = await supabase
+// 案内記録を取得
+export const getVisitRecords = async (storeId = null, startDate = null, endDate = null) => {
+  let query = supabase
     .from('visit_records')
-    .select(`
-      *,
-      staffs!visit_records_staff_id_fkey (
-        display_name,
-        staff_id
-      )
-    `)
-    .eq('store_id', storeId)
+    .select('*')
     .order('visited_at', { ascending: false })
-  
+
+  if (storeId) {
+    query = query.eq('store_id', storeId)
+  }
+
+  if (startDate) {
+    query = query.gte('visited_at', startDate)
+  }
+
+  if (endDate) {
+    query = query.lte('visited_at', endDate)
+  }
+
+  const { data, error } = await query
+
   if (error) {
     console.error('案内記録取得エラー:', error)
     return []
   }
-  
-  return data.map(record => ({
-    id: record.id,
-    store_id: record.store_id,
-    staff_id: record.staff_id,
-    staff_display_name: record.staffs?.display_name || '不明',
-    visitor_count: record.visitor_count,
-    visited_at: record.visited_at,
-    notes: record.notes
-  }))
+
+  return data || []
 }
 
-// 今日の案内記録取得
-export const getTodaysVisitRecords = async () => {
-  const today = new Date().toISOString().split('T')[0]
+// 今日の案内記録を取得
+export const getTodayVisitRecords = async (storeId = null) => {
+  const today = new Date()
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
   
-  const { data, error } = await supabase
-    .from('visit_records')
-    .select(`
-      *,
-      staffs!visit_records_staff_id_fkey (
-        display_name,
-        staff_id
-      )
-    `)
-    .gte('visited_at', `${today}T00:00:00`)
-    .lt('visited_at', `${today}T23:59:59`)
-    .order('visited_at', { ascending: false })
-  
-  if (error) {
-    console.error('今日の案内記録取得エラー:', error)
-    return []
-  }
-  
-  return data.map(record => ({
-    id: record.id,
-    store_id: record.store_id,
-    staff_id: record.staff_id,
-    staff_display_name: record.staffs?.display_name || '不明',
-    visitor_count: record.visitor_count,
-    visited_at: record.visited_at,
-    notes: record.notes
-  }))
+  return await getVisitRecords(storeId, startOfDay, endOfDay)
 }
 
-// 案内記録保存
-export const saveVisitRecord = async (visitData) => {
+// 月間案内記録を取得
+export const getMonthlyVisitRecords = async (storeId = null, year = null, month = null) => {
+  const now = new Date()
+  const targetYear = year || now.getFullYear()
+  const targetMonth = month !== null ? month : now.getMonth()
+  
+  const startOfMonth = new Date(targetYear, targetMonth, 1).toISOString()
+  const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString()
+  
+  return await getVisitRecords(storeId, startOfMonth, endOfMonth)
+}
+
+// 案内記録を追加
+export const addVisitRecord = async (visitData) => {
   const { data, error } = await supabase
     .from('visit_records')
     .insert({
       store_id: visitData.store_id,
-      staff_id: visitData.staff_id,
-      visitor_count: visitData.visitor_count,
-      notes: visitData.notes,
-      visited_at: visitData.visited_at || new Date().toISOString()
+      guest_count: visitData.guest_count,
+      staff_name: visitData.staff_name,
+      visited_at: visitData.visited_at || new Date().toISOString(),
+      notes: visitData.notes || null,
+      purpose: visitData.purpose || '案内'
     })
-    .select(`
-      *,
-      staffs!visit_records_staff_id_fkey (
-        display_name,
-        staff_id
-      )
-    `)
-    .single()
-  
+    .select()
+
   if (error) {
-    console.error('案内記録保存エラー:', error)
+    console.error('案内記録追加エラー:', error)
     throw error
   }
-  
-  return {
-    id: data.id,
-    store_id: data.store_id,
-    staff_id: data.staff_id,
-    staff_display_name: data.staffs?.display_name || '不明',
-    visitor_count: data.visitor_count,
-    visited_at: data.visited_at,
-    notes: data.notes
-  }
+
+  return data?.[0]
 }
 
-// 案内記録の論理削除
-export const softDeleteVisitRecord = async (recordId) => {
+// 案内記録を更新
+export const updateVisitRecord = async (recordId, updateData) => {
+  const { data, error } = await supabase
+    .from('visit_records')
+    .update(updateData)
+    .eq('id', recordId)
+    .select()
+
+  if (error) {
+    console.error('案内記録更新エラー:', error)
+    throw error
+  }
+
+  return data?.[0]
+}
+
+// 案内記録を削除
+export const deleteVisitRecord = async (recordId) => {
   const { error } = await supabase
-    .rpc('soft_delete_visit_record', { record_id: recordId })
-  
+    .from('visit_records')
+    .delete()
+    .eq('id', recordId)
+
   if (error) {
     console.error('案内記録削除エラー:', error)
     throw error
   }
-  
-  return { success: true }
+
+  return true
 }
 
-// リアルタイム状況取得
+// 店舗の最新状況を取得
 export const getLatestStoreStatus = async (storeId) => {
   const { data, error } = await supabase
     .from('store_status')
@@ -165,14 +229,36 @@ export const getLatestStoreStatus = async (storeId) => {
     .eq('store_id', storeId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
   
-  if (error && error.code !== 'PGRST116') { // "not found"以外のエラー
+  if (error) {
     console.error('店舗状況取得エラー:', error)
     return null
   }
   
-  return data
+  return data?.[0] || null
+}
+
+// 全店舗の最新状況を取得
+export const getAllStoresLatestStatus = async () => {
+  const { data, error } = await supabase
+    .from('store_status')
+    .select('store_id, status_type, created_at')
+    .order('created_at', { ascending: false })
+  
+  if (error) {
+    console.error('全店舗状況取得エラー:', error)
+    return {}
+  }
+  
+  // 各店舗の最新状況のみを抽出
+  const latestStatus = {}
+  data?.forEach(status => {
+    if (!latestStatus[status.store_id]) {
+      latestStatus[status.store_id] = status
+    }
+  })
+  
+  return latestStatus
 }
 
 // リアルタイム状況設定

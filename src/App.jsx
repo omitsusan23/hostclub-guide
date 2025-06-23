@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
+import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
@@ -91,6 +92,16 @@ const AppRoutes = () => {
           } 
         />
         
+        {/* 本日の営業店舗ページ（admin/staff専用） */}
+        <Route 
+          path="/today-open-stores" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']}>
+              <TodayOpenStoresPage />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* ルートパスは認証状態に応じてリダイレクト */}
         <Route 
           path="/" 
@@ -105,15 +116,15 @@ const AppRoutes = () => {
         <Route 
           path="*" 
           element={
-            <div className="container">
-              <div className="card" style={{ textAlign: 'center', marginTop: '4rem' }}>
-                <h2>ページが見つかりません</h2>
-                <p>お探しのページは存在しないか、移動された可能性があります。</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
+                <p className="text-gray-600 mb-8">お探しのページが見つかりません</p>
                 <button 
-                  className="btn btn-primary"
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  ホームに戻る
+                  ダッシュボードに戻る
                 </button>
               </div>
             </div>

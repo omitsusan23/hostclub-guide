@@ -69,3 +69,4 @@ supabase/functions/
 
 # Staff management files (contains authentication data)
 add-new-staff.js
+.vercel

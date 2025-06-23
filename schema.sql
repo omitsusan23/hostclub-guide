@@ -53,6 +53,16 @@ CREATE TABLE schedules (
   UNIQUE(store_id, date)
 );
 
+-- ⑤ store_holidays テーブル（店休日管理）
+CREATE TABLE store_holidays (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  store_id TEXT NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(store_id, date)
+);
+
 -- インデックスの作成
 CREATE INDEX idx_staff_logs_store_id ON staff_logs(store_id);
 CREATE INDEX idx_staff_logs_guided_at ON staff_logs(guided_at);
@@ -60,6 +70,9 @@ CREATE INDEX idx_store_status_store_id ON store_status(store_id);
 CREATE INDEX idx_store_status_created_at ON store_status(created_at);
 CREATE INDEX idx_schedules_store_id ON schedules(store_id);
 CREATE INDEX idx_schedules_date ON schedules(date);
+CREATE INDEX idx_store_holidays_store_id ON store_holidays(store_id);
+CREATE INDEX idx_store_holidays_date ON store_holidays(date);
+CREATE INDEX idx_store_holidays_store_date ON store_holidays(store_id, date);
 
 -- RLS（Row Level Security）ポリシーの設定
 
@@ -143,6 +156,27 @@ CREATE POLICY "スタッフは全てのスケジュールを参照可能" ON sch
 
 -- 顧客は自分の店舗のスケジュールのみ操作可能
 CREATE POLICY "顧客は自分の店舗のスケジュールのみ操作可能" ON schedules
+  FOR ALL USING (
+    store_id = (auth.jwt() ->> 'user_metadata')::jsonb ->> 'store_id'
+  );
+
+-- store_holidays テーブルのRLS
+ALTER TABLE store_holidays ENABLE ROW LEVEL SECURITY;
+
+-- 管理者は全ての店休日にアクセス可能
+CREATE POLICY "管理者は全ての店休日にアクセス可能" ON store_holidays
+  FOR ALL USING (
+    (auth.jwt() ->> 'user_metadata')::jsonb ->> 'role' = 'admin'
+  );
+
+-- スタッフは全ての店休日を参照可能
+CREATE POLICY "スタッフは全ての店休日を参照可能" ON store_holidays
+  FOR SELECT USING (
+    (auth.jwt() ->> 'user_metadata')::jsonb ->> 'role' = 'staff'
+  );
+
+-- 顧客は自分の店舗の店休日のみ操作可能
+CREATE POLICY "顧客は自分の店舗の店休日のみ操作可能" ON store_holidays
   FOR ALL USING (
     store_id = (auth.jwt() ->> 'user_metadata')::jsonb ->> 'store_id'
   );
