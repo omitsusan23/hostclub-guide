@@ -8,6 +8,7 @@ import StaffDashboard from './pages/StaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
+import StaffPerformancePage from './pages/StaffPerformancePage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
@@ -68,6 +69,16 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['staff']}>
               <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* スタッフ案内実績ページ */}
+        <Route 
+          path="/staff-performance" 
+          element={
+            <ProtectedRoute allowedRoles={['staff']}>
+              <StaffPerformancePage />
             </ProtectedRoute>
           } 
         />

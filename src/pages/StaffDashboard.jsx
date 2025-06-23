@@ -187,18 +187,21 @@ const StaffDashboard = () => {
             </p>
           </a>
 
-          {/* 空のプレースホルダー */}
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          {/* 案内実績 */}
+          <a
+            href="/staff-performance"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
+          >
             <div className="flex items-center mb-2">
-              <div className="text-2xl mr-3">📝</div>
-              <h4 className="font-medium text-gray-500">
-                案内実績グラフ
+              <div className="text-2xl mr-3">📊</div>
+              <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
+                案内実績
               </h4>
             </div>
-            <p className="text-sm text-gray-500">
-              近日公開予定
+            <p className="text-sm text-gray-600">
+              本日・今月の案内実績を確認
             </p>
-          </div>
+          </a>
 
           {/* 今後の機能用プレースホルダー */}
           <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
