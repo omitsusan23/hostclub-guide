@@ -107,10 +107,10 @@ const TodayOpenStoresPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-2 sm:p-4">
         {/* ヘッダー */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="mb-3 sm:mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             本日の営業店舗 {headerDateString}
           </h1>
         </div>
@@ -139,35 +139,35 @@ const TodayOpenStoresPage = () => {
         {!loading && !error && (
           <>
             {/* 統計情報 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
-                <div className="flex items-center">
-                  <div className="text-green-600 text-xl mr-2">🏪</div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-600">営業中店舗数</p>
-                    <p className="text-xl font-bold text-gray-900">{openStores.length}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-green-500">
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <div className="text-green-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">🏪</div>
+                  <div className="text-center sm:text-left">
+                    <p className="text-xs font-medium text-gray-600">営業中</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{openStores.length}</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
-                <div className="flex items-center">
-                  <div className="text-yellow-600 text-xl mr-2">⚠️</div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-600">店休日未更新</p>
-                    <p className="text-xl font-bold text-gray-900">
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-yellow-500">
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <div className="text-yellow-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">⚠️</div>
+                  <div className="text-center sm:text-left">
+                    <p className="text-xs font-medium text-gray-600">未更新</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">
                       {openStores.filter(store => !store.hasMonthlyUpdate).length}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
-                <div className="flex items-center">
-                  <div className="text-blue-600 text-xl mr-2">✅</div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-600">店休日更新済み</p>
-                    <p className="text-xl font-bold text-gray-900">
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 border-l-4 border-blue-500">
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <div className="text-blue-600 text-lg sm:text-xl mb-1 sm:mb-0 sm:mr-2">✅</div>
+                  <div className="text-center sm:text-left">
+                    <p className="text-xs font-medium text-gray-600">更新済み</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">
                       {openStores.filter(store => store.hasMonthlyUpdate).length}
                     </p>
                   </div>
@@ -207,18 +207,15 @@ const TodayOpenStoresPage = () => {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            {/* 店舗名とID */}
+                            {/* 店舗名と更新状況 */}
                             <div className="flex items-center mb-1">
                               <h3 className="text-lg font-semibold text-gray-900 mr-3">
                                 {store.name}
                               </h3>
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
-                                {store.store_id}
-                              </span>
                               
                               {/* 店休日更新状況マーク */}
                               {!store.hasMonthlyUpdate && (
-                                <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-md border border-yellow-200 flex items-center">
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-md border border-yellow-200 flex items-center">
                                   ⚠️ 当月未更新
                                 </span>
                               )}
