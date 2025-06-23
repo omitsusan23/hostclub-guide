@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { 
-  getStoreById, 
-  getStoreBySubdomain,
-  getVisitRecordsByStoreId,
+  getStores,
+  getVisitRecords,
   getLatestStoreStatus,
-  setStoreStatus,
-  getInvoiceSettings
+  setStoreStatus
 } from '../lib/database'
 
 const CustomerDashboard = () => {
@@ -33,19 +31,21 @@ const CustomerDashboard = () => {
         setDataLoading(true)
         
         // 店舗データ取得
-        let storeData = await getStoreById(storeId)
-        if (!storeData) {
-          storeData = await getStoreBySubdomain(storeId)
-        }
+        const allStores = await getStores()
+        const storeData = allStores.find(s => s.store_id === storeId)
         setStore(storeData)
 
-        // 案内記録取得
-        const records = await getVisitRecordsByStoreId(storeId)
+        // 案内記録取得（この店舗の分のみ）
+        const records = await getVisitRecords(storeId)
         setVisitRecords(records)
 
-        // 請求設定取得
-        const settings = await getInvoiceSettings(storeId)
-        setInvoiceSettings(settings)
+        // 請求設定は店舗データから取得
+        setInvoiceSettings({
+          base_fee: storeData?.base_price || 30000,
+          guaranteed_count: storeData?.guarantee_count || 8,
+          price_per_introduction: storeData?.unit_price || 3000,
+          with_tax: !storeData?.exclude_tax
+        })
 
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -58,7 +58,7 @@ const CustomerDashboard = () => {
   }, [storeId])
 
   // 総案内人数を計算
-  const totalVisitors = visitRecords.reduce((sum, record) => sum + record.visitor_count, 0)
+  const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
   
   // 請求情報を計算
   const monthlyIntroductions = visitRecords.length

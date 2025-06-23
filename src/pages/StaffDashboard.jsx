@@ -6,10 +6,9 @@ import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import { useApp } from '../contexts/AppContext'
 import { 
   getStores,
-  getTodaysVisitRecords,
-  getStoreById,
-  saveVisitRecord,
-  softDeleteVisitRecord
+  getTodayVisitRecords,
+  addVisitRecord,
+  deleteVisitRecord
 } from '../lib/database'
 
 const StaffDashboard = () => {
@@ -43,7 +42,7 @@ const StaffDashboard = () => {
         setStores(storesData)
 
         // 今日の案内記録取得
-        const recordsData = await getTodaysVisitRecords()
+        const recordsData = await getTodayVisitRecords()
         setVisitRecords(recordsData)
 
         // TODO: スタッフチャットデータ取得（テーブル作成後）
@@ -61,14 +60,11 @@ const StaffDashboard = () => {
 
   const handleVisitSubmit = async (visitData) => {
     try {
-      // ryotaユーザーのstaff_idを取得（208b1ea1-6e52-4d8b-b6c0-69a2cd597cd8）
-      const staffId = '208b1ea1-6e52-4d8b-b6c0-69a2cd597cd8' // ryotaのstaff ID
-      
       // Supabaseに案内記録を保存
-      const savedRecord = await saveVisitRecord({
+      const savedRecord = await addVisitRecord({
         store_id: visitData.storeId,
-        staff_id: staffId,
-        visitor_count: visitData.guestCount,
+        guest_count: visitData.guestCount,
+        staff_name: user?.email || 'スタッフ',
         notes: visitData.notes || null
       })
       
@@ -121,7 +117,7 @@ const StaffDashboard = () => {
   // 削除実行
   const handleConfirmDelete = async () => {
     try {
-      await softDeleteVisitRecord(deleteModal.record.id)
+      await deleteVisitRecord(deleteModal.record.id)
       
       // ローカル状態から削除
       setVisitRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
