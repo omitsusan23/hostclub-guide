@@ -168,14 +168,8 @@ const StaffDashboard = () => {
   return (
     <Layout>
       <div className="pb-24">
-        {/* クイックアクション */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-          </svg>
-          クイックアクション
-        </h3>
+                {/* クイックアクション */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* 本日の営業店舗 */}
           <a
@@ -222,51 +216,7 @@ const StaffDashboard = () => {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 左側：案内記録 */}
-        <div className="space-y-6">
-          {/* 案内記録統計 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              🏪 店舗案内記録
-            </h3>
-            
-            <p className="text-sm text-gray-600">
-              本日の案内記録: {visitRecords.length}件
-            </p>
-          </div>
-
-          {/* 今日の案内記録一覧 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📊 本日の案内実績 {getTodayDateString()}
-            </h3>
-            
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {visitRecords.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  本日の案内記録はまだありません
-                </p>
-              ) : (
-                visitRecords.map((record) => {
-                  const store = stores.find(s => s.store_id === record.store_id)
-                  
-                  return (
-                    <SwipeableVisitItem
-                      key={record.id}
-                      record={record}
-                      store={store}
-                      onDelete={handleDeleteRequest}
-                    />
-                  )
-                })
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 右側：スタッフチャット */}
-        <div className="space-y-6">
+      <div className="space-y-6">
           {/* スタッフチャット */}
           <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -333,7 +283,6 @@ const StaffDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* 案内記録フォームモーダル */}
