@@ -45,6 +45,9 @@ const TodayOpenStoresPage = () => {
           throw new Error(storesResult.error)
         }
 
+        console.log('取得したstoresデータ:', storesResult.data)
+        console.log('取得したstatusesデータ:', statusesResult)
+        
         setOpenStores(storesResult.data)
         setStoreStatuses(statusesResult)
       } catch (err) {
@@ -83,6 +86,7 @@ const TodayOpenStoresPage = () => {
 
   // 店舗詳細モーダルを開く
   const handleStoreClick = (store) => {
+    console.log('クリックされた店舗データ:', store)
     setSelectedStore(store)
     setShowStoreModal(true)
   }
@@ -93,13 +97,12 @@ const TodayOpenStoresPage = () => {
     setShowStoreModal(false)
   }
 
-  // 今日の日付を取得
+  // 今日の日付を取得（見出し用）
   const today = new Date()
-  const todayString = today.toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'long',
+  const headerDateString = today.toLocaleDateString('ja-JP', {
+    month: 'numeric',
     day: 'numeric',
-    weekday: 'long'
+    weekday: 'short'
   })
 
   return (
@@ -107,15 +110,9 @@ const TodayOpenStoresPage = () => {
       <div className="max-w-7xl mx-auto p-6">
         {/* ヘッダー */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            本日の営業店舗
+          <h1 className="text-3xl font-bold text-gray-900">
+            本日の営業店舗 {headerDateString}
           </h1>
-          <p className="text-gray-600 mb-1">
-            {todayString}
-          </p>
-          <p className="text-sm text-gray-500">
-            本日店休日に指定されていない店舗の一覧です
-          </p>
         </div>
 
         {/* ローディング状態 */}
@@ -205,7 +202,7 @@ const TodayOpenStoresPage = () => {
                     return (
                       <div 
                         key={store.id} 
-                        className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="pt-6 px-6 pb-4 hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => handleStoreClick(store)}
                       >
                         <div className="flex items-start justify-between">
@@ -232,7 +229,7 @@ const TodayOpenStoresPage = () => {
                               <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                               </svg>
-                              営業時間: {store.open_time || '20:00'} - {store.close_time || '23:30'}
+                              営業時間: {store.open_time ? store.open_time.slice(0, 5) : '20:00'} - {store.close_time ? store.close_time.slice(0, 5) : '23:30'}
                             </div>
 
                             {/* 料金情報（管理者のみ表示） */}
@@ -319,45 +316,65 @@ const TodayOpenStoresPage = () => {
             <div className="space-y-4">
               {/* 基本情報 */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">基本情報</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">📋 基本情報</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium text-gray-600">住所:</span>
-                    <div className="text-gray-900">{selectedStore.address}</div>
+                    <span className="font-medium text-gray-600">店舗名:</span>
+                    <div className="text-gray-900">{selectedStore.name}</div>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">電話番号:</span>
-                    <div className="text-gray-900">{selectedStore.phone}</div>
+                    <span className="font-medium text-gray-600">店舗ID:</span>
+                    <div className="text-gray-900">{selectedStore.store_id}</div>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">営業時間:</span>
-                    <div className="text-gray-900">{selectedStore.opening_hours}</div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">ホームページ:</span>
+                    <span className="font-medium text-gray-600">Open:</span>
                     <div className="text-gray-900">
-                      {selectedStore.website ? (
+                      {selectedStore.open_time ? selectedStore.open_time.slice(0, 5) : '20:00'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">初回Close:</span>
+                    <div className="text-gray-900">
+                      {selectedStore.close_time ? selectedStore.close_time.slice(0, 5) : '23:30'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">初回料金:</span>
+                    <div className="text-gray-900">¥{(selectedStore.base_price || 0).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">男性料金:</span>
+                    <div className="text-gray-900">
+                      {selectedStore.male_price === 0 ? '男性不可' : `¥${selectedStore.male_price?.toLocaleString() || 0}以上`}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">身分証要件:</span>
+                    <div className="text-gray-900">{selectedStore.id_required || '未設定'}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">ホスホス:</span>
+                    <div className="text-gray-900">
+                      {selectedStore.hoshos_url ? (
                         <a 
-                          href={selectedStore.website} 
+                          href={selectedStore.hoshos_url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
+                          className="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
                         >
-                          {selectedStore.website}
+                          ホスホス
                         </a>
-                      ) : '未設定'}
+                      ) : (
+                        <span className="text-gray-500">未設定</span>
+                      )}
                     </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">店舗番号:</span>
+                    <div className="text-gray-900">{selectedStore.store_phone || '未設定'}</div>
                   </div>
                 </div>
               </div>
-
-              {/* 詳細情報 */}
-              {selectedStore.description && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800">詳細情報</h3>
-                  <p className="text-gray-900 whitespace-pre-wrap">{selectedStore.description}</p>
-                </div>
-              )}
 
               {/* ボタン */}
               <div className="flex justify-end">
