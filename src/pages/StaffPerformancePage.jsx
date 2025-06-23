@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord } from '../lib/database'
+import { supabase } from '../lib/supabase'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 
@@ -12,6 +13,7 @@ const StaffPerformancePage = () => {
   const [stores, setStores] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
+  const [currentStaff, setCurrentStaff] = useState(null)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {

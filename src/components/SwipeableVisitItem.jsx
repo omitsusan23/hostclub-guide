@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const SwipeableVisitItem = ({ record, store, onDelete }) => {
   const [translateX, setTranslateX] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [displayName, setDisplayName] = useState(record.staff_name || '不明');
   const startX = useRef(0);
   const currentX = useRef(0);
   const isTracking = useRef(false);
@@ -11,6 +13,33 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  // staff_nameがメールアドレス形式の場合、staffsテーブルからdisplay_nameを取得
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (!record.staff_name) return;
+      
+      // メールアドレス形式かチェック（@を含むかどうか）
+      if (record.staff_name.includes('@')) {
+        try {
+          const { data, error } = await supabase
+            .from('staffs')
+            .select('display_name')
+            .eq('email', record.staff_name)
+            .single();
+          
+          if (!error && data?.display_name) {
+            setDisplayName(data.display_name);
+          }
+        } catch (error) {
+          console.error('スタッフ表示名取得エラー:', error);
+          // エラーの場合は元のstaff_nameを使用
+        }
+      }
+    };
+
+    fetchDisplayName();
+  }, [record.staff_name]);
 
   // タッチ開始
   const handleTouchStart = (e) => {
@@ -135,7 +164,7 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
             {record.guest_count}名 - {time}
           </div>
           <div className="text-sm text-gray-500 ml-auto flex-shrink-0">
-            担当: {record.staff_name || '不明'}
+            担当: {displayName}
           </div>
         </div>
       </div>
