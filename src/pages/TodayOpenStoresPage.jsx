@@ -107,10 +107,10 @@ const TodayOpenStoresPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4">
         {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">
             本日の営業店舗 {headerDateString}
           </h1>
         </div>
@@ -139,35 +139,35 @@ const TodayOpenStoresPage = () => {
         {!loading && !error && (
           <>
             {/* 統計情報 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
                 <div className="flex items-center">
-                  <div className="text-green-600 text-2xl mr-3">🏪</div>
+                  <div className="text-green-600 text-xl mr-2">🏪</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">営業中店舗数</p>
-                    <p className="text-2xl font-bold text-gray-900">{openStores.length}</p>
+                    <p className="text-xs font-medium text-gray-600">営業中店舗数</p>
+                    <p className="text-xl font-bold text-gray-900">{openStores.length}</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
                 <div className="flex items-center">
-                  <div className="text-yellow-600 text-2xl mr-3">⚠️</div>
+                  <div className="text-yellow-600 text-xl mr-2">⚠️</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">店休日未更新</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xs font-medium text-gray-600">店休日未更新</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {openStores.filter(store => !store.hasMonthlyUpdate).length}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
                 <div className="flex items-center">
-                  <div className="text-blue-600 text-2xl mr-3">✅</div>
+                  <div className="text-blue-600 text-xl mr-2">✅</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">店休日更新済み</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xs font-medium text-gray-600">店休日更新済み</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {openStores.filter(store => store.hasMonthlyUpdate).length}
                     </p>
                   </div>
@@ -188,8 +188,8 @@ const TodayOpenStoresPage = () => {
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                  <h2 className="text-base font-semibold text-gray-900">
                     営業中店舗一覧 ({openStores.length}店舗)
                   </h2>
                 </div>
@@ -202,13 +202,13 @@ const TodayOpenStoresPage = () => {
                     return (
                       <div 
                         key={store.id} 
-                        className="pt-6 px-6 pb-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="pt-3 px-4 pb-2 hover:bg-gray-50 transition-colors cursor-pointer"
                         onClick={() => handleStoreClick(store)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             {/* 店舗名とID */}
-                            <div className="flex items-center mb-2">
+                            <div className="flex items-center mb-1">
                               <h3 className="text-lg font-semibold text-gray-900 mr-3">
                                 {store.name}
                               </h3>
@@ -225,7 +225,7 @@ const TodayOpenStoresPage = () => {
                             </div>
 
                             {/* 営業時間 */}
-                            <div className="flex items-center text-sm text-gray-600 mb-3">
+                            <div className="flex items-center text-sm text-gray-600 mb-1">
                               <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                               </svg>
@@ -280,9 +280,9 @@ const TodayOpenStoresPage = () => {
             )}
 
             {/* 注意事項 */}
-            <div className="mt-8 bg-blue-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <div className="mt-4 bg-blue-50 rounded-lg p-4">
+              <h3 className="text-base font-semibold text-blue-900 mb-3 flex items-center">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 ご利用上の注意
@@ -369,10 +369,18 @@ const TodayOpenStoresPage = () => {
                       )}
                     </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-600">店舗番号:</span>
-                    <div className="text-gray-900">{selectedStore.store_phone || '未設定'}</div>
-                  </div>
+                                     <div>
+                     {selectedStore.store_phone ? (
+                       <a 
+                         href={`tel:${selectedStore.store_phone}`}
+                         className="inline-block px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors w-full text-center"
+                       >
+                         📞 電話する
+                       </a>
+                     ) : (
+                       <div className="text-sm text-gray-500">電話番号未設定</div>
+                     )}
+                   </div>
                 </div>
               </div>
 
