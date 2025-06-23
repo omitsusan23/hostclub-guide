@@ -7,7 +7,7 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
   const currentX = useRef(0);
   const isTracking = useRef(false);
 
-  const time = new Date(record.visited_at).toLocaleTimeString('ja-JP', {
+  const time = new Date(record.guided_at).toLocaleTimeString('ja-JP', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -132,10 +132,10 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
             {store?.name || record.store_id}
           </div>
           <div className="text-sm text-gray-600 flex-shrink-0">
-            {record.visitor_count}名 - {time}
+            {record.guest_count}名 - {time}
           </div>
           <div className="text-sm text-gray-500 ml-auto flex-shrink-0">
-            担当: {record.staff_display_name || '不明'}
+            担当: {record.staff_name || '不明'}
           </div>
         </div>
       </div>

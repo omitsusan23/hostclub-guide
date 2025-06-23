@@ -52,6 +52,10 @@ export const getTodayOpenStores = async () => {
     const currentMonthStart = formatLocalDate(new Date(now.getFullYear(), now.getMonth(), 1))
     const currentMonthEnd = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))
 
+    // 当月の紹介数を取得
+    const monthlyIntroductionsResult = await getMonthlyIntroductionCounts()
+    const monthlyIntroductions = monthlyIntroductionsResult.success ? monthlyIntroductionsResult.data : {}
+
     // 各店舗の今月の店休日更新状況をチェック
     const storeHolidayUpdates = await Promise.all(
       stores.map(async (store) => {
@@ -82,12 +86,27 @@ export const getTodayOpenStores = async () => {
     })
 
     // 営業中の店舗のみフィルタリング（本日が店休日でない店舗）
-    const openStores = stores
+    let openStores = stores
       .filter(store => !holidayStoreIds.has(store.store_id))
       .map(store => ({
         ...store,
-        hasMonthlyUpdate: updateStatusMap.get(store.store_id) || false
+        hasMonthlyUpdate: updateStatusMap.get(store.store_id) || false,
+        monthlyIntroductions: monthlyIntroductions[store.store_id] || 0,
+        guaranteeShortfall: Math.max(0, (store.guarantee_count || 0) - (monthlyIntroductions[store.store_id] || 0))
       }))
+
+    // 保証あり店舗と保証なし店舗で分ける
+    const guaranteedStores = openStores.filter(store => store.guarantee_count > 0)
+    const nonGuaranteedStores = openStores.filter(store => store.guarantee_count === 0)
+
+    // 保証あり店舗は保証割れが大きい順でソート
+    guaranteedStores.sort((a, b) => b.guaranteeShortfall - a.guaranteeShortfall)
+
+    // 保証なし店舗はア行順でソート
+    nonGuaranteedStores.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+
+    // 統合：保証あり店舗 → 保証なし店舗
+    openStores = [...guaranteedStores, ...nonGuaranteedStores]
 
     return { success: true, data: openStores }
   } catch (error) {
@@ -129,20 +148,20 @@ export const getStoreBySubdomain = async (subdomain) => {
 // 案内記録を取得
 export const getVisitRecords = async (storeId = null, startDate = null, endDate = null) => {
   let query = supabase
-    .from('visit_records')
+    .from('staff_logs')
     .select('*')
-    .order('visited_at', { ascending: false })
+    .order('guided_at', { ascending: false })
 
   if (storeId) {
     query = query.eq('store_id', storeId)
   }
 
   if (startDate) {
-    query = query.gte('visited_at', startDate)
+    query = query.gte('guided_at', startDate)
   }
 
   if (endDate) {
-    query = query.lte('visited_at', endDate)
+    query = query.lte('guided_at', endDate)
   }
 
   const { data, error } = await query
@@ -176,17 +195,46 @@ export const getMonthlyVisitRecords = async (storeId = null, year = null, month 
   return await getVisitRecords(storeId, startOfMonth, endOfMonth)
 }
 
+// 当月の紹介数を店舗別に集計
+export const getMonthlyIntroductionCounts = async () => {
+  try {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+    const { data, error } = await supabase
+      .from('staff_logs')
+      .select('store_id, guest_count')
+      .gte('guided_at', startOfMonth)
+      .lte('guided_at', endOfMonth)
+
+    if (error) throw error
+
+    // 店舗別に人数を集計
+    const countsByStore = {}
+    data.forEach(record => {
+      if (!countsByStore[record.store_id]) {
+        countsByStore[record.store_id] = 0
+      }
+      countsByStore[record.store_id] += record.guest_count
+    })
+
+    return { success: true, data: countsByStore }
+  } catch (error) {
+    console.error('当月紹介数取得エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 // 案内記録を追加
 export const addVisitRecord = async (visitData) => {
   const { data, error } = await supabase
-    .from('visit_records')
+    .from('staff_logs')
     .insert({
       store_id: visitData.store_id,
       guest_count: visitData.guest_count,
       staff_name: visitData.staff_name,
-      visited_at: visitData.visited_at || new Date().toISOString(),
-      notes: visitData.notes || null,
-      purpose: visitData.purpose || '案内'
+      guided_at: visitData.guided_at || new Date().toISOString()
     })
     .select()
 
@@ -201,7 +249,7 @@ export const addVisitRecord = async (visitData) => {
 // 案内記録を更新
 export const updateVisitRecord = async (recordId, updateData) => {
   const { data, error } = await supabase
-    .from('visit_records')
+    .from('staff_logs')
     .update(updateData)
     .eq('id', recordId)
     .select()
@@ -217,7 +265,7 @@ export const updateVisitRecord = async (recordId, updateData) => {
 // 案内記録を削除
 export const deleteVisitRecord = async (recordId) => {
   const { error } = await supabase
-    .from('visit_records')
+    .from('staff_logs')
     .delete()
     .eq('id', recordId)
 

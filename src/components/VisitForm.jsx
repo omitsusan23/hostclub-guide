@@ -45,7 +45,7 @@ const VisitForm = ({ selectedStore, onSubmit, onClose }) => {
       await onSubmit({
         storeId,
         guestCount: parseInt(guestCount),
-        visitedAt: new Date().toISOString()
+        guided_at: new Date().toISOString()
       })
       
       // フォームリセット

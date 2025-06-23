@@ -65,7 +65,7 @@ const StaffDashboard = () => {
         store_id: visitData.storeId,
         guest_count: visitData.guestCount,
         staff_name: user?.email || 'スタッフ',
-        notes: visitData.notes || null
+        guided_at: visitData.guided_at
       })
       
       // ローカル状態を更新

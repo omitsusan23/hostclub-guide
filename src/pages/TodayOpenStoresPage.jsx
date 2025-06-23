@@ -249,8 +249,24 @@ const TodayOpenStoresPage = () => {
                             )}
                           </div>
 
-                          {/* 店舗状況 */}
-                          <div className="ml-3 flex-shrink-0">
+                          {/* 保証実績と店舗状況 */}
+                          <div className="ml-3 flex-shrink-0 flex flex-col items-end">
+                            {/* 保証実績 */}
+                            {store.guarantee_count > 0 && (
+                              <div className="text-base font-bold mb-1">
+                                <span className="text-gray-900">{store.monthlyIntroductions}</span>
+                                <span className="text-gray-400">/</span>
+                                <span className={
+                                  store.monthlyIntroductions >= store.guarantee_count 
+                                    ? 'text-blue-600' 
+                                    : 'text-red-600'
+                                }>
+                                  {store.guarantee_count}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* 店舗状況 */}
                             <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusStyle(statusType)}`}>
                               {getStatusText(statusType)}
                             </div>
