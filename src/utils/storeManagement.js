@@ -22,18 +22,18 @@ export const addStoreToDatabase = async (storeData) => {
       .insert([{
         name: storeData.name,
         store_id: storeData.store_id,
-        open_time: storeData.open_time || '20:00',
-        close_time: storeData.close_time || '23:30',
-        base_price: storeData.base_price != null ? parseInt(storeData.base_price) : 0,
-        id_required: storeData.id_required || '顔＝保険証＋キャッシュ',
-        male_price: storeData.male_price != null ? parseInt(storeData.male_price) : 0,
-        panel_fee: storeData.panel_fee != null ? parseInt(storeData.panel_fee) : 120000,
-        guarantee_count: storeData.guarantee_count != null ? parseInt(storeData.guarantee_count) : 25,
-        penalty_fee: storeData.penalty_fee != null ? parseInt(storeData.penalty_fee) : 20000,
-        unit_price: storeData.unit_price != null ? parseInt(storeData.unit_price) : 1000,
-        is_transfer: storeData.is_transfer || false,
-        hoshos_url: storeData.hoshos_url || null,
-        store_phone: storeData.store_phone || null
+        open_time: storeData.open_time,
+        close_time: storeData.close_time,
+        base_fee: storeData.base_fee,
+        id_required: storeData.id_required,
+        male_price: storeData.male_price,
+        panel_fee: storeData.panel_fee,
+        guarantee_count: storeData.guarantee_count,
+        under_guarantee_penalty: storeData.under_guarantee_penalty,
+        charge_per_person: storeData.charge_per_person,
+        is_transfer: storeData.is_transfer,
+        hoshos_url: storeData.hoshos_url,
+        store_phone: storeData.store_phone
       }])
       .select()
 
@@ -224,18 +224,18 @@ export const updateStore = async (storeId, formData) => {
     const updateData = {
       name: formData.name,
       store_id: formData.store_id,
-      open_time: formData.open_time || '20:00',
-      close_time: formData.close_time || '23:30',
-      base_price: formData.base_price != null ? parseInt(formData.base_price) : 0,
-      id_required: formData.id_required || '顔＝保険証＋キャッシュ',
-      male_price: formData.male_price != null ? parseInt(formData.male_price) : 0,
-      panel_fee: formData.panel_fee != null ? parseInt(formData.panel_fee) : 120000,
-      guarantee_count: formData.guarantee_count != null ? parseInt(formData.guarantee_count) : 25,
-      penalty_fee: formData.penalty_fee != null ? parseInt(formData.penalty_fee) : 20000,
-      unit_price: formData.unit_price != null ? parseInt(formData.unit_price) : 1000,
-      is_transfer: Boolean(formData.is_transfer),
-      hoshos_url: formData.hoshos_url || null,
-      store_phone: formData.store_phone || null
+      open_time: formData.open_time,
+      close_time: formData.close_time,
+      base_fee: formData.base_fee,
+      id_required: formData.id_required,
+      male_price: formData.male_price,
+      panel_fee: formData.panel_fee,
+      guarantee_count: formData.guarantee_count,
+      under_guarantee_penalty: formData.under_guarantee_penalty,
+      charge_per_person: formData.charge_per_person,
+      is_transfer: formData.is_transfer,
+      hoshos_url: formData.hoshos_url,
+      store_phone: formData.store_phone
     };
 
     console.log('📝 Update data prepared:', updateData);

@@ -51,7 +51,7 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">初回料金</label>
-                <p className="mt-1 text-sm text-gray-900">¥{(store.base_price || 0).toLocaleString()}</p>
+                <p className="mt-1 text-sm text-gray-900">¥{(store.base_fee != null ? store.base_fee : 0).toLocaleString()}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">男性料金</label>
@@ -93,11 +93,11 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">パネル料</label>
-                <p className="mt-1 text-sm text-gray-900">¥{(store.panel_fee || 0).toLocaleString()}</p>
+                <p className="mt-1 text-sm text-gray-900">¥{(store.panel_fee != null ? store.panel_fee : 0).toLocaleString()}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">一人単価</label>
-                <p className="mt-1 text-sm text-gray-900">¥{(store.unit_price || 0).toLocaleString()}</p>
+                <p className="mt-1 text-sm text-gray-900">¥{(store.charge_per_person != null ? store.charge_per_person : 0).toLocaleString()}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">保証本数</label>
@@ -106,7 +106,7 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700">保証割れ料金</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {store.penalty_fee === 0 ? 'なし' : `－¥${store.penalty_fee.toLocaleString()}`}
+                  {(store.under_guarantee_penalty == null || store.under_guarantee_penalty === 0) ? 'なし' : `－¥${store.under_guarantee_penalty.toLocaleString()}`}
                 </p>
               </div>
               <div>

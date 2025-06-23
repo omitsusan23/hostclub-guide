@@ -19,15 +19,15 @@ const AdminDashboard = () => {
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
-    open_time: '20:00',
-    close_time: '23:30',
-    base_price: 0,
-    id_required: '顔＝保険証＋キャッシュ',
-    male_price: 0,
-    panel_fee: 120000,
-    guarantee_count: 25,
-    penalty_fee: 20000,
-    unit_price: 1000,
+    open_time: '',
+    close_time: '',
+    base_fee: '',
+    id_required: '',
+    male_price: '',
+    panel_fee: '',
+    guarantee_count: '',
+    under_guarantee_penalty: '',
+    charge_per_person: '',
     is_transfer: false,
     hoshos_url: '',
     store_phone: ''
@@ -975,8 +975,8 @@ const AdminDashboard = () => {
               </label>
               <input
                 type="number"
-                value={newStore.unit_price}
-                onChange={(e) => setNewStore({...newStore, unit_price: parseInt(e.target.value) || 0})}
+                value={newStore.charge_per_person}
+                onChange={(e) => setNewStore({...newStore, charge_per_person: parseInt(e.target.value) || 0})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="1000"
               />

@@ -4,15 +4,15 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
   const [formData, setFormData] = useState({
     name: '',
     store_id: '',
-    open_time: '20:00',
-    close_time: '23:30',
-    base_price: 0,
-    id_required: '顔＝保険証＋キャッシュ',
-    male_price: 0,
-    panel_fee: 0,
-    guarantee_count: 0,
-    penalty_fee: 0,
-    unit_price: 0,
+    open_time: '',
+    close_time: '',
+    base_fee: '',
+    id_required: '',
+    male_price: '',
+    panel_fee: '',
+    guarantee_count: '',
+    under_guarantee_penalty: '',
+    charge_per_person: '',
     is_transfer: false,
     hoshos_url: '',
     store_phone: ''
@@ -30,20 +30,20 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
       };
       
       const newFormData = {
-        name: store.name || '',
-        store_id: store.store_id || '',
-        open_time: formatTime(store.open_time) || '20:00',
-        close_time: formatTime(store.close_time) || '23:30',
-        base_price: store.base_price != null ? parseInt(store.base_price) : 0,
-        id_required: store.id_required || '顔＝保険証＋キャッシュ',
-        male_price: store.male_price != null ? parseInt(store.male_price) : 0,
-        panel_fee: store.panel_fee != null ? parseInt(store.panel_fee) : 120000,
-        guarantee_count: store.guarantee_count != null ? parseInt(store.guarantee_count) : 25,
-        penalty_fee: store.penalty_fee != null ? parseInt(store.penalty_fee) : 20000,
-        unit_price: store.unit_price != null ? parseInt(store.unit_price) : 1000,
-        is_transfer: Boolean(store.is_transfer),
-        hoshos_url: store.hoshos_url || '',
-        store_phone: store.store_phone || ''
+        name: store.name,
+        store_id: store.store_id,
+        open_time: formatTime(store.open_time),
+        close_time: formatTime(store.close_time),
+        base_fee: store.base_fee,
+        id_required: store.id_required,
+        male_price: store.male_price,
+        panel_fee: store.panel_fee,
+        guarantee_count: store.guarantee_count,
+        under_guarantee_penalty: store.under_guarantee_penalty,
+        charge_per_person: store.charge_per_person,
+        is_transfer: store.is_transfer,
+        hoshos_url: store.hoshos_url,
+        store_phone: store.store_phone
       };
       console.log('📝 New form data:', newFormData);
       setFormData(newFormData);
@@ -143,11 +143,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">初回料金</label>
                   <input
                     type="number"
-                    value={formData.base_price}
+                    value={formData.base_fee}
                     onChange={(e) => {
                       const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                      console.log('🔢 Base price changed:', { input: e.target.value, parsed: value });
-                      setFormData({...formData, base_price: value});
+                      console.log('🔢 Base fee changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, base_fee: value});
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
@@ -224,11 +224,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">一人単価</label>
                   <input
                     type="number"
-                    value={formData.unit_price}
+                    value={formData.charge_per_person}
                     onChange={(e) => {
                       const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                      console.log('🔢 Unit price changed:', { input: e.target.value, parsed: value });
-                      setFormData({...formData, unit_price: value});
+                      console.log('🔢 Charge per person changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, charge_per_person: value});
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
@@ -252,11 +252,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">保証割れ料金</label>
                   <input
                     type="number"
-                    value={formData.penalty_fee}
+                    value={formData.under_guarantee_penalty}
                     onChange={(e) => {
                       const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                      console.log('🔢 Penalty fee changed:', { input: e.target.value, parsed: value });
-                      setFormData({...formData, penalty_fee: value});
+                      console.log('🔢 Under guarantee penalty changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, under_guarantee_penalty: value});
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"

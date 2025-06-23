@@ -231,19 +231,19 @@ const TodayOpenStoresPage = () => {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-1">
                                 <div className="text-gray-600">
                                   <span className="font-medium">基本料金:</span>
-                                  <div className="text-gray-900">{(store.base_price || 0).toLocaleString()}円</div>
+                                  <div className="text-gray-900">{(store.base_fee != null ? store.base_fee : 0).toLocaleString()}円</div>
                                 </div>
                                 <div className="text-gray-600">
                                   <span className="font-medium">パネル代:</span>
-                                  <div className="text-gray-900">{(store.panel_fee || 0).toLocaleString()}円</div>
+                                  <div className="text-gray-900">{(store.panel_fee != null ? store.panel_fee : 0).toLocaleString()}円</div>
                                 </div>
                                 <div className="text-gray-600">
                                   <span className="font-medium">保証本数:</span>
-                                  <div className="text-gray-900">{store.guarantee_count || 0}本</div>
+                                  <div className="text-gray-900">{store.guarantee_count != null ? store.guarantee_count : 0}本</div>
                                 </div>
                                 <div className="text-gray-600">
                                   <span className="font-medium">単価:</span>
-                                  <div className="text-gray-900">{(store.unit_price || 0).toLocaleString()}円</div>
+                                  <div className="text-gray-900">{(store.charge_per_person != null ? store.charge_per_person : 0).toLocaleString()}円</div>
                                 </div>
                               </div>
                             )}
@@ -333,7 +333,7 @@ const TodayOpenStoresPage = () => {
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">初回料金:</span>
-                    <div className="text-gray-900">¥{(selectedStore.base_price || 0).toLocaleString()}</div>
+                    <div className="text-gray-900">¥{(selectedStore.base_fee != null ? selectedStore.base_fee : 0).toLocaleString()}</div>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">男性料金:</span>
