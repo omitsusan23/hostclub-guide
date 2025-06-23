@@ -10,6 +10,7 @@ import {
   addVisitRecord,
   deleteVisitRecord
 } from '../lib/database'
+import { supabase } from '../lib/supabase'
 
 const StaffDashboard = () => {
   const { user } = useApp()
@@ -21,6 +22,7 @@ const StaffDashboard = () => {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
+  const [currentStaff, setCurrentStaff] = useState(null)
 
   // 今日の日付を取得する関数
   const getTodayDateString = () => {
@@ -45,6 +47,19 @@ const StaffDashboard = () => {
         const recordsData = await getTodayVisitRecords()
         setVisitRecords(recordsData)
 
+        // 現在のスタッフ情報取得
+        if (user?.id) {
+          const { data: staffData, error } = await supabase
+            .from('staffs')
+            .select('display_name')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (!error && staffData) {
+            setCurrentStaff(staffData)
+          }
+        }
+
         // TODO: スタッフチャットデータ取得（テーブル作成後）
         setChatMessages([])
         
@@ -56,7 +71,7 @@ const StaffDashboard = () => {
     }
 
     fetchData()
-  }, [])
+  }, [user?.id])
 
   const handleVisitSubmit = async (visitData) => {
     try {
@@ -64,7 +79,7 @@ const StaffDashboard = () => {
       const savedRecord = await addVisitRecord({
         store_id: visitData.storeId,
         guest_count: visitData.guestCount,
-        staff_name: user?.email || 'スタッフ',
+        staff_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'スタッフ',
         guided_at: visitData.guided_at
       })
       
@@ -91,7 +106,7 @@ const StaffDashboard = () => {
       const newChatMessage = {
         id: Date.now().toString(),
         sender_id: user?.id || 'staff-1',
-        sender_name: user?.email || 'スタッフ',
+        sender_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'スタッフ',
         message: newMessage,
         created_at: new Date().toISOString()
       }
