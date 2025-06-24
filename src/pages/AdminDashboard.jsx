@@ -7,6 +7,7 @@ import StaffEditModal from '../components/StaffEditModal'
 import { useApp } from '../contexts/AppContext'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
+import { getMonthlyIntroductionCounts } from '../lib/database.js'
 
 const AdminDashboard = () => {
   const { user, getUserRole, getUserStoreId } = useApp()
@@ -16,6 +17,8 @@ const AdminDashboard = () => {
   const [staffs, setStaffs] = useState([])
   const [loadingStores, setLoadingStores] = useState(true)
   const [loadingStaffs, setLoadingStaffs] = useState(true)
+  const [monthlyStats, setMonthlyStats] = useState({ totalVisits: 0 })
+  const [loadingStats, setLoadingStats] = useState(true)
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -51,6 +54,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadStores()
     loadStaffs()
+    loadMonthlyStats()
   }, [])
 
   const loadStores = async () => {
@@ -93,9 +97,29 @@ const AdminDashboard = () => {
     }
   }
 
+  const loadMonthlyStats = async () => {
+    setLoadingStats(true)
+    try {
+      const result = await getMonthlyIntroductionCounts()
+      if (result.success) {
+        // 全店舗の今月の案内数を合計
+        const totalVisits = Object.values(result.data).reduce((sum, count) => sum + count, 0)
+        setMonthlyStats({ totalVisits })
+      } else {
+        console.error('Failed to load monthly stats:', result.error)
+        setMonthlyStats({ totalVisits: 0 })
+      }
+    } catch (error) {
+      console.error('Error loading monthly stats:', error)
+      setMonthlyStats({ totalVisits: 0 })
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
   // 統計計算
   const activeStores = stores.length
-  const totalVisits = 0 // TODO: 案内記録データベースと連携
+  const totalVisits = monthlyStats.totalVisits
   const totalRevenue = 0 // TODO: 請求データベースと連携
   
   // 各店舗の実績計算（現在は基本情報のみ）
@@ -481,7 +505,9 @@ const AdminDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">登録店舗数</p>
-              <p className="text-2xl font-bold text-gray-900">{activeStores}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {loadingStores ? '...' : activeStores}
+              </p>
             </div>
           </div>
         </div>
@@ -495,7 +521,9 @@ const AdminDashboard = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">今月の案内件数</p>
-              <p className="text-2xl font-bold text-gray-900">{totalVisits}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {loadingStats ? '...' : totalVisits}
+              </p>
             </div>
           </div>
         </div>

@@ -66,20 +66,15 @@ export const AppProvider = ({ children }) => {
   // ユーザーのスタッフ情報を取得
   const fetchUserStaffInfo = async (userId) => {
     try {
-      console.log('fetchUserStaffInfo called with userId:', userId)
       const { data, error } = await supabase
         .from('staffs')
         .select('display_name')
         .eq('user_id', userId)
         .single()
       
-      console.log('fetchUserStaffInfo result:', { data, error })
-      
       if (!error && data) {
-        console.log('Setting userStaff:', data)
         setUserStaff(data)
       } else {
-        console.log('No staff data found or error:', error)
         setUserStaff(null)
       }
     } catch (error) {
@@ -210,12 +205,6 @@ export const AppProvider = ({ children }) => {
   // 管理者権限チェック（display name「亮太」のみ）
   const hasAdminPermissions = () => {
     const role = getUserRole()
-    console.log('hasAdminPermissions check:', {
-      role,
-      userStaff,
-      displayName: userStaff?.display_name,
-      isRyota: userStaff?.display_name === '亮太'
-    })
     // staffロールかつdisplay nameが「亮太」の場合のみ管理者権限を付与
     return role === 'staff' && userStaff && userStaff.display_name === '亮太'
   }
