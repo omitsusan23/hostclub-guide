@@ -210,18 +210,7 @@ const StaffDashboard = () => {
             </p>
           </a>
 
-          {/* 今後の機能用プレースホルダー */}
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div className="flex items-center mb-2">
-              <div className="text-2xl mr-3">📊</div>
-              <h4 className="font-medium text-gray-500">
-                案内実績レポート
-              </h4>
-            </div>
-            <p className="text-sm text-gray-500">
-              近日公開予定
-            </p>
-          </div>
+
         </div>
       </div>
 

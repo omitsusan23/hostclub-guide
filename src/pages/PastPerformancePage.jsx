@@ -674,35 +674,48 @@ const PastPerformancePage = () => {
                   </div>
                 </div>
 
-                {/* 店舗別案内実績 */}
-                <div className="mt-8">
-                  <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      🏪 店舗別案内実績
-                    </h3>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      {getDisplayStores().map((store) => (
-                        <button
-                          key={store.id}
-                          onClick={() => selectStore(store)}
-                          className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all text-left"
-                        >
-                          <div className="flex items-center">
-                            <div className="text-lg mr-2">🏪</div>
-                            <h4 className="text-sm font-medium text-gray-900 leading-tight">{store.name}</h4>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    
-                    {getDisplayStores().length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>表示できる店舗がありません</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                                 {/* 店舗別案内実績 */}
+                 <div className="mt-8">
+                   <div className="bg-white rounded-lg shadow-md p-6">
+                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                       🏪 店舗別案内実績
+                     </h3>
+                     
+                     <div className="grid grid-cols-2 gap-3">
+                       {getDisplayStores().map((store) => (
+                         <button
+                           key={store.id}
+                           onClick={() => selectStore(store)}
+                           className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all text-left"
+                         >
+                           <div className="flex items-center">
+                             <div className="text-lg mr-2">🏪</div>
+                             <h4 className="text-sm font-medium text-gray-900 leading-tight">{store.name}</h4>
+                           </div>
+                         </button>
+                       ))}
+                     </div>
+                     
+                     {getDisplayStores().length === 0 && (
+                       <div className="text-center py-8 text-gray-500">
+                         <p>表示できる店舗がありません</p>
+                       </div>
+                     )}
+                   </div>
+                   
+                   {/* メインに戻るボタン */}
+                   <div className="mt-6">
+                     <a
+                       href="/staff"
+                       className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                     >
+                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                       </svg>
+                       メインに戻る
+                     </a>
+                   </div>
+                 </div>
               </>
             )}
           </>

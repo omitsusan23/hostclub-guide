@@ -196,15 +196,7 @@ const StaffPerformancePage = () => {
 
 
 
-        {/* 戻るボタン */}
-        <div className="mt-6 text-center">
-          <a
-            href="/staff"
-            className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            ← ダッシュボードに戻る
-          </a>
-        </div>
+
       </div>
 
       {/* 削除確認モーダル */}
