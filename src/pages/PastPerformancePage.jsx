@@ -193,59 +193,70 @@ const PastPerformancePage = () => {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
-        {/* ヘッダー */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            📋 過去の案内実績
-          </h1>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-4 text-gray-600">データを読み込み中...</p>
-            </div>
-          </div>
-        ) : selectedDate ? (
+        {selectedDate ? (
           // 日付詳細表示
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                📋 {selectedDate.getMonth() + 1}/{selectedDate.getDate()} 案内実績 {selectedDate.getMonth() + 1}/{selectedDate.getDate()}({getWeekday(selectedDate)})
-              </h3>
+          <>
+            {/* 戻るボタン */}
+            <div className="mb-6">
               <button
                 onClick={() => setSelectedDate(null)}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
                 カレンダーに戻る
               </button>
             </div>
-            
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {selectedRecords.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  この日の案内記録はありません
-                </p>
-              ) : (
-                selectedRecords.map((record) => {
-                  const store = stores.find(s => s.store_id === record.store_id)
-                  
-                  return (
-                    <SwipeableVisitItem
-                      key={record.id}
-                      record={record}
-                      store={store}
-                      onDelete={handleDeleteRequest}
-                    />
-                  )
-                })
-              )}
+
+                        <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  📋 案内実績{selectedDate.getMonth() + 1}/{selectedDate.getDate()}({getWeekday(selectedDate)})
+                </h3>
+              </div>
+             
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {selectedRecords.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">
+                    この日の案内記録はありません
+                  </p>
+                ) : (
+                  selectedRecords.map((record) => {
+                    const store = stores.find(s => s.store_id === record.store_id)
+                    
+                    return (
+                      <SwipeableVisitItem
+                        key={record.id}
+                        record={record}
+                        store={store}
+                        onDelete={handleDeleteRequest}
+                      />
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
+          </>
         ) : (
-          // カレンダー表示
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <>
+            {/* ヘッダー */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">
+                📋 過去の案内実績
+              </h1>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">データを読み込み中...</p>
+                </div>
+              </div>
+            ) : (
+              // カレンダー表示
+              <div className="bg-white rounded-lg shadow-md p-6">
             {/* 月移動ヘッダー */}
             <div className="flex justify-between items-center mb-6">
               <button
@@ -327,10 +338,12 @@ const PastPerformancePage = () => {
                       </button>
                     )
                   })}
-                </div>
-              ))}
-            </div>
-          </div>
+                                 </div>
+               ))}
+             </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* 削除確認モーダル */}
