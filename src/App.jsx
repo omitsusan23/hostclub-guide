@@ -96,21 +96,21 @@ const AppRoutes = () => {
           } 
         />
         
-        {/* 店舗管理ページ（display name「亮太」のみ） */}
+        {/* 店舗管理ページ（admin または display name「亮太」） */}
         <Route 
           path="/store-management" 
           element={
-            <ProtectedRoute allowedRoles={['staff']} requireAdminPermissions={true}>
+            <ProtectedRoute allowedRoles={['admin', 'staff']} requireAdminPermissions={true}>
               <StoreManagementPage />
             </ProtectedRoute>
           } 
         />
         
-        {/* スタッフ管理ページ（display name「亮太」のみ） */}
+        {/* スタッフ管理ページ（admin または display name「亮太」） */}
         <Route 
           path="/staff-management" 
           element={
-            <ProtectedRoute allowedRoles={['staff']} requireAdminPermissions={true}>
+            <ProtectedRoute allowedRoles={['admin', 'staff']} requireAdminPermissions={true}>
               <StaffManagementPage />
             </ProtectedRoute>
           } 

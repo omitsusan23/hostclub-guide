@@ -202,11 +202,11 @@ export const AppProvider = ({ children }) => {
     return false
   }
 
-  // 管理者権限チェック（display name「亮太」のみ）
+  // 管理者権限チェック（adminロールまたはdisplay name「亮太」）
   const hasAdminPermissions = () => {
     const role = getUserRole()
-    // staffロールかつdisplay nameが「亮太」の場合のみ管理者権限を付与
-    return role === 'staff' && userStaff && userStaff.display_name === '亮太'
+    // adminロールまたはstaffロールかつdisplay nameが「亮太」の場合に管理者権限を付与
+    return role === 'admin' || (role === 'staff' && userStaff && userStaff.display_name === '亮太')
   }
 
   const value = {

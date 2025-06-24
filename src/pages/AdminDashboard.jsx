@@ -593,34 +593,36 @@ const AdminDashboard = () => {
           </a>
 
           {/* 店舗管理 */}
-          <div
-            className="block p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-default"
+          <a
+            href="/store-management"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-purple-300 transition-all group"
           >
             <div className="flex items-center mb-2">
               <div className="text-2xl mr-3">🏢</div>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-gray-900 group-hover:text-purple-600">
                 店舗管理
               </h4>
             </div>
             <p className="text-sm text-gray-600">
-              下記の店舗管理セクションで操作
+              店舗の登録・編集・削除を管理
             </p>
-          </div>
+          </a>
 
           {/* スタッフ管理 */}
-          <div
-            className="block p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-default"
+          <a
+            href="/staff-management"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-orange-300 transition-all group"
           >
             <div className="flex items-center mb-2">
               <div className="text-2xl mr-3">👥</div>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-gray-900 group-hover:text-orange-600">
                 スタッフ管理
               </h4>
             </div>
             <p className="text-sm text-gray-600">
-              下記のスタッフ管理セクションで操作
+              スタッフの登録・編集・削除を管理
             </p>
-          </div>
+          </a>
         </div>
       </div>
 
