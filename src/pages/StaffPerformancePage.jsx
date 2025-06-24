@@ -196,7 +196,7 @@ const StaffPerformancePage = () => {
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">本日の目標本数まで</p>
                 <p className={`text-2xl font-bold ${
-                  getTodayTargetRemaining().remaining >= 0 ? 'text-blue-600' : 'text-red-600'
+                  getTodayTargetRemaining().remaining > 0 ? 'text-red-600' : 'text-blue-600'
                 }`}>
                   {getTodayTargetRemaining().remaining}
                 </p>
