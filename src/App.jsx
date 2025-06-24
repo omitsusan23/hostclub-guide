@@ -10,6 +10,8 @@ import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
 import StaffPerformancePage from './pages/StaffPerformancePage'
 import PastPerformancePage from './pages/PastPerformancePage'
+import StoreManagementPage from './pages/StoreManagementPage'
+import StaffManagementPage from './pages/StaffManagementPage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
@@ -90,6 +92,26 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['staff']}>
               <PastPerformancePage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 店舗管理ページ（display name「亮太」のみ） */}
+        <Route 
+          path="/store-management" 
+          element={
+            <ProtectedRoute allowedRoles={['staff']} requireAdminPermissions={true}>
+              <StoreManagementPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* スタッフ管理ページ（display name「亮太」のみ） */}
+        <Route 
+          path="/staff-management" 
+          element={
+            <ProtectedRoute allowedRoles={['staff']} requireAdminPermissions={true}>
+              <StaffManagementPage />
             </ProtectedRoute>
           } 
         />
