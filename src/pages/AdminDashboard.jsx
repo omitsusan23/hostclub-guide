@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
-import Modal from '../components/Modal'
-import StoreDetailModal from '../components/StoreDetailModal'
-import StoreEditModal from '../components/StoreEditModal'
-import StaffEditModal from '../components/StaffEditModal'
 import { useApp } from '../contexts/AppContext'
-import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
-import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
+import { getAllStores } from '../utils/storeManagement.js'
+import { getAllStaffs } from '../utils/staffManagement.js'
 import { getMonthlyIntroductionCounts } from '../lib/database.js'
 
 const AdminDashboard = () => {
@@ -24,13 +20,13 @@ const AdminDashboard = () => {
     store_id: '',
     open_time: '',
     close_time: '',
-    base_fee: '',
+    base_price: 0,
     id_required: '',
-    male_price: '',
-    panel_fee: '',
-    guarantee_count: '',
-    under_guarantee_penalty: '',
-    charge_per_person: '',
+    male_price: 0,
+    panel_fee: 0,
+    guarantee_count: 0,
+    penalty_fee: 0,
+    charge_per_person: 0,
     is_transfer: false,
     hoshos_url: '',
     store_phone: ''
@@ -169,15 +165,15 @@ const AdminDashboard = () => {
         setNewStore({
           name: '',
           store_id: '',
-          open_time: '20:00',
-          close_time: '23:30',
+          open_time: '',
+          close_time: '',
           base_price: 0,
-          id_required: '顔＝保険証＋キャッシュ',
+          id_required: '',
           male_price: 0,
-          panel_fee: 120000,
-          guarantee_count: 25,
-          penalty_fee: 20000,
-          unit_price: 1000,
+          panel_fee: 0,
+          guarantee_count: 0,
+          penalty_fee: 0,
+          charge_per_person: 0,
           is_transfer: false,
           hoshos_url: '',
           store_phone: ''
@@ -624,234 +620,46 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* メインコンテンツ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 左側：店舗管理 */}
-        <div className="space-y-6">
-          {/* 店舗一覧 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                🏪 店舗管理
-              </h3>
-              <button
-                onClick={() => setShowStoreModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                新規店舗追加
-              </button>
+      {/* 管理者向けサマリー情報 */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          📈 システム概要
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* システム統計 */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-600">月額パネル料合計</span>
+              <span className="font-bold text-green-600">
+                ¥{storeStats.reduce((sum, store) => sum + (store.panel_fee || 0), 0).toLocaleString()}
+              </span>
             </div>
-            
-            <div className="space-y-3">
-              {loadingStores ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">店舗データを読み込み中...</p>
-                </div>
-              ) : storeStats.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">登録された店舗がありません</p>
-                </div>
-              ) : (
-                storeStats.map((store) => (
-                  <div key={store.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                    <button
-                      onClick={() => handleStoreClick(store)}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
-                          {store.name}
-                        </h4>
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </button>
-                  </div>
-                ))
-              )}
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-600">アクティブスタッフ数</span>
+              <span className="font-bold text-blue-600">
+                {staffs.filter(staff => staff.is_active).length}名
+              </span>
             </div>
           </div>
-
-          {/* スタッフ管理 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
-                👥 スタッフ管理
-              </h3>
-              <button
-                onClick={() => setShowStaffModal(true)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-              >
-                新規スタッフ追加
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {loadingStaffs ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">スタッフデータを読み込み中...</p>
-                </div>
-              ) : staffs.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">登録されたスタッフがいません</p>
-                </div>
-              ) : (
-                staffs.map((staff) => (
-                  <div key={staff.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                    <button
-                      onClick={() => handleEditStaff(staff)}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center">
-                            <h4 className="font-medium text-gray-900 hover:text-purple-600 transition-colors">{staff.display_name}</h4>
-                            <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                              staff.is_active 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {staff.is_active ? 'アクティブ' : '無効'}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-sm text-gray-600">
-                            スタッフID: {staff.staff_id} | 
-                            メール: {staff.email}
-                          </div>
-                          {staff.notes && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              備考: {staff.notes}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="text-right">
-                            <div className="text-sm text-gray-500">
-                              登録日: {new Date(staff.created_at).toLocaleDateString('ja-JP')}
-                            </div>
-                            <div className="text-xs text-blue-600">
-                              {staff.staff_id}@hostclub.local
-                            </div>
-                          </div>
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* システム設定 */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                ⚙️ システム設定
-              </h3>
-              <p className="text-gray-600 mb-4">システム全体の設定と管理を行います。</p>
-              <div className="flex space-x-2">
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
-                  ユーザー管理
-                </button>
-                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                  システム設定
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 右側：統計・レポート */}
-        <div className="space-y-6">
-          {/* 月次売上レポート */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📊 月次売上レポート
-            </h3>
-            
-            <div className="space-y-4">
-              {storeStats.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>店舗が登録されていません</p>
-                </div>
-              ) : (
-                storeStats.slice(0, 5).map((store) => (
-                  <div key={store.id} className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-gray-900">{store.name}</div>
-                        <div className="text-sm text-gray-600">今月</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-blue-600">
-                          ¥{(store.panel_fee || 0).toLocaleString()}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          パネル料（基本）
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex justify-between font-bold text-lg">
-                <span>月額パネル料合計</span>
-                <span className="text-green-600">
-                  ¥{storeStats.reduce((sum, store) => sum + (store.panel_fee || 0), 0).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                ※ 実際の案内件数による変動は含まれていません
-              </p>
-            </div>
-          </div>
-
-          {/* 最近の活動 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              📰 最近の活動
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">新規店舗「クラブエース」の契約が完了しました</p>
-                  <p className="text-xs text-gray-500">2時間前</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">スタッフ田中さんが案内登録を15件完了しました</p>
-                  <p className="text-xs text-gray-500">5時間前</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">システムメンテナンスが正常に完了しました</p>
-                  <p className="text-xs text-gray-500">1日前</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">月次請求書の自動発行が完了しました</p>
-                  <p className="text-xs text-gray-500">2日前</p>
-                </div>
+          
+          {/* 管理機能へのリンク */}
+          <div className="space-y-4">
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">管理機能</h4>
+              <div className="space-y-2">
+                <a
+                  href="/store-management"
+                  className="block text-sm text-blue-600 hover:text-blue-800"
+                >
+                  🏢 店舗管理ページで詳細管理
+                </a>
+                <a
+                  href="/staff-management"
+                  className="block text-sm text-blue-600 hover:text-blue-800"
+                >
+                  👥 スタッフ管理ページで詳細管理
+                </a>
               </div>
             </div>
           </div>

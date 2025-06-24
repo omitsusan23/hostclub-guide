@@ -282,77 +282,99 @@ const StaffManagementPage = () => {
         </div>
 
         {/* 新規スタッフ追加モーダル */}
-        <Modal isOpen={showStaffModal} onClose={() => setShowStaffModal(false)}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">新規スタッフ追加</h3>
-            
-            <div className="space-y-4">
+        <Modal
+          isOpen={showStaffModal}
+          onClose={() => setShowStaffModal(false)}
+          title="新規スタッフ追加"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  表示名 *
+                  表示名 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={newStaff.display_name}
                   onChange={(e) => handleDisplayNameChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="表示名を入力"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="例: 田中 太郎"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  スタッフID *
+                  スタッフID <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={newStaff.staff_id}
-                  onChange={(e) => setNewStaff({...newStaff, staff_id: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="スタッフIDを入力"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  パスワード
-                </label>
-                <input
-                  type="text"
-                  value={newStaff.password}
-                  onChange={(e) => setNewStaff({...newStaff, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="パスワードを入力"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  備考
-                </label>
-                <textarea
-                  value={newStaff.notes}
-                  onChange={(e) => setNewStaff({...newStaff, notes: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="備考を入力"
-                  rows="3"
-                />
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={newStaff.staff_id}
+                    onChange={(e) => setNewStaff({...newStaff, staff_id: e.target.value})}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="tanaka"
+                  />
+                  <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 text-sm">
+                    @hostclub.local
+                  </span>
+                </div>
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3 mt-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                パスワード
+              </label>
+              <input
+                type="text"
+                value={newStaff.password}
+                onChange={(e) => setNewStaff({...newStaff, password: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="ryota123"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                スタッフがログインに使用するパスワードです
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                備考（任意）
+              </label>
+              <textarea
+                value={newStaff.notes}
+                onChange={(e) => setNewStaff({...newStaff, notes: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="役職、担当エリア、その他メモなど"
+                rows={3}
+              />
+            </div>
+            
+            {/* プレビュー */}
+            <div className="bg-gray-50 p-4 rounded-md">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">作成される情報</h4>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>📧 メール: {newStaff.staff_id ? `${newStaff.staff_id}@hostclub.local` : '（スタッフIDを入力してください）'}</div>
+                <div>👤 表示名: {newStaff.display_name || '（表示名を入力してください）'}</div>
+                <div>🔑 パスワード: {newStaff.password}</div>
+                <div>🌐 アクセスURL: https://staff.susukino-hostclub-guide.online</div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 pt-4">
               <button
                 onClick={() => setShowStaffModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleAddStaff}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
               >
-                {loading ? '追加中...' : '追加'}
+                {loading ? '追加中...' : 'スタッフを追加'}
               </button>
             </div>
           </div>

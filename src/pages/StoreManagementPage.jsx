@@ -16,13 +16,13 @@ const StoreManagementPage = () => {
     store_id: '',
     open_time: '',
     close_time: '',
-    base_fee: '',
+    base_price: 0,
     id_required: '',
-    male_price: '',
-    panel_fee: '',
-    guarantee_count: '',
-    under_guarantee_penalty: '',
-    charge_per_person: '',
+    male_price: 0,
+    panel_fee: 0,
+    guarantee_count: 0,
+    penalty_fee: 0,
+    charge_per_person: 0,
     is_transfer: false,
     hoshos_url: '',
     store_phone: ''
@@ -100,15 +100,15 @@ const StoreManagementPage = () => {
         setNewStore({
           name: '',
           store_id: '',
-          open_time: '20:00',
-          close_time: '23:30',
+          open_time: '',
+          close_time: '',
           base_price: 0,
-          id_required: '顔＝保険証＋キャッシュ',
+          id_required: '',
           male_price: 0,
-          panel_fee: 120000,
-          guarantee_count: 25,
-          penalty_fee: 20000,
-          unit_price: 1000,
+          panel_fee: 0,
+          guarantee_count: 0,
+          penalty_fee: 0,
+          charge_per_person: 0,
           is_transfer: false,
           hoshos_url: '',
           store_phone: ''
@@ -275,77 +275,226 @@ const StoreManagementPage = () => {
         </div>
 
         {/* 新規店舗追加モーダル */}
-        <Modal isOpen={showStoreModal} onClose={() => setShowStoreModal(false)}>
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">新規店舗追加</h3>
-            
-            <div className="space-y-4">
+        <Modal
+          isOpen={showStoreModal}
+          onClose={() => setShowStoreModal(false)}
+          title="新規店舗追加"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  店舗名 *
+                  店舗名 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={newStore.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="店舗名を入力"
+                  placeholder="例: クラブプレミアム"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  店舗ID *
+                  店舗ID <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={newStore.store_id}
-                  onChange={(e) => setNewStore({...newStore, store_id: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="店舗IDを入力"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    開店時間
-                  </label>
+                <div className="flex">
                   <input
-                    type="time"
-                    value={newStore.open_time}
-                    onChange={(e) => setNewStore({...newStore, open_time: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="text"
+                    value={newStore.store_id}
+                    onChange={(e) => setNewStore({...newStore, store_id: e.target.value})}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="premium"
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    閉店時間
-                  </label>
-                  <input
-                    type="time"
-                    value={newStore.close_time}
-                    onChange={(e) => setNewStore({...newStore, close_time: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 text-sm">
+                    .susukino-hostclub-guide.online
+                  </span>
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Open
+                </label>
+                <input
+                  type="time"
+                  value={newStore.open_time}
+                  onChange={(e) => setNewStore({...newStore, open_time: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  初回Close
+                </label>
+                <input
+                  type="time"
+                  value={newStore.close_time}
+                  onChange={(e) => setNewStore({...newStore, close_time: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  初回料金
+                </label>
+                <input
+                  type="number"
+                  value={newStore.base_price}
+                  onChange={(e) => setNewStore({...newStore, base_price: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  男性料金
+                </label>
+                <input
+                  type="number"
+                  value={newStore.male_price}
+                  onChange={(e) => setNewStore({...newStore, male_price: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ホスホスURL
+                </label>
+                <input
+                  type="url"
+                  value={newStore.hoshos_url}
+                  onChange={(e) => setNewStore({...newStore, hoshos_url: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://hoshos.jp/shop/..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  店舗番号
+                </label>
+                <input
+                  type="tel"
+                  value={newStore.store_phone}
+                  onChange={(e) => setNewStore({...newStore, store_phone: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="011-555-1234"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  パネル料
+                </label>
+                <input
+                  type="number"
+                  value={newStore.panel_fee}
+                  onChange={(e) => setNewStore({...newStore, panel_fee: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="120000"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  一人単価
+                </label>
+                <input
+                  type="number"
+                  value={newStore.charge_per_person}
+                  onChange={(e) => setNewStore({...newStore, charge_per_person: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="1000"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  保証本数
+                </label>
+                <input
+                  type="number"
+                  value={newStore.guarantee_count}
+                  onChange={(e) => setNewStore({...newStore, guarantee_count: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="25"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  保証割れ料金
+                </label>
+                <input
+                  type="number"
+                  value={newStore.penalty_fee}
+                  onChange={(e) => setNewStore({...newStore, penalty_fee: parseInt(e.target.value) || 0})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="20000"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  振込/現金
+                </label>
+                <select
+                  value={newStore.is_transfer}
+                  onChange={(e) => setNewStore({...newStore, is_transfer: e.target.value === 'true'})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={false}>現金</option>
+                  <option value={true}>振込</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  身分証要件
+                </label>
+                <select
+                  value={newStore.id_required}
+                  onChange={(e) => setNewStore({...newStore, id_required: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="顔＝保険証＋キャッシュ">顔＝保険証＋キャッシュ</option>
+                  <option value="顔＝保険証＋クレジット">顔＝保険証＋クレジット</option>
+                  <option value="顔必須">顔必須</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3 pt-4">
               <button
                 onClick={() => setShowStoreModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleAddStore}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? '追加中...' : '追加'}
+                {loading ? '追加中...' : '店舗を追加'}
               </button>
             </div>
           </div>

@@ -80,7 +80,7 @@ const AppRoutes = () => {
         <Route 
           path="/staff-performance" 
           element={
-            <ProtectedRoute allowedRoles={['staff']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff']}>
               <StaffPerformancePage />
             </ProtectedRoute>
           } 
@@ -90,7 +90,7 @@ const AppRoutes = () => {
         <Route 
           path="/past-performance" 
           element={
-            <ProtectedRoute allowedRoles={['staff']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff']}>
               <PastPerformancePage />
             </ProtectedRoute>
           } 

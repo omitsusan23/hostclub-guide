@@ -23,6 +23,11 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAdminPermissions =
 
   const userRole = getUserRole()
   
+  // adminロールは全てのページにアクセス可能
+  if (userRole === 'admin') {
+    return children
+  }
+  
   // ロール制限がある場合はチェック
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
     return (
@@ -42,7 +47,7 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAdminPermissions =
     )
   }
 
-  // 管理者権限が必要な場合はチェック
+  // 管理者権限が必要な場合はチェック（display name「亮太」の管理者権限もチェック）
   if (requireAdminPermissions && !hasAdminPermissions()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
