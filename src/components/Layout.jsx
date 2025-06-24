@@ -40,9 +40,9 @@ const Layout = ({ children }) => {
       {/* ヘッダー */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-12 sm:h-16">
-            {/* 戻るボタン */}
-            <div className="flex items-center w-16 sm:w-20">
+          <div className="flex items-center h-12 sm:h-16">
+            {/* 戻るボタンエリア（固定幅） */}
+            <div className="flex items-center w-8 sm:w-12">
               {!isTopPage() && user && (
                 <button
                   onClick={handleBack}
@@ -56,11 +56,16 @@ const Layout = ({ children }) => {
               )}
             </div>
 
-            {/* ロゴ・タイトル + ロール + display name */}
-            <div className="flex items-center flex-1 justify-center">
-              <h1 className="text-sm sm:text-xl font-bold text-gray-900">
-                <span className="hidden sm:inline">すすきの ホストクラブ案内所</span>
-                <span className="sm:hidden">すすきのホストクラブ案内所</span>
+            {/* ロゴ・タイトル + ロール + display name（左寄せ） */}
+            <div className="flex items-center flex-1 min-w-0 ml-1">
+              <h1 className="font-bold text-gray-900">
+                {/* デスクトップ表示 */}
+                <span className="hidden sm:inline text-xl">すすきの ホストクラブ案内所</span>
+                {/* モバイル表示（2段） */}
+                <div className="sm:hidden text-xs leading-tight">
+                  <div>すすきのホストクラブ</div>
+                  <div style={{marginLeft: '3em'}}>無料案内所</div>
+                </div>
               </h1>
               {user && (
                 <div className="flex items-center ml-1 sm:ml-4">
@@ -77,7 +82,7 @@ const Layout = ({ children }) => {
             </div>
 
             {/* ログアウトボタン */}
-            <div className="flex items-center w-16 sm:w-20 justify-end">
+            <div className="flex items-center ml-2">
               {user && (
                 <button
                   onClick={handleLogout}
