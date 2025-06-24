@@ -7,6 +7,7 @@ import { useApp } from '../contexts/AppContext'
 import { 
   getStores,
   getTodayVisitRecords,
+  getMonthlyVisitRecords,
   addVisitRecord,
   deleteVisitRecord
 } from '../lib/database'
@@ -18,6 +19,7 @@ const StaffDashboard = () => {
   const [selectedStore, setSelectedStore] = useState(null)
   const [stores, setStores] = useState([])
   const [visitRecords, setVisitRecords] = useState([])
+  const [monthlyRecords, setMonthlyRecords] = useState([])
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -53,6 +55,10 @@ const StaffDashboard = () => {
         // 今日の案内記録取得
         const recordsData = await getTodayVisitRecords()
         setVisitRecords(recordsData)
+
+        // 今月の案内記録取得
+        const monthlyData = await getMonthlyVisitRecords()
+        setMonthlyRecords(monthlyData)
 
         // 現在のスタッフ情報取得
         if (user?.id) {
