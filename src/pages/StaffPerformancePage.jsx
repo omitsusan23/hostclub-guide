@@ -87,6 +87,31 @@ const StaffPerformancePage = () => {
     return monthlyCount >= getMonthlyTarget()
   }
 
+  // 本日の目標本数まで計算
+  const getTodayTargetRemaining = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const today = now.getDate()
+    
+    // 今月の最終日を取得
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
+    
+    // 今日を含む残り日数
+    const remainingDays = lastDayOfMonth - today + 1
+    
+    // 前日までの案内数（今月の案内数 - 今日の案内数）
+    const previousDaysCount = monthlyCount - todayCount
+    
+    // 1日あたりの目標本数 = (目標本数 - 前日までの案内数) ÷ 残り日数
+    const dailyTarget = Math.ceil((getMonthlyTarget() - previousDaysCount) / remainingDays)
+    
+    return {
+      dailyTarget: dailyTarget,
+      remaining: dailyTarget - todayCount
+    }
+  }
+
   // 削除確認モーダルを開く
   const handleDeleteRequest = (record, storeName) => {
     setDeleteModal({
@@ -161,13 +186,20 @@ const StaffPerformancePage = () => {
             </div>
           </div>
           
-          {/* 今月の案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+          {/* 本日の目標本数まで */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-purple-500">
             <div className="flex flex-col items-center">
-              <div className="text-blue-600 text-2xl mb-2">📅</div>
+              <div className="flex items-center mb-2">
+                <span className="text-purple-600 text-2xl">📈</span>
+                <span className="text-sm text-gray-600 ml-1">({getTodayTargetRemaining().dailyTarget})</span>
+              </div>
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">今月の案内数</p>
-                <p className="text-2xl font-bold text-gray-900">{monthlyCount}</p>
+                <p className="text-xs font-medium text-gray-600 mb-1">本日の目標本数まで</p>
+                <p className={`text-2xl font-bold ${
+                  getTodayTargetRemaining().remaining >= 0 ? 'text-blue-600' : 'text-red-600'
+                }`}>
+                  {getTodayTargetRemaining().remaining}
+                </p>
               </div>
             </div>
           </div>
