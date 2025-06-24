@@ -116,10 +116,16 @@ const StaffPerformancePage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
         {/* ヘッダー */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">
             📊 案内実績
           </h1>
+          <a
+            href="/past-performance"
+            className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            📋 過去の案内実績
+          </a>
         </div>
 
         {/* 実績カード */}
