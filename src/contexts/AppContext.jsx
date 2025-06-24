@@ -78,7 +78,7 @@ export const AppProvider = ({ children }) => {
         setUserStaff(null)
       }
     } catch (error) {
-      console.error('スタッフ情報取得エラー:', error)
+      console.warn('スタッフ情報取得エラー（続行します）:', error)
       setUserStaff(null)
     }
   }
@@ -87,29 +87,34 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     // 現在のセッションを取得
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      // 初回セッション取得時にもスタッフ情報を取得
-      if (session?.user) {
-        await fetchUserStaffInfo(session.user.id)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        // スタッフ情報を非ブロッキングで取得
+        if (session?.user) {
+          fetchUserStaffInfo(session.user.id).catch(console.warn)
+        }
+        
+        setLoading(false)
+      } catch (error) {
+        console.error('セッション取得エラー:', error)
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     getSession()
 
     // 認証状態の変更をリッスン
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
         
-        // ユーザー情報が変更された場合、スタッフ情報も取得
+        // スタッフ情報を非ブロッキングで取得
         if (session?.user) {
-          await fetchUserStaffInfo(session.user.id)
+          fetchUserStaffInfo(session.user.id).catch(console.warn)
         } else {
           setUserStaff(null)
         }
@@ -201,7 +206,7 @@ export const AppProvider = ({ children }) => {
   const hasAdminPermissions = () => {
     const role = getUserRole()
     // staffロールかつdisplay nameが「亮太」の場合のみ管理者権限を付与
-    return role === 'staff' && userStaff?.display_name === '亮太'
+    return role === 'staff' && userStaff && userStaff.display_name === '亮太'
   }
 
   const value = {
