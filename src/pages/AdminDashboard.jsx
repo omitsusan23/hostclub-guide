@@ -559,21 +559,15 @@ const AdminDashboard = () => {
 
       {/* クイックアクション */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-          </svg>
-          クイックアクション
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* 本日の営業店舗 */}
           <a
             href="/today-open-stores"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all group"
           >
             <div className="flex items-center mb-2">
               <div className="text-2xl mr-3">🏪</div>
-              <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
+              <h4 className="font-medium text-gray-900 group-hover:text-green-600">
                 本日の営業店舗
               </h4>
             </div>
@@ -582,28 +576,49 @@ const AdminDashboard = () => {
             </p>
           </a>
 
-          {/* 今後の機能用プレースホルダー */}
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          {/* 案内実績 */}
+          <a
+            href="/staff-performance"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
+          >
             <div className="flex items-center mb-2">
               <div className="text-2xl mr-3">📊</div>
-              <h4 className="font-medium text-gray-500">
-                月次レポート
+              <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
+                案内実績
               </h4>
             </div>
-            <p className="text-sm text-gray-500">
-              近日公開予定
+            <p className="text-sm text-gray-600">
+              全体の案内実績レポートを確認
+            </p>
+          </a>
+
+          {/* 店舗管理 */}
+          <div
+            className="block p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-default"
+          >
+            <div className="flex items-center mb-2">
+              <div className="text-2xl mr-3">🏢</div>
+              <h4 className="font-medium text-gray-900">
+                店舗管理
+              </h4>
+            </div>
+            <p className="text-sm text-gray-600">
+              下記の店舗管理セクションで操作
             </p>
           </div>
 
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          {/* スタッフ管理 */}
+          <div
+            className="block p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-default"
+          >
             <div className="flex items-center mb-2">
-              <div className="text-2xl mr-3">⚙️</div>
-              <h4 className="font-medium text-gray-500">
-                システム設定
+              <div className="text-2xl mr-3">👥</div>
+              <h4 className="font-medium text-gray-900">
+                スタッフ管理
               </h4>
             </div>
-            <p className="text-sm text-gray-500">
-              近日公開予定
+            <p className="text-sm text-gray-600">
+              下記のスタッフ管理セクションで操作
             </p>
           </div>
         </div>
