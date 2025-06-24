@@ -118,15 +118,16 @@ const PastPerformancePage = () => {
   // 月移動
   const changeMonth = (direction) => {
     const newDate = new Date(currentDate)
+    const now = new Date()
     
     if (direction === 'prev') {
-      // 2025年7月より前には行けない
-      if (newDate.getFullYear() === 2025 && newDate.getMonth() === 6) {
+      // 現在の月より前には行けない
+      if (newDate.getFullYear() < now.getFullYear() || 
+          (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() <= now.getMonth())) {
         return
       }
       newDate.setMonth(newDate.getMonth() - 1)
     } else if (direction === 'next') {
-      const now = new Date()
       // 来月には行けない
       if (newDate.getFullYear() > now.getFullYear() || 
           (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() >= now.getMonth())) {
@@ -186,7 +187,8 @@ const PastPerformancePage = () => {
 
   const calendar = generateCalendarData()
   const now = new Date()
-  const canGoPrev = !(currentDate.getFullYear() === 2025 && currentDate.getMonth() === 6)
+  const canGoPrev = !(currentDate.getFullYear() < now.getFullYear() || 
+                     (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() <= now.getMonth()))
   const canGoNext = !(currentDate.getFullYear() > now.getFullYear() || 
                      (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() >= now.getMonth()))
 
