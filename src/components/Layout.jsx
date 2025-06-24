@@ -41,9 +41,9 @@ const Layout = ({ children }) => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <div className="flex items-center h-12 sm:h-16">
-            {/* 戻るボタンエリア（固定幅） */}
+            {/* 戻るボタンエリア（常に固定幅を確保） */}
             <div className="flex items-center w-8 sm:w-12">
-              {!isTopPage() && user && (
+              {!isTopPage() && user ? (
                 <button
                   onClick={handleBack}
                   className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -53,6 +53,9 @@ const Layout = ({ children }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
+              ) : (
+                // トップページでもスペースを確保するための透明な要素
+                <div className="w-4 h-4 sm:w-5 sm:h-5"></div>
               )}
             </div>
 
