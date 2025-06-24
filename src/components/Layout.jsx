@@ -1,8 +1,11 @@
 import React from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
 
 const Layout = ({ children }) => {
   const { user, signOut, getUserRole } = useApp()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const handleLogout = async () => {
     try {
@@ -13,14 +16,48 @@ const Layout = ({ children }) => {
     }
   }
 
+  const handleBack = () => {
+    navigate(-1)
+  }
+
+  // トップページかどうかを判定
+  const isTopPage = () => {
+    const topPaths = ['/', '/dashboard', '/admin', '/staff', '/customer']
+    return topPaths.includes(location.pathname)
+  }
+
+  // display nameの省略処理
+  const getDisplayName = () => {
+    const name = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'ユーザー'
+    if (name.length > 8) {
+      return name.substring(0, 8) + '...'
+    }
+    return name
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-12 sm:h-16">
-            {/* ロゴ・タイトル */}
-            <div className="flex items-center">
+            {/* 戻るボタン */}
+            <div className="flex items-center w-16 sm:w-20">
+              {!isTopPage() && user && (
+                <button
+                  onClick={handleBack}
+                  className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  title="前のページに戻る"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* ロゴ・タイトル + ロール + display name */}
+            <div className="flex items-center flex-1 justify-center">
               <h1 className="text-sm sm:text-xl font-bold text-gray-900">
                 <span className="hidden sm:inline">すすきの ホストクラブ案内所</span>
                 <span className="sm:hidden">すすきのホストクラブ案内所</span>
@@ -33,23 +70,23 @@ const Layout = ({ children }) => {
                     {getUserRole() === 'customer' && '店舗'}
                   </span>
                   <span className="ml-1 text-xs text-gray-700 truncate max-w-[60px]">
-                    {user.user_metadata?.display_name || user.email?.split('@')[0] || 'ユーザー'}
+                    {getDisplayName()}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* ユーザー情報・ログアウト */}
-            {user && (
-              <div className="flex items-center">
+            {/* ログアウトボタン */}
+            <div className="flex items-center w-16 sm:w-20 justify-end">
+              {user && (
                 <button
                   onClick={handleLogout}
                   className="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                   ログアウト
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
