@@ -7,6 +7,7 @@ import { getTodayOpenStores, getAllStoresLatestStatus } from '../lib/database'
 const TodayOpenStoresPage = () => {
   const { user, getUserRole } = useApp()
   const [openStores, setOpenStores] = useState([])
+  const [totalStoresWithMonthlyUpdate, setTotalStoresWithMonthlyUpdate] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [storeStatuses, setStoreStatuses] = useState({})
@@ -47,6 +48,7 @@ const TodayOpenStoresPage = () => {
 
         
         setOpenStores(storesResult.data)
+        setTotalStoresWithMonthlyUpdate(storesResult.totalStoresWithMonthlyUpdate || 0)
         setStoreStatuses(statusesResult)
       } catch (err) {
         console.error('データ取得エラー:', err)
@@ -165,7 +167,7 @@ const TodayOpenStoresPage = () => {
                   <div className="text-center">
                     <p className="text-xs font-medium text-gray-600">更新済み</p>
                     <p className="text-base font-bold text-gray-900">
-                      {openStores.filter(store => store.hasMonthlyUpdate).length}
+                      {totalStoresWithMonthlyUpdate}
                     </p>
                   </div>
                 </div>

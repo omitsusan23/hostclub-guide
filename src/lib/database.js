@@ -103,6 +103,9 @@ export const getTodayOpenStores = async () => {
       updateStatusMap.set(status.store_id, status.hasUpdated)
     })
 
+    // 全店舗の更新統計を計算（営業中・休業中関係なく）
+    const totalStoresWithMonthlyUpdate = storeHolidayUpdates.filter(status => status.hasUpdated).length
+
     // 営業中の店舗のみフィルタリング（本日が店休日でない店舗）
     let openStores = stores
       .filter(store => !holidayStoreIds.has(store.store_id))
@@ -126,7 +129,12 @@ export const getTodayOpenStores = async () => {
     // 統合：保証あり店舗 → 保証なし店舗
     openStores = [...guaranteedStores, ...nonGuaranteedStores]
 
-    return { success: true, data: openStores }
+    return { 
+      success: true, 
+      data: openStores,
+      // 全店舗ベースの統計情報を追加
+      totalStoresWithMonthlyUpdate 
+    }
   } catch (error) {
     console.error('本日の営業店舗取得エラー:', error)
     return { success: false, error: error.message }
