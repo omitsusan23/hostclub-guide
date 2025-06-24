@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import Modal from '../components/Modal'
+import StoreDetailModal from '../components/StoreDetailModal'
+import StoreEditModal from '../components/StoreEditModal'
+import StaffEditModal from '../components/StaffEditModal'
 import { useApp } from '../contexts/AppContext'
-import { getAllStores } from '../utils/storeManagement.js'
-import { getAllStaffs } from '../utils/staffManagement.js'
+import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
+import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 import { getMonthlyIntroductionCounts } from '../lib/database.js'
 
 const AdminDashboard = () => {
