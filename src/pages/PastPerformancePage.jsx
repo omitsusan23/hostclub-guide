@@ -359,6 +359,25 @@ const PastPerformancePage = () => {
   const canGoNext = !(currentDate.getFullYear() > now.getFullYear() || 
                      (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() >= now.getMonth()))
 
+  // 現在選択中の月の案内数を計算
+  const getCurrentMonthGuidanceCount = () => {
+    return Object.values(monthlyData).flat().reduce((total, record) => total + (record.guest_count || 0), 0)
+  }
+
+  // 目標本数（将来的にadmin設定から取得）
+  const getMonthlyTarget = () => {
+    // TODO: admin設定から取得する
+    return 100 // デフォルト目標本数
+  }
+
+  // 達成度を計算
+  const getCurrentMonthAchievementRate = () => {
+    const guidanceCount = getCurrentMonthGuidanceCount()
+    const target = getMonthlyTarget()
+    if (target === 0) return 0
+    return Math.round((guidanceCount / target) * 100)
+  }
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
@@ -586,6 +605,40 @@ const PastPerformancePage = () => {
               </div>
             ) : (
               <>
+                {/* 月別実績カード */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {/* 月の案内数 */}
+                  <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                    <div className="flex flex-col items-center">
+                      <div className="text-blue-600 text-2xl mb-2">📊</div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-600 mb-1">
+                          {currentDate.getMonth() + 1}月の案内数
+                        </p>
+                        <p className="text-2xl font-bold text-gray-900">{getCurrentMonthGuidanceCount()}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 目標達成度 */}
+                  <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+                    <div className="flex flex-col items-center">
+                      <div className="text-green-600 text-2xl mb-2">🎯</div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-600 mb-1">
+                          {currentDate.getMonth() + 1}月の目標達成度
+                        </p>
+                        <p className="text-lg font-bold text-gray-900">{getMonthlyTarget()}</p>
+                        <p className={`text-lg font-bold ${
+                          getCurrentMonthAchievementRate() >= 100 ? 'text-blue-600' : 'text-red-600'
+                        }`}>
+                          {getCurrentMonthAchievementRate()}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* カレンダー表示 */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                   {/* 月移動ヘッダー */}
