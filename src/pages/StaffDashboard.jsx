@@ -14,7 +14,7 @@ import {
 import { supabase } from '../lib/supabase'
 
 const StaffDashboard = () => {
-  const { user } = useApp()
+  const { user, hasAdminPermissions } = useApp()
   const [showVisitForm, setShowVisitForm] = useState(false)
   const [selectedStore, setSelectedStore] = useState(null)
   const [stores, setStores] = useState([])
@@ -250,7 +250,7 @@ const StaffDashboard = () => {
 
                 {/* クイックアクション */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${hasAdminPermissions() ? 'lg:grid-cols-4' : ''}`}>
           {/* 本日の営業店舗 */}
           <a
             href="/today-open-stores"
@@ -283,7 +283,43 @@ const StaffDashboard = () => {
             </p>
           </a>
 
+          {/* 管理者限定：店舗管理 */}
+          {hasAdminPermissions() && (
+            <a
+              href="/store-management"
+              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-purple-300 transition-all group"
+            >
+              <div className="flex items-center mb-2">
+                <div className="text-2xl mr-3">🏢</div>
+                <h4 className="font-medium text-gray-900 group-hover:text-purple-600">
+                  店舗管理
+                </h4>
+              </div>
+              <p className="text-sm text-gray-600">
+                店舗の登録・編集・削除を管理
+              </p>
+            </a>
+          )}
 
+          {/* 管理者限定：スタッフ管理 */}
+          {hasAdminPermissions() && (
+            <a
+              href="/staff-management"
+              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-orange-300 transition-all group"
+            >
+              <div className="flex items-center mb-2">
+                <div className="text-2xl mr-3">👥</div>
+                <h4 className="font-medium text-gray-900 group-hover:text-orange-600">
+                  スタッフ管理
+                </h4>
+              </div>
+              <p className="text-sm text-gray-600">
+                スタッフの登録・編集・削除を管理
+              </p>
+            </a>
+          )}
+
+ 
         </div>
       </div>
 

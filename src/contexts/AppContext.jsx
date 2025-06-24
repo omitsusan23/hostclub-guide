@@ -15,6 +15,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [userStaff, setUserStaff] = useState(null)
 
   // サブドメインからstore_idを取得する関数
   const getStoreIdFromSubdomain = () => {
@@ -62,6 +63,26 @@ export const AppProvider = ({ children }) => {
     }
   }
 
+  // ユーザーのスタッフ情報を取得
+  const fetchUserStaffInfo = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('staffs')
+        .select('display_name')
+        .eq('user_id', userId)
+        .single()
+      
+      if (!error && data) {
+        setUserStaff(data)
+      } else {
+        setUserStaff(null)
+      }
+    } catch (error) {
+      console.error('スタッフ情報取得エラー:', error)
+      setUserStaff(null)
+    }
+  }
+
   // 認証状態の変更を監視
   useEffect(() => {
     // 現在のセッションを取得
@@ -69,6 +90,12 @@ export const AppProvider = ({ children }) => {
       const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
       setUser(session?.user ?? null)
+      
+      // 初回セッション取得時にもスタッフ情報を取得
+      if (session?.user) {
+        await fetchUserStaffInfo(session.user.id)
+      }
+      
       setLoading(false)
     }
 
@@ -79,6 +106,14 @@ export const AppProvider = ({ children }) => {
       async (event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
+        
+        // ユーザー情報が変更された場合、スタッフ情報も取得
+        if (session?.user) {
+          await fetchUserStaffInfo(session.user.id)
+        } else {
+          setUserStaff(null)
+        }
+        
         setLoading(false)
       }
     )
@@ -162,10 +197,18 @@ export const AppProvider = ({ children }) => {
     return false
   }
 
+  // 管理者権限チェック（display name「亮太」のみ）
+  const hasAdminPermissions = () => {
+    const role = getUserRole()
+    // staffロールかつdisplay nameが「亮太」の場合のみ管理者権限を付与
+    return role === 'staff' && userStaff?.display_name === '亮太'
+  }
+
   const value = {
     user,
     session,
     loading,
+    userStaff,
     signIn,
     signOut,
     updatePassword,
@@ -174,6 +217,7 @@ export const AppProvider = ({ children }) => {
     getStoreIdFromSubdomain,
     getRoleFromSubdomain,
     hasAccess,
+    hasAdminPermissions,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
