@@ -86,6 +86,30 @@ const StaffDashboard = () => {
     fetchData()
   }, [user?.id])
 
+  // 本日の案内数を計算
+  const todayCount = visitRecords.reduce((total, record) => total + record.guest_count, 0)
+  
+  // 今月の案内数を計算
+  const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
+
+  // 目標本数（将来的にadmin設定から取得）
+  const getMonthlyTarget = () => {
+    // TODO: admin設定から取得する
+    return 100 // デフォルト目標本数
+  }
+
+  // 目標本数までの計算
+  const getTargetRemaining = () => {
+    const target = getMonthlyTarget()
+    const remaining = target - monthlyCount
+    return remaining > 0 ? remaining : monthlyCount - target // 目標達成時は超過分を返す
+  }
+
+  // 目標達成状況
+  const isTargetAchieved = () => {
+    return monthlyCount >= getMonthlyTarget()
+  }
+
   const handleVisitSubmit = async (visitData) => {
     try {
       // Supabaseに案内記録を保存
@@ -181,6 +205,49 @@ const StaffDashboard = () => {
   return (
     <Layout>
       <div className="pb-24">
+        {/* 実績カード */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          {/* 本日の案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+            <div className="flex flex-col items-center">
+              <div className="text-green-600 text-2xl mb-2">🏪</div>
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
+                <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* 今月の案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+            <div className="flex flex-col items-center">
+              <div className="text-blue-600 text-2xl mb-2">📅</div>
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600 mb-1">今月の案内数</p>
+                <p className="text-2xl font-bold text-gray-900">{monthlyCount}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 目標本数まで */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-2">
+                <span className="text-yellow-600 text-2xl">🎯</span>
+                <span className="text-sm text-gray-600 ml-1">({getMonthlyTarget()})</span>
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-600 mb-1">目標本数まで</p>
+                <p className={`text-2xl font-bold ${
+                  isTargetAchieved() ? 'text-blue-600' : 'text-red-600'
+                }`}>
+                  {isTargetAchieved() ? `+${getTargetRemaining()}` : getTargetRemaining()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
                 {/* クイックアクション */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
