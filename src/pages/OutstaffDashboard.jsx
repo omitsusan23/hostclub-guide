@@ -20,8 +20,6 @@ const OutstaffDashboard = () => {
   const [stores, setStores] = useState([])
   const [visitRecords, setVisitRecords] = useState([])
   const [monthlyRecords, setMonthlyRecords] = useState([])
-  const [chatMessages, setChatMessages] = useState([])
-  const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
@@ -77,8 +75,7 @@ const OutstaffDashboard = () => {
           }
         }
 
-        // TODO: outstaff専用チャットデータ取得（テーブル作成後）
-        setChatMessages([])
+
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -138,30 +135,7 @@ const OutstaffDashboard = () => {
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return
 
-    try {
-      // TODO: 実際のSupabaseへのoutstaff用チャット保存
-      console.log('アウトスタッフチャット送信:', newMessage)
-      
-      // 一時的にローカル状態を更新
-      const newChatMessage = {
-        id: Date.now().toString(),
-        sender_id: user?.id || 'outstaff-1',
-        sender_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'アウトスタッフ',
-        message: newMessage,
-        created_at: new Date().toISOString()
-      }
-      
-      setChatMessages(prev => [...prev, newChatMessage])
-      setNewMessage('')
-      
-    } catch (error) {
-      console.error('チャット送信エラー:', error)
-      alert('❌ 送信に失敗しました')
-    }
-  }
 
   // 削除確認モーダルを開く
   const handleDeleteRequest = (record, storeName) => {
@@ -299,60 +273,6 @@ const OutstaffDashboard = () => {
 
         {/* メインコンテンツ */}
         <div className="space-y-6">
-          {/* アウトスタッフチャット */}
-          <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              💬 アウトスタッフチャット
-            </h3>
-            
-            {/* チャットメッセージ */}
-            <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-              {chatMessages.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">💭</div>
-                  <p className="text-gray-500">まだメッセージはありません</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    他のアウトスタッフとの情報共有にご活用ください
-                  </p>
-                </div>
-              ) : (
-                chatMessages.map((chat) => (
-                  <div key={chat.id} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-l-4 border-purple-300">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm text-purple-700">{chat.sender_name}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(chat.created_at).toLocaleTimeString('ja-JP', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                    <p className="text-sm">{chat.message}</p>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            {/* メッセージ入力 */}
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="メッセージを入力..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
-              >
-                送信
-              </button>
-            </div>
-          </div>
-
           {/* 担当可能店舗一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
