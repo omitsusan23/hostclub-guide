@@ -402,7 +402,7 @@ const OutstaffDashboard = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 border-t border-purple-300 px-4 py-3 shadow-lg z-50">
         <button
           onClick={() => setShowVisitForm(true)}
-          className="w-full max-w-sm mx-auto block px-6 py-4 bg-white text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-semibold rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-md border-2 border-white"
+          className="w-full max-w-sm mx-auto block px-6 py-4 bg-white text-purple-600 text-lg font-semibold rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-md border-2 border-white"
         >
           📝 案内報告
         </button>
