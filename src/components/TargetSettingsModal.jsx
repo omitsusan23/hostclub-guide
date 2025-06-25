@@ -35,10 +35,10 @@ const TargetSettingsModal = ({ isOpen, onClose }) => {
           initialEditingTargets[target.month] = target.target_count
         })
         
-        // 存在しない月はデフォルト値（100）を設定
+        // 存在しない月はデフォルト値（0）を設定
         for (let month = 1; month <= 12; month++) {
           if (!initialEditingTargets[month]) {
-            initialEditingTargets[month] = 100
+            initialEditingTargets[month] = 0
           }
         }
         
@@ -62,6 +62,7 @@ const TargetSettingsModal = ({ isOpen, onClose }) => {
 
   // 保存
   const handleSave = async () => {
+    console.log('🎯 目標保存開始...')
     setSaving(true)
     try {
       // 一括保存用のデータを準備
@@ -71,16 +72,21 @@ const TargetSettingsModal = ({ isOpen, onClose }) => {
         target_count: target_count
       }))
 
+      console.log('📊 保存データ:', bulkTargets)
+      
       const result = await setBulkMonthlyTargets(bulkTargets)
+      console.log('📝 保存結果:', result)
+      
       if (result.success) {
         alert('✅ 目標を保存しました')
         await fetchTargets() // 最新データを再取得
       } else {
+        console.error('❌ 保存失敗:', result.error)
         alert('❌ 保存に失敗しました: ' + result.error)
       }
     } catch (error) {
-      console.error('保存エラー:', error)
-      alert('❌ 保存中にエラーが発生しました')
+      console.error('❌ 保存エラー:', error)
+      alert('❌ 保存中にエラーが発生しました: ' + error.message)
     } finally {
       setSaving(false)
     }
@@ -128,7 +134,7 @@ const TargetSettingsModal = ({ isOpen, onClose }) => {
           <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto">
             {monthNames.map((monthName, index) => {
               const month = index + 1
-              const currentValue = editingTargets[month] || 100
+              const currentValue = editingTargets[month] || 0
               
               return (
                 <div key={month} className="bg-gray-50 p-3 rounded-lg">

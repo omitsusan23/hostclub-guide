@@ -130,11 +130,11 @@ const AppRoutes = () => {
           } 
         />
         
-        {/* outstaff店舗設定ページ（admin専用） */}
+        {/* outstaff店舗設定ページ（admin または display name「亮太」） */}
         <Route 
           path="/outstaff-store-settings" 
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff']} requireAdminPermissions={true}>
               <OutstaffStoreSettingsPage />
             </ProtectedRoute>
           } 

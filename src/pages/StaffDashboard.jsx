@@ -26,7 +26,7 @@ const StaffDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
-  const [monthlyTarget, setMonthlyTarget] = useState(100)
+  const [monthlyTarget, setMonthlyTarget] = useState(0)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {

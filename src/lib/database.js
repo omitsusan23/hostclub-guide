@@ -711,14 +711,14 @@ export const getMonthlyTarget = async (year = null, month = null) => {
       .single()
 
     if (error) {
-      console.warn('目標取得エラー（デフォルト値100を使用）:', error)
-      return 100 // デフォルト値
+      console.warn('目標取得エラー（デフォルト値0を使用）:', error)
+      return 0 // デフォルト値
     }
 
-    return data?.target_count || 100
+    return data?.target_count || 0
   } catch (error) {
-    console.warn('目標取得エラー（デフォルト値100を使用）:', error)
-    return 100 // デフォルト値
+    console.warn('目標取得エラー（デフォルト値0を使用）:', error)
+    return 0 // デフォルト値
   }
 }
 
