@@ -16,6 +16,8 @@ const StaffPerformancePage = () => {
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalTodayRecommendations, setPersonalTodayRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
   const [effectiveRole, setEffectiveRole] = useState(null)
+  const [dailyTargetData, setDailyTargetData] = useState(null)
+  const [achievementData, setAchievementData] = useState(null)
 
   // URLパラメータからtypeを取得
   const urlParams = new URLSearchParams(window.location.search)
@@ -93,6 +95,16 @@ const StaffPerformancePage = () => {
             }
           }
         }
+
+        // staff向けの動的日割り目標を計算
+        if (currentEffectiveRole !== 'outstaff' && forceType !== 'outstaff') {
+          const monthlyData = await getMonthlyVisitRecords(null, null, null, staffTypeFilter)
+          const monthlyCount = monthlyData.reduce((total, record) => total + record.guest_count, 0)
+          const targetData = await calculateDailyTarget(monthlyCount)
+          const achievementResult = await calculateTargetAchievementRate(monthlyCount)
+          setDailyTargetData(targetData)
+          setAchievementData(achievementResult)
+        }
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -110,9 +122,7 @@ const StaffPerformancePage = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
-  // staff向けの目標計算
-  const dailyTargetData = effectiveRole !== 'outstaff' && forceType !== 'outstaff' ? calculateDailyTarget() : null
-  const achievementData = effectiveRole !== 'outstaff' && forceType !== 'outstaff' ? calculateTargetAchievementRate(monthlyCount) : null
+
 
 
 
@@ -228,18 +238,18 @@ const StaffPerformancePage = () => {
               </div>
             </div>
 
-            {/* 本日の目標本数まで */}
+            {/* 本日の日割り目標 */}
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
               <div className="flex flex-col items-center">
                 <div className="text-orange-600 text-2xl mb-2">🎯</div>
                 <div className="text-center">
-                  <p className="text-xs font-medium text-gray-600 mb-1">本日の目標本数まで</p>
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日の日割り目標</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {achievementData?.remainingToDaily || 0}
+                    {dailyTargetData ? dailyTargetData.dailyTarget : 0}
                   </p>
                   {dailyTargetData && (
                     <p className="text-xs text-gray-500 mt-1">
-                      目標: {Math.ceil(dailyTargetData.dailyRate * dailyTargetData.currentDay)}本
+                      残り{dailyTargetData.remainingTarget}本 ÷ {dailyTargetData.remainingDays}日
                     </p>
                   )}
                 </div>

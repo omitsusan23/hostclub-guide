@@ -702,8 +702,8 @@ export const getMonthlyTarget = () => {
   return 100
 }
 
-// 日割り目標を計算（staffのみ）
-export const calculateDailyTarget = () => {
+// 日割り目標を計算（staffのみ）- 動的計算式
+export const calculateDailyTarget = async (currentMonthCount = 0) => {
   const monthlyTarget = getMonthlyTarget()
   const now = new Date()
   const year = now.getFullYear()
@@ -715,22 +715,30 @@ export const calculateDailyTarget = () => {
   // 今日が何日目か
   const currentDay = now.getDate()
   
-  // 日割り目標 = 月間目標 / 今月の総日数 * 今日までの日数
-  const dailyTarget = Math.ceil((monthlyTarget / totalDaysInMonth) * currentDay)
+  // 今日を含む残り営業日数
+  const remainingDays = totalDaysInMonth - currentDay + 1
+  
+  // 残り目標数 = 月間目標 - 現在までの案内数
+  const remainingTarget = Math.max(0, monthlyTarget - currentMonthCount)
+  
+  // 今日の日割り目標 = 残り目標数 ÷ 残り営業日数
+  const dailyTarget = remainingDays > 0 ? Math.ceil(remainingTarget / remainingDays) : 0
   
   return {
     monthlyTarget,
     totalDaysInMonth,
     currentDay,
+    remainingDays,
+    remainingTarget,
     dailyTarget,
-    dailyRate: monthlyTarget / totalDaysInMonth
+    currentMonthCount
   }
 }
 
 // 目標達成率を計算（staffのみ）
-export const calculateTargetAchievementRate = (currentCount) => {
-  const { dailyTarget, monthlyTarget } = calculateDailyTarget()
-  const dailyRate = (currentCount / dailyTarget) * 100
+export const calculateTargetAchievementRate = async (currentCount) => {
+  const { dailyTarget, monthlyTarget } = await calculateDailyTarget(currentCount)
+  const dailyRate = dailyTarget > 0 ? (currentCount / dailyTarget) * 100 : 0
   const monthlyRate = (currentCount / monthlyTarget) * 100
   
   return {
