@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord } from '../lib/database'
+import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord, getPersonalTodayIntroductionsByRecommendation } from '../lib/database'
 import { supabase } from '../lib/supabase'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
@@ -14,6 +14,7 @@ const StaffPerformancePage = () => {
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
+  const [personalTodayRecommendations, setPersonalTodayRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -56,6 +57,27 @@ const StaffPerformancePage = () => {
         // 今月の案内記録取得（分離表示）
         const monthlyData = await getMonthlyVisitRecords(null, null, null, staffTypeFilter)
         setMonthlyRecords(monthlyData)
+
+        // 現在のスタッフ情報取得
+        if (user?.id) {
+          const { data: staffData, error } = await supabase
+            .from('staffs')
+            .select('display_name')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (!error && staffData) {
+            setCurrentStaff(staffData)
+            
+            // outstaffの場合は個人本日推奨状態別案内数を取得
+            if (userRole === 'outstaff') {
+              const personalTodayRecommendationsResult = await getPersonalTodayIntroductionsByRecommendation(staffData.display_name)
+              if (personalTodayRecommendationsResult.success) {
+                setPersonalTodayRecommendations(personalTodayRecommendationsResult.data)
+              }
+            }
+          }
+        }
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -73,48 +95,7 @@ const StaffPerformancePage = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
-  // 目標本数（将来的にadmin設定から取得）
-  const getMonthlyTarget = () => {
-    // TODO: admin設定から取得する
-    return 100 // デフォルト目標本数
-  }
 
-  // 目標本数までの計算
-  const getTargetRemaining = () => {
-    const target = getMonthlyTarget()
-    const remaining = target - monthlyCount
-    return remaining > 0 ? remaining : monthlyCount - target // 目標達成時は超過分を返す
-  }
-
-  // 目標達成状況
-  const isTargetAchieved = () => {
-    return monthlyCount >= getMonthlyTarget()
-  }
-
-  // 本日の目標本数まで計算
-  const getTodayTargetRemaining = () => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const today = now.getDate()
-    
-    // 今月の最終日を取得
-    const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
-    
-    // 今日を含む残り日数
-    const remainingDays = lastDayOfMonth - today + 1
-    
-    // 前日までの案内数（今月の案内数 - 今日の案内数）
-    const previousDaysCount = monthlyCount - todayCount
-    
-    // 1日あたりの目標本数 = (目標本数 - 前日までの案内数) ÷ 残り日数
-    const dailyTarget = Math.ceil((getMonthlyTarget() - previousDaysCount) / remainingDays)
-    
-    return {
-      dailyTarget: dailyTarget,
-      remaining: dailyTarget - todayCount
-    }
-  }
 
   // 削除確認モーダルを開く
   const handleDeleteRequest = (record, storeName) => {
@@ -180,9 +161,9 @@ const StaffPerformancePage = () => {
         {/* 実績カード */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           {/* 本日の案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
             <div className="flex flex-col items-center">
-              <div className="text-green-600 text-2xl mb-2">🏪</div>
+              <div className="text-blue-600 text-2xl mb-2">🏪</div>
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
                 <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
@@ -190,38 +171,24 @@ const StaffPerformancePage = () => {
             </div>
           </div>
           
-          {/* 本日の目標本数まで */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-purple-500">
+          {/* 本日のチェックマークあり案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
             <div className="flex flex-col items-center">
-              <div className="flex items-center mb-2">
-                <span className="text-purple-600 text-2xl">📈</span>
-                <span className="text-sm text-gray-600 ml-1">({getTodayTargetRemaining().dailyTarget})</span>
-              </div>
+              <div className="text-green-600 text-2xl mb-2">✅</div>
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">本日の目標本数まで</p>
-                <p className={`text-2xl font-bold ${
-                  getTodayTargetRemaining().remaining > 0 ? 'text-red-600' : 'text-blue-600'
-                }`}>
-                  {getTodayTargetRemaining().remaining}
-                </p>
+                <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークあり</p>
+                <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.recommended}</p>
               </div>
             </div>
           </div>
 
-          {/* 目標本数まで */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+          {/* 本日のチェックマークなし案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
             <div className="flex flex-col items-center">
-              <div className="flex items-center mb-2">
-                <span className="text-yellow-600 text-2xl">🎯</span>
-                <span className="text-sm text-gray-600 ml-1">({getMonthlyTarget()})</span>
-              </div>
+              <div className="text-red-600 text-2xl mb-2">❌</div>
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">目標本数まで</p>
-                <p className={`text-2xl font-bold ${
-                  isTargetAchieved() ? 'text-blue-600' : 'text-red-600'
-                }`}>
-                  {isTargetAchieved() ? `+${getTargetRemaining()}` : getTargetRemaining()}
-                </p>
+                <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークなし</p>
+                <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.notRecommended}</p>
               </div>
             </div>
           </div>

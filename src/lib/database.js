@@ -552,4 +552,98 @@ export const getMonthlyIntroductionCountsByStaffAndRecommendation = async () => 
     console.error('スタッフ別案内数取得エラー:', error)
     return { success: false, error: error.message, data: {} }
   }
+}
+
+// 個人スタッフの推奨状態別当月案内数を取得
+export const getPersonalMonthlyIntroductionsByRecommendation = async (staffName) => {
+  try {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+    // そのスタッフの当月案内記録を取得
+    const { data: logs, error: logsError } = await supabase
+      .from('staff_logs')
+      .select('guest_count, store_was_recommended, staff_name')
+      .eq('staff_name', staffName)
+      .gte('guided_at', startOfMonth)
+      .lte('guided_at', endOfMonth)
+
+    if (logsError) throw logsError
+
+    // 推奨状態別に集計
+    let recommendedCount = 0
+    let notRecommendedCount = 0
+    
+    logs.forEach(record => {
+      if (record.store_was_recommended) {
+        recommendedCount += record.guest_count
+      } else {
+        notRecommendedCount += record.guest_count
+      }
+    })
+
+    return { 
+      success: true, 
+      data: { 
+        recommended: recommendedCount, 
+        notRecommended: notRecommendedCount,
+        total: recommendedCount + notRecommendedCount
+      } 
+    }
+  } catch (error) {
+    console.error('個人スタッフ案内数取得エラー:', error)
+    return { 
+      success: false, 
+      error: error.message, 
+      data: { recommended: 0, notRecommended: 0, total: 0 } 
+    }
+  }
+}
+
+// 個人スタッフの推奨状態別本日案内数を取得
+export const getPersonalTodayIntroductionsByRecommendation = async (staffName) => {
+  try {
+    const businessDate = getBusinessDate()
+    const startOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate(), 1).toISOString() // 1時から開始
+    const endOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate() + 1, 1).toISOString() // 翌日1時まで
+
+    // そのスタッフの本日案内記録を取得
+    const { data: logs, error: logsError } = await supabase
+      .from('staff_logs')
+      .select('guest_count, store_was_recommended, staff_name')
+      .eq('staff_name', staffName)
+      .gte('guided_at', startOfDay)
+      .lte('guided_at', endOfDay)
+
+    if (logsError) throw logsError
+
+    // 推奨状態別に集計
+    let recommendedCount = 0
+    let notRecommendedCount = 0
+    
+    logs.forEach(record => {
+      if (record.store_was_recommended) {
+        recommendedCount += record.guest_count
+      } else {
+        notRecommendedCount += record.guest_count
+      }
+    })
+
+    return { 
+      success: true, 
+      data: { 
+        recommended: recommendedCount, 
+        notRecommended: notRecommendedCount,
+        total: recommendedCount + notRecommendedCount
+      } 
+    }
+  } catch (error) {
+    console.error('個人スタッフ本日案内数取得エラー:', error)
+    return { 
+      success: false, 
+      error: error.message, 
+      data: { recommended: 0, notRecommended: 0, total: 0 } 
+    }
+  }
 } 

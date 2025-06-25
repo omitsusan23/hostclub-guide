@@ -3,7 +3,8 @@ import Layout from '../components/Layout'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import { useApp } from '../contexts/AppContext'
-import { getVisitRecords, getStores, deleteVisitRecord } from '../lib/database'
+import { getVisitRecords, getStores, deleteVisitRecord, getPersonalMonthlyIntroductionsByRecommendation } from '../lib/database'
+import { supabase } from '../lib/supabase'
 
 const PastPerformancePage = () => {
   const { user, getUserRole, getUserStoreId } = useApp()
@@ -22,6 +23,8 @@ const PastPerformancePage = () => {
   const [storeMonthlyData, setStoreMonthlyData] = useState({})
   const [storeSelectedRecords, setStoreSelectedRecords] = useState([])
   const [storeLoading, setStoreLoading] = useState(false)
+  const [currentStaff, setCurrentStaff] = useState(null)
+  const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
 
   // staff、outstaffロールのみアクセス可能
   const userRole = getUserRole()
@@ -90,13 +93,31 @@ const PastPerformancePage = () => {
 
   // 店舗データ取得（outstaffフィルタリング対応）
   useEffect(() => {
-    const fetchStores = async () => {
+    const fetchInitialData = async () => {
       const userRole = getUserRole()
       const storesData = await getStores(userRole)
       setStores(storesData)
+
+      // スタッフ情報と当月推奨状態別案内数を取得（outstaffの場合のみ）
+      if (userRole === 'outstaff' && user?.id) {
+        const { data: staffData, error } = await supabase
+          .from('staffs')
+          .select('display_name')
+          .eq('user_id', user.id)
+          .single()
+        
+        if (!error && staffData) {
+          setCurrentStaff(staffData)
+          
+          const personalRecommendationsResult = await getPersonalMonthlyIntroductionsByRecommendation(staffData.display_name)
+          if (personalRecommendationsResult.success) {
+            setPersonalMonthlyRecommendations(personalRecommendationsResult.data)
+          }
+        }
+      }
     }
-    fetchStores()
-  }, [])
+    fetchInitialData()
+  }, [user?.id])
 
   // 月が変更されたときにデータを取得
   useEffect(() => {
@@ -375,23 +396,47 @@ const PastPerformancePage = () => {
     return Object.values(monthlyData).flat().reduce((total, record) => total + (record.guest_count || 0), 0)
   }
 
-  // 目標本数（将来的にadmin設定から取得）
-  const getMonthlyTarget = () => {
-    // TODO: admin設定から取得する
-    return 100 // デフォルト目標本数
-  }
-
-  // 達成度を計算
-  const getCurrentMonthAchievementRate = () => {
-    const guidanceCount = getCurrentMonthGuidanceCount()
-    const target = getMonthlyTarget()
-    if (target === 0) return 0
-    return Math.round((guidanceCount / target) * 100)
-  }
-
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
+        {/* outstaffの場合のみ当月統計カードを表示 */}
+        {userRole === 'outstaff' && !selectedDate && !storeSelectedDate && !selectedStore && (
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {/* 当月の案内数 */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex flex-col items-center">
+                <div className="text-blue-600 text-2xl mb-2">🏪</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">当月の案内数</p>
+                  <p className="text-2xl font-bold text-gray-900">{personalMonthlyRecommendations.total}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* 当月のチェックマークあり案内数 */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+              <div className="flex flex-col items-center">
+                <div className="text-green-600 text-2xl mb-2">✅</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">当月のチェックマークあり</p>
+                  <p className="text-2xl font-bold text-gray-900">{personalMonthlyRecommendations.recommended}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 当月のチェックマークなし案内数 */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+              <div className="flex flex-col items-center">
+                <div className="text-red-600 text-2xl mb-2">❌</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">当月のチェックマークなし</p>
+                  <p className="text-2xl font-bold text-gray-900">{personalMonthlyRecommendations.notRecommended}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedDate ? (
           // 日付詳細表示
           <>
