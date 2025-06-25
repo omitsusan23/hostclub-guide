@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord, getPersonalTodayIntroductionsByRecommendation } from '../lib/database'
+import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord, getPersonalTodayIntroductionsByRecommendation, getAllOutstaffTodayIntroductionsByRecommendation } from '../lib/database'
 import { supabase } from '../lib/supabase'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
@@ -15,6 +15,10 @@ const StaffPerformancePage = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalTodayRecommendations, setPersonalTodayRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
+
+  // URLパラメータからtypeを取得
+  const urlParams = new URLSearchParams(window.location.search)
+  const forceType = urlParams.get('type') // 'outstaff' または null
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -44,10 +48,11 @@ const StaffPerformancePage = () => {
         
         // ユーザーロールを取得して分離表示フィルタリングを適用
         const userRole = getUserRole()
-        const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+        const effectiveRole = forceType || userRole // URLパラメータでの強制指定を優先
+        const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'
         
         // 店舗データ取得（outstaffフィルタリング対応）
-        const storesData = await getStores(userRole)
+        const storesData = await getStores(effectiveRole)
         setStores(storesData)
         
         // 今日の案内記録取得（分離表示）
@@ -58,8 +63,16 @@ const StaffPerformancePage = () => {
         const monthlyData = await getMonthlyVisitRecords(null, null, null, staffTypeFilter)
         setMonthlyRecords(monthlyData)
 
-        // 現在のスタッフ情報取得
-        if (user?.id) {
+        // スタッフ情報と推奨状態別案内数を取得
+        if (forceType === 'outstaff') {
+          // admin経由でoutstaff全体のデータを表示
+          const allOutstaffTodayResult = await getAllOutstaffTodayIntroductionsByRecommendation()
+          if (allOutstaffTodayResult.success) {
+            setPersonalTodayRecommendations(allOutstaffTodayResult.data)
+          }
+          setCurrentStaff({ display_name: '全outstaffスタッフ' })
+        } else if (user?.id) {
+          // 個人のスタッフ情報取得
           const { data: staffData, error } = await supabase
             .from('staffs')
             .select('display_name')
@@ -70,7 +83,7 @@ const StaffPerformancePage = () => {
             setCurrentStaff(staffData)
             
             // outstaffの場合は個人本日推奨状態別案内数を取得
-            if (userRole === 'outstaff') {
+            if (effectiveRole === 'outstaff') {
               const personalTodayRecommendationsResult = await getPersonalTodayIntroductionsByRecommendation(staffData.display_name)
               if (personalTodayRecommendationsResult.success) {
                 setPersonalTodayRecommendations(personalTodayRecommendationsResult.data)
@@ -148,7 +161,7 @@ const StaffPerformancePage = () => {
         {/* ヘッダー */}
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">
-            📊 案内実績
+            📊 {forceType === 'outstaff' ? 'outstaff案内実績' : '案内実績'}
           </h1>
           <a
             href="/past-performance"
@@ -159,7 +172,9 @@ const StaffPerformancePage = () => {
         </div>
 
         {/* 実績カード */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className={`grid gap-2 mb-6 ${
+          (effectiveRole === 'outstaff' || forceType === 'outstaff') ? 'grid-cols-3' : 'grid-cols-1'
+        }`}>
           {/* 本日の案内数 */}
           <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
             <div className="flex flex-col items-center">
@@ -171,27 +186,31 @@ const StaffPerformancePage = () => {
             </div>
           </div>
           
-          {/* 本日のチェックマークあり案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
-            <div className="flex flex-col items-center">
-              <div className="text-green-600 text-2xl mb-2">✅</div>
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークあり</p>
-                <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.recommended}</p>
+          {/* 本日のチェックマークあり案内数（outstaffまたはforceType='outstaff'の場合のみ表示） */}
+          {(effectiveRole === 'outstaff' || forceType === 'outstaff') && (
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+              <div className="flex flex-col items-center">
+                <div className="text-green-600 text-2xl mb-2">✅</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークあり</p>
+                  <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.recommended}</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* 本日のチェックマークなし案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
-            <div className="flex flex-col items-center">
-              <div className="text-red-600 text-2xl mb-2">❌</div>
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークなし</p>
-                <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.notRecommended}</p>
+          {/* 本日のチェックマークなし案内数（outstaffまたはforceType='outstaff'の場合のみ表示） */}
+          {(effectiveRole === 'outstaff' || forceType === 'outstaff') && (
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+              <div className="flex flex-col items-center">
+                <div className="text-red-600 text-2xl mb-2">❌</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日のチェックマークなし</p>
+                  <p className="text-2xl font-bold text-gray-900">{personalTodayRecommendations.notRecommended}</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* 本日の案内実績 */}

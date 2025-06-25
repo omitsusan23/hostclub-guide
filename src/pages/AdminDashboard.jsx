@@ -657,7 +657,7 @@ const AdminDashboard = () => {
 
           {/* outstaff案内実績 */}
           <a
-            href="/staff-performance"
+            href="/staff-performance?type=outstaff"
             className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-pink-300 transition-all group"
           >
             <div className="flex items-center mb-2">

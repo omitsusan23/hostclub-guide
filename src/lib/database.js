@@ -646,4 +646,51 @@ export const getPersonalTodayIntroductionsByRecommendation = async (staffName) =
       data: { recommended: 0, notRecommended: 0, total: 0 } 
     }
   }
+}
+
+// 全outstaffスタッフの推奨状態別本日案内数を取得
+export const getAllOutstaffTodayIntroductionsByRecommendation = async () => {
+  try {
+    const businessDate = getBusinessDate()
+    const startOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate(), 1).toISOString() // 1時から開始
+    const endOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate() + 1, 1).toISOString() // 翌日1時まで
+
+    // 全outstaffスタッフの本日案内記録を取得
+    const { data: logs, error: logsError } = await supabase
+      .from('staff_logs')
+      .select('guest_count, store_was_recommended, staff_type')
+      .eq('staff_type', 'outstaff')
+      .gte('guided_at', startOfDay)
+      .lte('guided_at', endOfDay)
+
+    if (logsError) throw logsError
+
+    // 推奨状態別に集計
+    let recommendedCount = 0
+    let notRecommendedCount = 0
+    
+    logs.forEach(record => {
+      if (record.store_was_recommended) {
+        recommendedCount += record.guest_count
+      } else {
+        notRecommendedCount += record.guest_count
+      }
+    })
+
+    return { 
+      success: true, 
+      data: { 
+        recommended: recommendedCount, 
+        notRecommended: notRecommendedCount,
+        total: recommendedCount + notRecommendedCount
+      } 
+    }
+  } catch (error) {
+    console.error('全outstaff本日案内数取得エラー:', error)
+    return { 
+      success: false, 
+      error: error.message, 
+      data: { recommended: 0, notRecommended: 0, total: 0 } 
+    }
+  }
 } 
