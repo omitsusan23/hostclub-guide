@@ -103,7 +103,7 @@ const SwipeableVisitItem = ({ record, store, onDelete, isRecommended = false }) 
 
   return (
     <div className={`relative rounded-lg overflow-hidden ${
-      isRecommended ? 'bg-green-50' : 'bg-gray-50'
+      isRecommended ? 'bg-green-100 border-2 border-green-300' : 'bg-gray-50'
     }`}>
       {/* 背景の削除ボタン */}
       <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center">
@@ -119,7 +119,7 @@ const SwipeableVisitItem = ({ record, store, onDelete, isRecommended = false }) 
       {/* メインコンテンツ */}
       <div
         className={`relative rounded-lg transition-transform duration-200 ease-out ${
-          isRecommended ? 'bg-green-50' : 'bg-gray-50'
+          isRecommended ? 'bg-green-100' : 'bg-gray-50'
         }`}
         style={{
           transform: `translateX(${translateX}px)`,
@@ -161,8 +161,13 @@ const SwipeableVisitItem = ({ record, store, onDelete, isRecommended = false }) 
         }}
       >
         <div className="flex items-center gap-4 p-2">
-          <div className="font-medium text-sm min-w-0 flex-shrink-0">
+          <div className="font-medium text-sm min-w-0 flex-shrink-0 flex items-center">
             {store?.name || record.store_id}
+            {isRecommended && (
+              <span className="ml-2 px-2 py-0.5 bg-green-200 text-green-800 text-xs rounded-full font-medium">
+                推奨
+              </span>
+            )}
           </div>
           <div className="text-sm text-gray-600 flex-shrink-0">
             {record.guest_count}名 - {time}

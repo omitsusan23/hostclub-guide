@@ -55,7 +55,6 @@ const TodayOpenStoresPage = () => {
           throw new Error(storesResult.error)
         }
 
-        setOpenStores(storesResult.data)
         setTotalStoresWithMonthlyUpdate(storesResult.totalStoresWithMonthlyUpdate || 0)
         setStoreStatuses(statusesResult)
 
@@ -67,6 +66,41 @@ const TodayOpenStoresPage = () => {
               .map(rec => rec.store_id)
           )
           setRecommendedStores(recommended)
+          
+          // outstaffの場合は特別な並び順を適用
+          if (storesResult.success) {
+            const sortedStores = [...storesResult.data].sort((a, b) => {
+              const aIsRecommended = recommended.has(a.store_id)
+              const bIsRecommended = recommended.has(b.store_id)
+              
+              // 1. 推奨店舗を上に
+              if (aIsRecommended && !bIsRecommended) return -1
+              if (!aIsRecommended && bIsRecommended) return 1
+              
+              // 2. 同じ推奨状態の場合は、残り保証人数差が多い順（保証なしは末尾）
+              const aGuaranteeShortfall = Math.max(0, (a.guarantee_count || 0) - (a.monthlyIntroductions || 0))
+              const bGuaranteeShortfall = Math.max(0, (b.guarantee_count || 0) - (b.monthlyIntroductions || 0))
+              
+              // 保証数が0の店舗は末尾
+              if ((a.guarantee_count || 0) === 0 && (b.guarantee_count || 0) > 0) return 1
+              if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) === 0) return -1
+              
+              // 両方保証ありまたは両方保証なしの場合
+              if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) > 0) {
+                return bGuaranteeShortfall - aGuaranteeShortfall // 残り必要数が多い順
+              }
+              
+              // 両方保証なしの場合は名前順
+              return a.name.localeCompare(b.name, 'ja')
+            })
+            
+            setOpenStores(sortedStores)
+          }
+        } else {
+          // outstaff以外の場合は通常の並び順
+          if (storesResult.success) {
+            setOpenStores(storesResult.data)
+          }
         }
       } catch (err) {
         console.error('データ取得エラー:', err)

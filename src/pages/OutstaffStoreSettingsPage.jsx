@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getOutstaffRecommendations, updateOutstaffRecommendations } from '../lib/database'
+import { getOutstaffRecommendations, updateOutstaffRecommendations, getStores, getMonthlyIntroductionCounts } from '../lib/database'
 
 const OutstaffStoreSettingsPage = () => {
   const { user } = useApp()
@@ -19,13 +19,37 @@ const OutstaffStoreSettingsPage = () => {
   const loadRecommendations = async () => {
     setLoading(true)
     try {
-      const result = await getOutstaffRecommendations()
-      if (result.success) {
-        setRecommendations(result.data)
-      } else {
-        setMessage('データの読み込みに失敗しました')
-        setMessageType('error')
-      }
+      // outstaff対象店舗のみ取得
+      const storesResult = await getStores('outstaff')
+      
+      // 当月紹介数を取得（合算データ）
+      const monthlyIntroductionsResult = await getMonthlyIntroductionCounts('both')
+      const monthlyIntroductions = monthlyIntroductionsResult.success ? monthlyIntroductionsResult.data : {}
+
+      // 推奨設定を取得
+      const recommendationsResult = await getOutstaffRecommendations()
+      const existingRecommendations = recommendationsResult.success ? recommendationsResult.data : []
+      
+      // 推奨設定のマップを作成
+      const recommendationMap = new Map()
+      existingRecommendations.forEach(rec => {
+        recommendationMap.set(rec.store_id, rec.is_recommended)
+      })
+
+      // outstaff対象店舗のみで推奨設定を構築
+      const outstaffRecommendations = storesResult.map(store => ({
+        store_id: store.store_id,
+        is_recommended: recommendationMap.get(store.store_id) || false,
+        stores: {
+          name: store.name,
+          store_id: store.store_id,
+          guarantee_count: store.guarantee_count || 0
+        },
+        monthlyIntroductions: monthlyIntroductions[store.store_id] || 0,
+        updated_at: null
+      }))
+
+      setRecommendations(outstaffRecommendations)
     } catch (error) {
       console.error('推奨店舗読み込みエラー:', error)
       setMessage('データの読み込み中にエラーが発生しました')
@@ -118,7 +142,7 @@ const OutstaffStoreSettingsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{totalCount}</div>
-              <div className="text-sm text-gray-600">総店舗数</div>
+              <div className="text-sm text-gray-600">outstaff対象店舗数</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{recommendedCount}</div>
@@ -177,22 +201,51 @@ const OutstaffStoreSettingsPage = () => {
                     : 'border-gray-200 bg-white'
                 }`}
               >
-                <label className="flex items-center cursor-pointer">
+                <label className="flex items-start cursor-pointer">
                   <input
                     type="checkbox"
                     checked={rec.is_recommended}
                     onChange={(e) => handleCheckChange(rec.store_id, e.target.checked)}
-                    className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2 mr-3"
+                    className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2 mr-3 flex-shrink-0 mt-1"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-900">
                       {rec.stores.name}
                     </div>
                     <div className="text-sm text-gray-600">
                       ID: {rec.stores.store_id}
                     </div>
+                    
+                    {/* 当月紹介数と保証数 */}
+                    <div className="mt-2 space-y-1">
+                      <div className="text-sm">
+                        <span className="text-gray-600">当月紹介数:</span>
+                        <span className="font-medium text-gray-900 ml-1">
+                          {rec.monthlyIntroductions}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-gray-600">保証数:</span>
+                        <span className="font-medium text-gray-900 ml-1">
+                          {rec.stores.guarantee_count}
+                        </span>
+                      </div>
+                      {rec.stores.guarantee_count > 0 && (
+                        <div className="text-sm">
+                          <span className="text-gray-600">残り必要数:</span>
+                          <span className={`font-medium ml-1 ${
+                            (rec.stores.guarantee_count - rec.monthlyIntroductions) <= 0 
+                              ? 'text-green-600' 
+                              : 'text-red-600'
+                          }`}>
+                            {Math.max(0, rec.stores.guarantee_count - rec.monthlyIntroductions)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
                     {rec.updated_at && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 mt-2">
                         最終更新: {new Date(rec.updated_at).toLocaleDateString('ja-JP')}
                       </div>
                     )}
@@ -205,7 +258,7 @@ const OutstaffStoreSettingsPage = () => {
           {recommendations.length === 0 && (
             <div className="text-center py-8">
               <div className="text-4xl mb-2">🏪</div>
-              <p className="text-gray-500">店舗が見つかりません</p>
+              <p className="text-gray-500">outstaff対象店舗が見つかりません</p>
             </div>
           )}
         </div>
