@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import StaffDashboard from './pages/StaffDashboard'
+import OutstaffDashboard from './pages/OutstaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
@@ -32,6 +33,8 @@ const DashboardRedirect = () => {
       return <Navigate to="/admin" replace />
     case 'staff':
       return <Navigate to="/staff" replace />
+    case 'outstaff':
+      return <Navigate to="/outstaff" replace />
     case 'customer':
       return <Navigate to="/customer" replace />
     default:
@@ -76,11 +79,21 @@ const AppRoutes = () => {
           } 
         />
         
+        {/* 外注スタッフ専用ルート */}
+        <Route 
+          path="/outstaff" 
+          element={
+            <ProtectedRoute allowedRoles={['outstaff']}>
+              <OutstaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* スタッフ案内実績ページ */}
         <Route 
           path="/staff-performance" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'outstaff']}>
               <StaffPerformancePage />
             </ProtectedRoute>
           } 
@@ -90,7 +103,7 @@ const AppRoutes = () => {
         <Route 
           path="/past-performance" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'outstaff']}>
               <PastPerformancePage />
             </ProtectedRoute>
           } 
@@ -136,11 +149,11 @@ const AppRoutes = () => {
           } 
         />
         
-        {/* 本日の営業店舗ページ（admin/staff専用） */}
+        {/* 本日の営業店舗ページ（admin/staff/outstaff専用） */}
         <Route 
           path="/today-open-stores" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'outstaff']}>
               <TodayOpenStoresPage />
             </ProtectedRoute>
           } 

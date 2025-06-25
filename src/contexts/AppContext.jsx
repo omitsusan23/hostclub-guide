@@ -57,6 +57,8 @@ export const AppProvider = ({ children }) => {
         return 'admin'
       case 'staff':
         return 'staff'
+      case 'outstaff':
+        return 'outstaff'
       default:
         // store1.example.com のような形式の場合はcustomer
         return 'customer'
@@ -189,8 +191,8 @@ export const AppProvider = ({ children }) => {
     const userStoreId = getUserStoreId()
     const currentStoreId = getStoreIdFromSubdomain()
 
-    // 管理者とスタッフは常にアクセス可能
-    if (role === 'admin' || role === 'staff') {
+    // 管理者とスタッフ（staff/outstaff）は常にアクセス可能
+    if (role === 'admin' || role === 'staff' || role === 'outstaff') {
       return true
     }
 

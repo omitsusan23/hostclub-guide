@@ -1,11 +1,18 @@
 import { supabase } from './supabase'
 
-// 店舗データ取得
-export const getStores = async () => {
-  const { data, error } = await supabase
+// 店舗データ取得（outstaffフィルタリング対応）
+export const getStores = async (userRole = null) => {
+  let query = supabase
     .from('stores')
     .select('*')
     .order('created_at', { ascending: true })
+  
+  // outstaffの場合はアクセス可能な店舗のみフィルタリング
+  if (userRole === 'outstaff') {
+    query = query.eq('outstaff_accessible', true)
+  }
+
+  const { data, error } = await query
   
   if (error) {
     console.error('店舗データ取得エラー:', error)
@@ -41,16 +48,23 @@ const getBusinessToday = () => {
   return formatLocalDate(getBusinessDate());
 };
 
-// 本日の営業店舗データを取得（admin/staff用）
-export const getTodayOpenStores = async () => {
+// 本日の営業店舗データを取得（admin/staff/outstaff用）
+export const getTodayOpenStores = async (userRole = null) => {
   try {
     const today = getBusinessToday(); // 業務日ベースの今日（25時切り替わり）
 
-    // 全店舗を取得
-    const { data: stores, error: storesError } = await supabase
+    // 全店舗を取得（outstaffフィルタリング対応）
+    let storesQuery = supabase
       .from('stores')
       .select('*')
       .order('name')
+
+    // outstaffの場合はアクセス可能な店舗のみフィルタリング
+    if (userRole === 'outstaff') {
+      storesQuery = storesQuery.eq('outstaff_accessible', true)
+    }
+
+    const { data: stores, error: storesError } = await storesQuery
 
     if (storesError) throw storesError
 
@@ -70,8 +84,8 @@ export const getTodayOpenStores = async () => {
     const currentMonthStart = formatLocalDate(new Date(now.getFullYear(), now.getMonth(), 1))
     const currentMonthEnd = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))
 
-    // 当月の紹介数を取得
-    const monthlyIntroductionsResult = await getMonthlyIntroductionCounts()
+    // 当月の紹介数を取得（本日の営業店舗カード内は合算データ）
+    const monthlyIntroductionsResult = await getMonthlyIntroductionCounts('both')
     const monthlyIntroductions = monthlyIntroductionsResult.success ? monthlyIntroductionsResult.data : {}
 
     // 各店舗の今月の店休日更新状況をチェック
@@ -171,8 +185,8 @@ export const getStoreBySubdomain = async (subdomain) => {
   return data
 }
 
-// 案内記録を取得
-export const getVisitRecords = async (storeId = null, startDate = null, endDate = null) => {
+// 案内記録を取得（staff_typeフィルタリング対応）
+export const getVisitRecords = async (storeId = null, startDate = null, endDate = null, staffTypeFilter = 'both') => {
   let query = supabase
     .from('staff_logs')
     .select('*')
@@ -190,6 +204,14 @@ export const getVisitRecords = async (storeId = null, startDate = null, endDate 
     query = query.lte('guided_at', endDate)
   }
 
+  // staff_typeでフィルタリング
+  if (staffTypeFilter === 'staff') {
+    query = query.eq('staff_type', 'staff')
+  } else if (staffTypeFilter === 'outstaff') {
+    query = query.eq('staff_type', 'outstaff')
+  }
+  // 'both'の場合はフィルタリングしない
+
   const { data, error } = await query
 
   if (error) {
@@ -201,16 +223,16 @@ export const getVisitRecords = async (storeId = null, startDate = null, endDate 
 }
 
 // 今日の案内記録を取得（業務日ベース - 25時切り替わり）
-export const getTodayVisitRecords = async (storeId = null) => {
+export const getTodayVisitRecords = async (storeId = null, staffTypeFilter = 'both') => {
   const businessDate = getBusinessDate()
   const startOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate(), 1).toISOString() // 1時から開始
   const endOfDay = new Date(businessDate.getFullYear(), businessDate.getMonth(), businessDate.getDate() + 1, 1).toISOString() // 翌日1時まで
   
-  return await getVisitRecords(storeId, startOfDay, endOfDay)
+  return await getVisitRecords(storeId, startOfDay, endOfDay, staffTypeFilter)
 }
 
 // 月間案内記録を取得
-export const getMonthlyVisitRecords = async (storeId = null, year = null, month = null) => {
+export const getMonthlyVisitRecords = async (storeId = null, year = null, month = null, staffTypeFilter = 'both') => {
   const now = new Date()
   const targetYear = year || now.getFullYear()
   const targetMonth = month !== null ? month : now.getMonth()
@@ -218,21 +240,31 @@ export const getMonthlyVisitRecords = async (storeId = null, year = null, month 
   const startOfMonth = new Date(targetYear, targetMonth, 1).toISOString()
   const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString()
   
-  return await getVisitRecords(storeId, startOfMonth, endOfMonth)
+  return await getVisitRecords(storeId, startOfMonth, endOfMonth, staffTypeFilter)
 }
 
-// 当月の紹介数を店舗別に集計
-export const getMonthlyIntroductionCounts = async () => {
+// 当月の紹介数を店舗別に集計（staff/outstaffの分離・合算対応）
+export const getMonthlyIntroductionCounts = async (staffTypeFilter = 'both') => {
   try {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('staff_logs')
-      .select('store_id, guest_count')
+      .select('store_id, guest_count, staff_type')
       .gte('guided_at', startOfMonth)
       .lte('guided_at', endOfMonth)
+
+    // staff_typeでフィルタリング
+    if (staffTypeFilter === 'staff') {
+      query = query.eq('staff_type', 'staff')
+    } else if (staffTypeFilter === 'outstaff') {
+      query = query.eq('staff_type', 'outstaff')
+    }
+    // 'both'の場合はフィルタリングしない（staff + outstaff合算）
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -252,15 +284,19 @@ export const getMonthlyIntroductionCounts = async () => {
   }
 }
 
-// 案内記録を追加
-export const addVisitRecord = async (visitData) => {
+// 案内記録を追加（staff_type自動設定対応）
+export const addVisitRecord = async (visitData, userRole = 'staff') => {
+  // staff_typeを自動設定
+  const staffType = userRole === 'outstaff' ? 'outstaff' : 'staff'
+
   const { data, error } = await supabase
     .from('staff_logs')
     .insert({
       store_id: visitData.store_id,
       guest_count: visitData.guest_count,
       staff_name: visitData.staff_name,
-      guided_at: visitData.guided_at || new Date().toISOString()
+      guided_at: visitData.guided_at || new Date().toISOString(),
+      staff_type: staffType
     })
     .select()
 

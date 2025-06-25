@@ -13,8 +13,8 @@ import {
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
-const StaffDashboard = () => {
-  const { user, hasAdminPermissions, getUserRole } = useApp()
+const OutstaffDashboard = () => {
+  const { user, getUserRole } = useApp()
   const [showVisitForm, setShowVisitForm] = useState(false)
   const [selectedStore, setSelectedStore] = useState(null)
   const [stores, setStores] = useState([])
@@ -48,19 +48,19 @@ const StaffDashboard = () => {
       try {
         setLoading(true)
         
-        // staff専用のデータ取得
+        // outstaff専用のデータ取得
         const userRole = getUserRole()
-        const staffTypeFilter = 'staff'
+        const staffTypeFilter = 'outstaff'
         
-        // 店舗データ取得（全店舗アクセス可能）
+        // 店舗データ取得（outstaffアクセス可能店舗のみ）
         const storesData = await getStores(userRole)
         setStores(storesData)
 
-        // 今日の案内記録取得（staff分離表示）
+        // 今日の案内記録取得（outstaff分離表示）
         const recordsData = await getTodayVisitRecords(null, staffTypeFilter)
         setVisitRecords(recordsData)
 
-        // 今月の案内記録取得（staff分離表示）
+        // 今月の案内記録取得（outstaff分離表示）
         const monthlyData = await getMonthlyVisitRecords(null, null, null, staffTypeFilter)
         setMonthlyRecords(monthlyData)
 
@@ -77,7 +77,7 @@ const StaffDashboard = () => {
           }
         }
 
-        // TODO: staff専用チャットデータ取得（テーブル作成後）
+        // TODO: outstaff専用チャットデータ取得（テーブル作成後）
         setChatMessages([])
         
       } catch (error) {
@@ -96,10 +96,10 @@ const StaffDashboard = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
-  // staff用目標本数（将来的にadmin設定から取得）
+  // outstaff用目標本数（staffとは異なる設定）
   const getMonthlyTarget = () => {
-    // TODO: staff専用の目標設定から取得する
-    return 100 // staff用デフォルト目標本数
+    // TODO: outstaff専用の目標設定から取得する
+    return 80 // outstaff用デフォルト目標本数（staffより少し低め）
   }
 
   // 目標本数までの計算
@@ -118,11 +118,11 @@ const StaffDashboard = () => {
     try {
       const userRole = getUserRole()
       
-      // Supabaseに案内記録を保存（staff_type='staff'で固定）
+      // Supabaseに案内記録を保存（staff_type='outstaff'で自動設定）
       const savedRecord = await addVisitRecord({
         store_id: visitData.storeId,
         guest_count: visitData.guestCount,
-        staff_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'スタッフ',
+        staff_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'アウトスタッフ',
         guided_at: visitData.guided_at
       }, userRole)
       
@@ -142,14 +142,14 @@ const StaffDashboard = () => {
     if (!newMessage.trim()) return
 
     try {
-      // TODO: 実際のSupabaseへのstaff用チャット保存
-      console.log('スタッフチャット送信:', newMessage)
+      // TODO: 実際のSupabaseへのoutstaff用チャット保存
+      console.log('アウトスタッフチャット送信:', newMessage)
       
       // 一時的にローカル状態を更新
       const newChatMessage = {
         id: Date.now().toString(),
-        sender_id: user?.id || 'staff-1',
-        sender_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'スタッフ',
+        sender_id: user?.id || 'outstaff-1',
+        sender_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'アウトスタッフ',
         message: newMessage,
         created_at: new Date().toISOString()
       }
@@ -211,6 +211,12 @@ const StaffDashboard = () => {
   return (
     <Layout>
       <div className="pb-24">
+        {/* outstaff専用ヘッダー */}
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-4 mb-6">
+          <h2 className="text-lg font-semibold">🌟 アウトスタッフダッシュボード</h2>
+          <p className="text-sm opacity-90">お疲れ様です！今日も頑張りましょう✨</p>
+        </div>
+
         {/* 実績カード */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           {/* 本日の案内数 */}
@@ -254,100 +260,66 @@ const StaffDashboard = () => {
           </div>
         </div>
 
-                {/* クイックアクション */}
+        {/* クイックアクション（outstaff用） */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${hasAdminPermissions() ? 'lg:grid-cols-4' : ''}`}>
-          {/* 本日の営業店舗 */}
-          <a
-            href="/today-open-stores"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="text-2xl mr-3">🏪</div>
-              <h4 className="font-medium text-gray-900 group-hover:text-green-600">
-                本日の営業店舗
-              </h4>
-            </div>
-            <p className="text-sm text-gray-600">
-              今日営業中の店舗一覧と店休日更新状況を確認
-            </p>
-          </a>
-
-          {/* 案内実績 */}
-          <a
-            href="/staff-performance"
-            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="text-2xl mr-3">📊</div>
-              <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
-                案内実績
-              </h4>
-            </div>
-            <p className="text-sm text-gray-600">
-              本日・今月の案内実績を確認
-            </p>
-          </a>
-
-          {/* 管理者限定：店舗管理 */}
-          {hasAdminPermissions() && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 本日の営業店舗 */}
             <a
-              href="/store-management"
-              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-purple-300 transition-all group"
+              href="/today-open-stores"
+              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-green-300 transition-all group"
             >
               <div className="flex items-center mb-2">
-                <div className="text-2xl mr-3">🏢</div>
-                <h4 className="font-medium text-gray-900 group-hover:text-purple-600">
-                  店舗管理
+                <div className="text-2xl mr-3">🏪</div>
+                <h4 className="font-medium text-gray-900 group-hover:text-green-600">
+                  本日の営業店舗
                 </h4>
               </div>
               <p className="text-sm text-gray-600">
-                店舗の登録・編集・削除を管理
+                今日営業中の店舗一覧と店休日更新状況を確認
               </p>
             </a>
-          )}
 
-          {/* 管理者限定：スタッフ管理 */}
-          {hasAdminPermissions() && (
+            {/* 案内実績 */}
             <a
-              href="/staff-management"
-              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-orange-300 transition-all group"
+              href="/staff-performance"
+              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
             >
               <div className="flex items-center mb-2">
-                <div className="text-2xl mr-3">👥</div>
-                <h4 className="font-medium text-gray-900 group-hover:text-orange-600">
-                  スタッフ管理
+                <div className="text-2xl mr-3">📊</div>
+                <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
+                  案内実績
                 </h4>
               </div>
               <p className="text-sm text-gray-600">
-                スタッフの登録・編集・削除を管理
+                本日・今月のアウトスタッフ案内実績を確認
               </p>
             </a>
-          )}
-
- 
+          </div>
         </div>
-      </div>
 
-      {/* メインコンテンツ */}
-      <div className="space-y-6">
-          {/* スタッフチャット */}
+        {/* メインコンテンツ */}
+        <div className="space-y-6">
+          {/* アウトスタッフチャット */}
           <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              💬 スタッフチャット
+              💬 アウトスタッフチャット
             </h3>
             
             {/* チャットメッセージ */}
             <div className="flex-1 overflow-y-auto space-y-3 mb-4">
               {chatMessages.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  チャットメッセージはありません
-                </p>
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">💭</div>
+                  <p className="text-gray-500">まだメッセージはありません</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    他のアウトスタッフとの情報共有にご活用ください
+                  </p>
+                </div>
               ) : (
                 chatMessages.map((chat) => (
-                  <div key={chat.id} className="p-3 bg-gray-50 rounded-lg">
+                  <div key={chat.id} className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-l-4 border-purple-300">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{chat.sender_name}</span>
+                      <span className="font-medium text-sm text-purple-700">{chat.sender_name}</span>
                       <span className="text-xs text-gray-500">
                         {new Date(chat.created_at).toLocaleTimeString('ja-JP', {
                           hour: '2-digit',
@@ -369,32 +341,39 @@ const StaffDashboard = () => {
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="メッセージを入力..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
               >
                 送信
               </button>
             </div>
           </div>
 
-          {/* 店舗一覧 */}
+          {/* 担当可能店舗一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              🏢 契約店舗一覧
+              🏢 担当可能店舗一覧
             </h3>
             
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
               {stores.map((store) => (
-                <div key={store.id} className="p-3 bg-gray-50 rounded-lg">
-                  <div className="font-medium">{store.name}</div>
-                  <div className="text-sm text-gray-600">ID: {store.store_id}</div>
+                <div key={store.id} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="font-medium text-blue-800">{store.name}</div>
+                  <div className="text-sm text-blue-600">ID: {store.store_id}</div>
                 </div>
               ))}
             </div>
+            
+            {stores.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-2">🏪</div>
+                <p className="text-gray-500">担当可能な店舗がありません</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -420,10 +399,10 @@ const StaffDashboard = () => {
       />
 
       {/* 固定フッター：案内報告ボタン */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 border-t border-purple-300 px-4 py-3 shadow-lg z-50">
         <button
           onClick={() => setShowVisitForm(true)}
-          className="w-full max-w-sm mx-auto block px-6 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-md"
+          className="w-full max-w-sm mx-auto block px-6 py-4 bg-white text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-lg font-semibold rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-md border-2 border-white"
         >
           📝 案内報告
         </button>
@@ -432,4 +411,4 @@ const StaffDashboard = () => {
   )
 }
 
-export default StaffDashboard 
+export default OutstaffDashboard 
