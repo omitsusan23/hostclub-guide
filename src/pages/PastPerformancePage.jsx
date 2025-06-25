@@ -66,6 +66,9 @@ const PastPerformancePage = () => {
   // 月の案内記録を取得（分離表示）
   const fetchMonthlyData = async (year, month) => {
     try {
+      // effectiveRoleが定義されるまで待機
+      if (!effectiveRole) return
+      
       setLoading(true)
       const startDate = new Date(year, month, 1)
       const endDate = new Date(year, month + 1, 0)
@@ -101,6 +104,9 @@ const PastPerformancePage = () => {
   // 店舗データ取得（outstaffフィルタリング対応）
   useEffect(() => {
     const fetchInitialData = async () => {
+      // effectiveRoleが定義されるまで待機
+      if (!effectiveRole) return
+      
       const storesData = await getStores(effectiveRole)
       setStores(storesData)
 
@@ -123,19 +129,22 @@ const PastPerformancePage = () => {
       }
     }
     fetchInitialData()
-  }, [user?.id])
+  }, [user?.id, effectiveRole])
 
   // 月が変更されたときにデータを取得
   useEffect(() => {
+    // effectiveRoleが定義されるまで待機
+    if (!effectiveRole) return
+    
     fetchMonthlyData(currentDate.getFullYear(), currentDate.getMonth())
-  }, [currentDate])
+  }, [currentDate, effectiveRole])
 
   // 店舗カレンダーの月が変更されたときに店舗データを再取得
   useEffect(() => {
-    if (selectedStore) {
+    if (selectedStore && effectiveRole) {
       fetchStoreMonthlyData(selectedStore.store_id, storeCurrentDate.getFullYear(), storeCurrentDate.getMonth())
     }
-  }, [storeCurrentDate, selectedStore])
+  }, [storeCurrentDate, selectedStore, effectiveRole])
 
   // カレンダーデータ生成
   const generateCalendarData = () => {
@@ -240,6 +249,9 @@ const PastPerformancePage = () => {
   // 特定店舗の月次データ取得（分離表示）
   const fetchStoreMonthlyData = async (storeId, year, month) => {
     try {
+      // effectiveRoleが定義されるまで待機
+      if (!effectiveRole) return
+      
       setStoreLoading(true)
       const startDate = new Date(year, month, 1)
       const endDate = new Date(year, month + 1, 0)
@@ -328,7 +340,11 @@ const PastPerformancePage = () => {
     setSelectedStore(store)
     setStoreSelectedDate(null)
     setStoreCurrentDate(new Date()) // 現在月にリセット
-    fetchStoreMonthlyData(store.store_id, new Date().getFullYear(), new Date().getMonth())
+    
+    // effectiveRoleが定義されている場合のみデータ取得
+    if (effectiveRole) {
+      fetchStoreMonthlyData(store.store_id, new Date().getFullYear(), new Date().getMonth())
+    }
   }
 
   // 店舗カレンダーの日付選択
