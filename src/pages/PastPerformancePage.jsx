@@ -662,7 +662,7 @@ const PastPerformancePage = () => {
             ) : (
               <>
                 {/* 月別実績カード */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 gap-4 mb-6">
                   {/* 月の案内数 */}
                   <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
                     <div className="flex flex-col items-center">
@@ -672,26 +672,6 @@ const PastPerformancePage = () => {
                           {currentDate.getMonth() + 1}月の案内数
                         </p>
                         <p className="text-2xl font-bold text-gray-900">{getCurrentMonthGuidanceCount()}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* 目標達成度 */}
-                  <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center mb-2">
-                        <span className="text-green-600 text-2xl">🎯</span>
-                        <span className="text-sm text-gray-600 ml-1">({getMonthlyTarget()})</span>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-gray-600 mb-1">
-                          {currentDate.getMonth() + 1}月の目標達成度
-                        </p>
-                        <p className={`text-2xl font-bold ${
-                          getCurrentMonthAchievementRate() >= 100 ? 'text-blue-600' : 'text-red-600'
-                        }`}>
-                          {getCurrentMonthAchievementRate()}%
-                        </p>
                       </div>
                     </div>
                   </div>
