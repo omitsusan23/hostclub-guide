@@ -9,7 +9,8 @@ import {
   getTodayVisitRecords,
   getMonthlyVisitRecords,
   addVisitRecord,
-  deleteVisitRecord
+  deleteVisitRecord,
+  getMonthlyTarget
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
@@ -25,6 +26,7 @@ const StaffDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
+  const [monthlyTarget, setMonthlyTarget] = useState(100)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -77,6 +79,10 @@ const StaffDashboard = () => {
           }
         }
 
+        // staff用の月間目標を取得
+        const target = await getMonthlyTarget()
+        setMonthlyTarget(target)
+
         // TODO: staff専用チャットデータ取得（テーブル作成後）
         setChatMessages([])
         
@@ -96,22 +102,15 @@ const StaffDashboard = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
-  // staff用目標本数（将来的にadmin設定から取得）
-  const getMonthlyTarget = () => {
-    // TODO: staff専用の目標設定から取得する
-    return 100 // staff用デフォルト目標本数
-  }
-
   // 目標本数までの計算
   const getTargetRemaining = () => {
-    const target = getMonthlyTarget()
-    const remaining = target - monthlyCount
-    return remaining > 0 ? remaining : monthlyCount - target // 目標達成時は超過分を返す
+    const remaining = monthlyTarget - monthlyCount
+    return remaining > 0 ? remaining : monthlyCount - monthlyTarget // 目標達成時は超過分を返す
   }
 
   // 目標達成状況
   const isTargetAchieved = () => {
-    return monthlyCount >= getMonthlyTarget()
+    return monthlyCount >= monthlyTarget
   }
 
   const handleVisitSubmit = async (visitData) => {
@@ -240,7 +239,7 @@ const StaffDashboard = () => {
             <div className="flex flex-col items-center">
               <div className="flex items-center mb-2">
                 <span className="text-yellow-600 text-2xl">🎯</span>
-                <span className="text-sm text-gray-600 ml-1">({getMonthlyTarget()})</span>
+                                    <span className="text-sm text-gray-600 ml-1">({monthlyTarget})</span>
               </div>
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">目標本数まで</p>
@@ -321,6 +320,24 @@ const StaffDashboard = () => {
               </div>
               <p className="text-sm text-gray-600">
                 スタッフの登録・編集・削除を管理
+              </p>
+            </a>
+          )}
+
+          {/* 管理者限定：outstaff店舗設定 */}
+          {hasAdminPermissions() && (
+            <a
+              href="/outstaff-store-settings"
+              className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-pink-300 transition-all group"
+            >
+              <div className="flex items-center mb-2">
+                <div className="text-2xl mr-3">🌸</div>
+                <h4 className="font-medium text-gray-900 group-hover:text-pink-600">
+                  outstaff店舗設定
+                </h4>
+              </div>
+              <p className="text-sm text-gray-600">
+                アウトスタッフの推奨店舗を設定
               </p>
             </a>
           )}

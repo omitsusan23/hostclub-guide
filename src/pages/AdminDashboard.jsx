@@ -4,6 +4,7 @@ import Modal from '../components/Modal'
 import StoreDetailModal from '../components/StoreDetailModal'
 import StoreEditModal from '../components/StoreEditModal'
 import StaffEditModal from '../components/StaffEditModal'
+import TargetSettingsModal from '../components/TargetSettingsModal'
 import { useApp } from '../contexts/AppContext'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
@@ -53,6 +54,7 @@ const AdminDashboard = () => {
   const [showStoreEditModal, setShowStoreEditModal] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState(null)
   const [showStaffEditModal, setShowStaffEditModal] = useState(false)
+  const [showTargetSettingsModal, setShowTargetSettingsModal] = useState(false)
 
   // 店舗データを取得
   useEffect(() => {
@@ -718,6 +720,22 @@ const AdminDashboard = () => {
               アウトスタッフの推奨店舗を設定
             </p>
           </a>
+
+          {/* staff目標設定 */}
+          <button
+            onClick={() => setShowTargetSettingsModal(true)}
+            className="block w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group"
+          >
+            <div className="flex items-center mb-2">
+              <div className="text-2xl mr-3">🎯</div>
+              <h4 className="font-medium text-gray-900 group-hover:text-blue-600">
+                staff目標設定
+              </h4>
+            </div>
+            <p className="text-sm text-gray-600">
+              staffの月間目標数を設定・管理
+            </p>
+          </button>
         </div>
       </div>
 
@@ -1136,6 +1154,12 @@ const AdminDashboard = () => {
         onDelete={handleDeleteStaff}
         onClose={handleCloseStaffEdit}
         loading={loading}
+      />
+
+      {/* 目標設定モーダル */}
+      <TargetSettingsModal
+        isOpen={showTargetSettingsModal}
+        onClose={() => setShowTargetSettingsModal(false)}
       />
     </Layout>
   )

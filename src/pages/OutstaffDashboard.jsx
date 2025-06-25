@@ -177,11 +177,7 @@ const OutstaffDashboard = () => {
   return (
     <Layout>
       <div className="pb-24">
-        {/* outstaff専用ヘッダー */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold">🌟 アウトスタッフダッシュボード</h2>
-          <p className="text-sm opacity-90">お疲れ様です！今日も頑張りましょう✨</p>
-        </div>
+
 
         {/* 実績カード */}
         <div className="grid grid-cols-3 gap-2 mb-6">

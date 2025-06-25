@@ -696,15 +696,35 @@ export const getAllOutstaffTodayIntroductionsByRecommendation = async () => {
 }
 
 // staff向け目標関連機能
-// 月間目標を取得（staffのみ）
-export const getMonthlyTarget = () => {
-  // staff用のハードコードされた月間目標
-  return 100
+// 月間目標を取得（データベースから）
+export const getMonthlyTarget = async (year = null, month = null) => {
+  try {
+    const now = new Date()
+    const targetYear = year || now.getFullYear()
+    const targetMonth = month !== null ? month : now.getMonth() + 1 // getMonth()は0ベースなので+1
+
+    const { data, error } = await supabase
+      .from('staff_targets')
+      .select('target_count')
+      .eq('year', targetYear)
+      .eq('month', targetMonth)
+      .single()
+
+    if (error) {
+      console.warn('目標取得エラー（デフォルト値100を使用）:', error)
+      return 100 // デフォルト値
+    }
+
+    return data?.target_count || 100
+  } catch (error) {
+    console.warn('目標取得エラー（デフォルト値100を使用）:', error)
+    return 100 // デフォルト値
+  }
 }
 
 // 日割り目標を計算（staffのみ）- 動的計算式
 export const calculateDailyTarget = async (currentMonthCount = 0) => {
-  const monthlyTarget = getMonthlyTarget()
+  const monthlyTarget = await getMonthlyTarget()
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth()
@@ -746,5 +766,72 @@ export const calculateTargetAchievementRate = async (currentCount) => {
     monthlyRate: Math.round(monthlyRate * 10) / 10,
     remainingToDaily: Math.max(0, dailyTarget - currentCount),
     remainingToMonthly: Math.max(0, monthlyTarget - currentCount)
+  }
+}
+
+// 目標管理関連機能（admin専用）
+// 全目標を取得（指定年のみ）
+export const getTargetsByYear = async (year) => {
+  try {
+    const { data, error } = await supabase
+      .from('staff_targets')
+      .select('*')
+      .eq('year', year)
+      .order('month')
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('年次目標取得エラー:', error)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+// 目標を設定・更新
+export const setMonthlyTarget = async (year, month, targetCount) => {
+  try {
+    const { data, error } = await supabase
+      .from('staff_targets')
+      .upsert({ 
+        year, 
+        month, 
+        target_count: targetCount,
+        updated_at: new Date().toISOString()
+      }, { 
+        onConflict: 'year,month' 
+      })
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data?.[0] }
+  } catch (error) {
+    console.error('目標設定エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 複数月の目標を一括設定
+export const setBulkMonthlyTargets = async (targets) => {
+  try {
+    const upsertData = targets.map(target => ({
+      year: target.year,
+      month: target.month,
+      target_count: target.target_count,
+      updated_at: new Date().toISOString()
+    }))
+
+    const { data, error } = await supabase
+      .from('staff_targets')
+      .upsert(upsertData, { onConflict: 'year,month' })
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('一括目標設定エラー:', error)
+    return { success: false, error: error.message }
   }
 } 
