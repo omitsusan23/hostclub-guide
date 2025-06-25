@@ -339,61 +339,25 @@ export const deleteVisitRecord = async (recordId) => {
   return true
 }
 
-// 店舗の最新状況を取得
+// 店舗の最新状況を取得（store_statusテーブル未作成のため無効化）
 export const getLatestStoreStatus = async (storeId) => {
-  const { data, error } = await supabase
-    .from('store_status')
-    .select('*')
-    .eq('store_id', storeId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-  
-  if (error) {
-    console.error('店舗状況取得エラー:', error)
-    return null
-  }
-  
-  return data?.[0] || null
+  // store_statusテーブルが存在しないため、デフォルト値を返す
+  console.log('store_statusテーブル未作成のため、店舗状況は無効です')
+  return null
 }
 
-// 全店舗の最新状況を取得
+// 全店舗の最新状況を取得（store_statusテーブル未作成のため無効化）
 export const getAllStoresLatestStatus = async () => {
-  const { data, error } = await supabase
-    .from('store_status')
-    .select('store_id, status_type, created_at')
-    .order('created_at', { ascending: false })
-  
-  if (error) {
-    console.error('全店舗状況取得エラー:', error)
-    return {}
-  }
-  
-  // 各店舗の最新状況のみを抽出
-  const latestStatus = {}
-  data?.forEach(status => {
-    if (!latestStatus[status.store_id]) {
-      latestStatus[status.store_id] = status
-    }
-  })
-  
-  return latestStatus
+  // store_statusテーブルが存在しないため、空のオブジェクトを返す
+  console.log('store_statusテーブル未作成のため、店舗状況は無効です')
+  return {}
 }
 
-// リアルタイム状況設定
+// リアルタイム状況設定（store_statusテーブル未作成のため無効化）
 export const setStoreStatus = async (storeId, statusType) => {
-  const { data, error } = await supabase
-    .from('store_status')
-    .insert({
-      store_id: storeId,
-      status_type: statusType
-    })
-  
-  if (error) {
-    console.error('店舗状況設定エラー:', error)
-    throw error
-  }
-  
-  return data
+  // store_statusテーブルが存在しないため、何もしない
+  console.log('store_statusテーブル未作成のため、店舗状況設定は無効です')
+  return null
 }
 
 // 請求設定関連（将来のテーブル用）
