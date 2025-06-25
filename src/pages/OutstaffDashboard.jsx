@@ -9,7 +9,8 @@ import {
   getTodayVisitRecords,
   getMonthlyVisitRecords,
   addVisitRecord,
-  deleteVisitRecord
+  deleteVisitRecord,
+  getPersonalMonthlyIntroductionsByRecommendation
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
@@ -23,6 +24,7 @@ const OutstaffDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
+  const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -72,6 +74,12 @@ const OutstaffDashboard = () => {
           
           if (!error && staffData) {
             setCurrentStaff(staffData)
+            
+            // 個人の推奨状態別当月案内数を取得
+            const personalRecommendationsResult = await getPersonalMonthlyIntroductionsByRecommendation(staffData.display_name)
+            if (personalRecommendationsResult.success) {
+              setPersonalMonthlyRecommendations(personalRecommendationsResult.data)
+            }
           }
         }
 
@@ -93,23 +101,7 @@ const OutstaffDashboard = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
-  // outstaff用目標本数（staffとは異なる設定）
-  const getMonthlyTarget = () => {
-    // TODO: outstaff専用の目標設定から取得する
-    return 80 // outstaff用デフォルト目標本数（staffより少し低め）
-  }
 
-  // 目標本数までの計算
-  const getTargetRemaining = () => {
-    const target = getMonthlyTarget()
-    const remaining = target - monthlyCount
-    return remaining > 0 ? remaining : monthlyCount - target // 目標達成時は超過分を返す
-  }
-
-  // 目標達成状況
-  const isTargetAchieved = () => {
-    return monthlyCount >= getMonthlyTarget()
-  }
 
   const handleVisitSubmit = async (visitData) => {
     try {
@@ -194,9 +186,9 @@ const OutstaffDashboard = () => {
         {/* 実績カード */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           {/* 本日の案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
             <div className="flex flex-col items-center">
-              <div className="text-green-600 text-2xl mb-2">🏪</div>
+              <div className="text-blue-600 text-2xl mb-2">🏪</div>
               <div className="text-center">
                 <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
                 <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
@@ -204,31 +196,24 @@ const OutstaffDashboard = () => {
             </div>
           </div>
           
-          {/* 今月の案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+          {/* 今月のチェックマークあり案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
             <div className="flex flex-col items-center">
-              <div className="text-blue-600 text-2xl mb-2">📅</div>
+              <div className="text-green-600 text-2xl mb-2">✅</div>
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">今月の案内数</p>
-                <p className="text-2xl font-bold text-gray-900">{monthlyCount}</p>
+                <p className="text-xs font-medium text-gray-600 mb-1">今月のチェックマークあり</p>
+                <p className="text-2xl font-bold text-gray-900">{personalMonthlyRecommendations.recommended}</p>
               </div>
             </div>
           </div>
 
-          {/* 目標本数まで */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+          {/* 今月のチェックマークなし案内数 */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
             <div className="flex flex-col items-center">
-              <div className="flex items-center mb-2">
-                <span className="text-yellow-600 text-2xl">🎯</span>
-                <span className="text-sm text-gray-600 ml-1">({getMonthlyTarget()})</span>
-              </div>
+              <div className="text-red-600 text-2xl mb-2">❌</div>
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">目標本数まで</p>
-                <p className={`text-2xl font-bold ${
-                  isTargetAchieved() ? 'text-blue-600' : 'text-red-600'
-                }`}>
-                  {isTargetAchieved() ? `+${getTargetRemaining()}` : getTargetRemaining()}
-                </p>
+                <p className="text-xs font-medium text-gray-600 mb-1">今月のチェックマークなし</p>
+                <p className="text-2xl font-bold text-gray-900">{personalMonthlyRecommendations.notRecommended}</p>
               </div>
             </div>
           </div>
