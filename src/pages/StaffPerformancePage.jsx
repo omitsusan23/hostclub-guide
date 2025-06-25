@@ -15,6 +15,7 @@ const StaffPerformancePage = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalTodayRecommendations, setPersonalTodayRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
+  const [effectiveRole, setEffectiveRole] = useState(null)
 
   // URLパラメータからtypeを取得
   const urlParams = new URLSearchParams(window.location.search)
@@ -48,11 +49,12 @@ const StaffPerformancePage = () => {
         
         // ユーザーロールを取得して分離表示フィルタリングを適用
         const userRole = getUserRole()
-        const effectiveRole = forceType || userRole // URLパラメータでの強制指定を優先
-        const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'
+        const currentEffectiveRole = forceType || userRole // URLパラメータでの強制指定を優先
+        setEffectiveRole(currentEffectiveRole)
+        const staffTypeFilter = currentEffectiveRole === 'outstaff' ? 'outstaff' : 'staff'
         
         // 店舗データ取得（outstaffフィルタリング対応）
-        const storesData = await getStores(effectiveRole)
+        const storesData = await getStores(currentEffectiveRole)
         setStores(storesData)
         
         // 今日の案内記録取得（分離表示）
@@ -83,7 +85,7 @@ const StaffPerformancePage = () => {
             setCurrentStaff(staffData)
             
             // outstaffの場合は個人本日推奨状態別案内数を取得
-            if (effectiveRole === 'outstaff') {
+            if (currentEffectiveRole === 'outstaff') {
               const personalTodayRecommendationsResult = await getPersonalTodayIntroductionsByRecommendation(staffData.display_name)
               if (personalTodayRecommendationsResult.success) {
                 setPersonalTodayRecommendations(personalTodayRecommendationsResult.data)
