@@ -75,8 +75,8 @@ const StaffPerformancePage = () => {
             setPersonalTodayRecommendations(allOutstaffTodayResult.data)
           }
           setCurrentStaff({ display_name: '全outstaffスタッフ' })
-        } else if (user?.id) {
-          // 個人のスタッフ情報取得
+        } else if (user?.id && userRole !== 'admin') {
+          // 個人のスタッフ情報取得（adminは除外）
           const { data: staffData, error } = await supabase
             .from('staffs')
             .select('display_name')

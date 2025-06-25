@@ -3,7 +3,7 @@ import Layout from '../components/Layout'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import { useApp } from '../contexts/AppContext'
-import { getVisitRecords, getStores, deleteVisitRecord, getPersonalMonthlyIntroductionsByRecommendation, calculateTargetAchievementRate } from '../lib/database'
+import { getVisitRecords, getStores, deleteVisitRecord, getPersonalMonthlyIntroductionsByRecommendation, calculateTargetAchievementRate, getMonthlyIntroductionCountsByStaffAndRecommendation } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
 const PastPerformancePage = () => {
@@ -111,19 +111,59 @@ const PastPerformancePage = () => {
       setStores(storesData)
 
       // スタッフ情報と当月推奨状態別案内数を取得（outstaffの場合のみ）
-      if (effectiveRole === 'outstaff' && user?.id) {
-        const { data: staffData, error } = await supabase
-          .from('staffs')
-          .select('display_name')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (!error && staffData) {
-          setCurrentStaff(staffData)
+      if (effectiveRole === 'outstaff') {
+        if (userRole === 'admin' || forceType === 'outstaff') {
+          // adminの場合は全outstaffの統計を取得（権限エラー回避のため既存関数を使用）
+          const staffCountsResult = await getMonthlyIntroductionCountsByStaffAndRecommendation()
+          console.log('outstaffスタッフ統計データ:', staffCountsResult)
           
-          const personalRecommendationsResult = await getPersonalMonthlyIntroductionsByRecommendation(staffData.display_name)
-          if (personalRecommendationsResult.success) {
-            setPersonalMonthlyRecommendations(personalRecommendationsResult.data)
+          if (staffCountsResult.success) {
+            // 全outstaffスタッフの統計を合計
+            let totalRecommended = 0
+            let totalNotRecommended = 0
+            
+            Object.values(staffCountsResult.data).forEach(staffData => {
+              console.log('スタッフデータ:', staffData)
+              totalRecommended += staffData.recommended
+              totalNotRecommended += staffData.notRecommended
+            })
+            
+            console.log('合計統計:', { totalRecommended, totalNotRecommended })
+            
+            setPersonalMonthlyRecommendations({
+              recommended: totalRecommended,
+              notRecommended: totalNotRecommended,
+              total: totalRecommended + totalNotRecommended
+            })
+            setCurrentStaff({ display_name: '全outstaffスタッフ' })
+          } else {
+            console.error('outstaffスタッフ統計取得エラー:', staffCountsResult.error)
+            
+            // デバッグ: 直接outstaffデータが存在するかチェック
+            const { data: outstaffLogs, error: logsError } = await supabase
+              .from('staff_logs')
+              .select('*')
+              .eq('staff_type', 'outstaff')
+              .gte('guided_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+              .limit(10)
+            
+            console.log('outstaffの生ログデータ:', outstaffLogs, 'エラー:', logsError)
+          }
+        } else if (user?.id) {
+          // 個人outstaffスタッフの場合
+          const { data: staffData, error } = await supabase
+            .from('staffs')
+            .select('display_name')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (!error && staffData) {
+            setCurrentStaff(staffData)
+            
+            const personalRecommendationsResult = await getPersonalMonthlyIntroductionsByRecommendation(staffData.display_name)
+            if (personalRecommendationsResult.success) {
+              setPersonalMonthlyRecommendations(personalRecommendationsResult.data)
+            }
           }
         }
       }
