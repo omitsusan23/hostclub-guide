@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord, getPersonalTodayIntroductionsByRecommendation, getAllOutstaffTodayIntroductionsByRecommendation } from '../lib/database'
+import { getTodayVisitRecords, getMonthlyVisitRecords, getStores, deleteVisitRecord, getPersonalTodayIntroductionsByRecommendation, getAllOutstaffTodayIntroductionsByRecommendation, calculateDailyTarget, calculateTargetAchievementRate } from '../lib/database'
 import { supabase } from '../lib/supabase'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
@@ -110,6 +110,10 @@ const StaffPerformancePage = () => {
   // 今月の案内数を計算
   const monthlyCount = monthlyRecords.reduce((total, record) => total + record.guest_count, 0)
 
+  // staff向けの目標計算
+  const dailyTargetData = effectiveRole !== 'outstaff' && forceType !== 'outstaff' ? calculateDailyTarget() : null
+  const achievementData = effectiveRole !== 'outstaff' && forceType !== 'outstaff' ? calculateTargetAchievementRate(monthlyCount) : null
+
 
 
   // 削除確認モーダルを開く
@@ -174,22 +178,21 @@ const StaffPerformancePage = () => {
         </div>
 
         {/* 実績カード */}
-        <div className={`grid gap-2 mb-6 ${
-          (effectiveRole === 'outstaff' || forceType === 'outstaff') ? 'grid-cols-3' : 'grid-cols-1'
-        }`}>
-          {/* 本日の案内数 */}
-          <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
-            <div className="flex flex-col items-center">
-              <div className="text-blue-600 text-2xl mb-2">🏪</div>
-              <div className="text-center">
-                <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
-                <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
+        {(effectiveRole === 'outstaff' || forceType === 'outstaff') ? (
+          // outstaff向け実績カード（チェックマーク機能）
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {/* 本日の案内数 */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex flex-col items-center">
+                <div className="text-blue-600 text-2xl mb-2">🏪</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
+                  <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* 本日のチェックマークあり案内数（outstaffまたはforceType='outstaff'の場合のみ表示） */}
-          {(effectiveRole === 'outstaff' || forceType === 'outstaff') && (
+            
+            {/* 本日のチェックマークあり案内数 */}
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
               <div className="flex flex-col items-center">
                 <div className="text-green-600 text-2xl mb-2">✅</div>
@@ -199,10 +202,8 @@ const StaffPerformancePage = () => {
                 </div>
               </div>
             </div>
-          )}
 
-          {/* 本日のチェックマークなし案内数（outstaffまたはforceType='outstaff'の場合のみ表示） */}
-          {(effectiveRole === 'outstaff' || forceType === 'outstaff') && (
+            {/* 本日のチェックマークなし案内数 */}
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
               <div className="flex flex-col items-center">
                 <div className="text-red-600 text-2xl mb-2">❌</div>
@@ -212,8 +213,40 @@ const StaffPerformancePage = () => {
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // staff向け実績カード（目標機能）
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            {/* 本日の案内数 */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex flex-col items-center">
+                <div className="text-blue-600 text-2xl mb-2">🏪</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日の案内数</p>
+                  <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 本日の目標本数まで */}
+            <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+              <div className="flex flex-col items-center">
+                <div className="text-orange-600 text-2xl mb-2">🎯</div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-gray-600 mb-1">本日の目標本数まで</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {achievementData?.remainingToDaily || 0}
+                  </p>
+                  {dailyTargetData && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      目標: {Math.ceil(dailyTargetData.dailyRate * dailyTargetData.currentDay)}本
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 本日の案内実績 */}
         <div className="bg-white rounded-lg shadow-md p-6">

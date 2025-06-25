@@ -3,7 +3,7 @@ import Layout from '../components/Layout'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import { useApp } from '../contexts/AppContext'
-import { getVisitRecords, getStores, deleteVisitRecord, getPersonalMonthlyIntroductionsByRecommendation } from '../lib/database'
+import { getVisitRecords, getStores, deleteVisitRecord, getPersonalMonthlyIntroductionsByRecommendation, calculateTargetAchievementRate } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
 const PastPerformancePage = () => {
@@ -396,6 +396,13 @@ const PastPerformancePage = () => {
     return Object.values(monthlyData).flat().reduce((total, record) => total + (record.guest_count || 0), 0)
   }
 
+  // staff向けの目標達成度を計算
+  const getStaffAchievementData = () => {
+    if (userRole !== 'staff') return null
+    const currentMonthCount = getCurrentMonthGuidanceCount()
+    return calculateTargetAchievementRate(currentMonthCount)
+  }
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
@@ -436,6 +443,42 @@ const PastPerformancePage = () => {
             </div>
           </div>
         )}
+
+        {/* staffの場合のみ目標達成度カードを表示 */}
+        {userRole === 'staff' && !selectedDate && !storeSelectedDate && !selectedStore && (() => {
+          const achievementData = getStaffAchievementData()
+          return achievementData && (
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {/* 目標達成度 */}
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+                <div className="flex flex-col items-center">
+                  <div className="text-green-600 text-2xl mb-2">🎯</div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">月間目標達成度</p>
+                    <p className="text-2xl font-bold text-gray-900">{achievementData.monthlyRate}%</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      ({getCurrentMonthGuidanceCount()}/100本)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 目標本数まで */}
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-orange-500">
+                <div className="flex flex-col items-center">
+                  <div className="text-orange-600 text-2xl mb-2">📈</div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">目標本数まで</p>
+                    <p className="text-2xl font-bold text-gray-900">{achievementData.remainingToMonthly}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      残り本数
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {selectedDate ? (
           // 日付詳細表示

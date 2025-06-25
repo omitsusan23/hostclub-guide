@@ -693,4 +693,50 @@ export const getAllOutstaffTodayIntroductionsByRecommendation = async () => {
       data: { recommended: 0, notRecommended: 0, total: 0 } 
     }
   }
+}
+
+// staff向け目標関連機能
+// 月間目標を取得（staffのみ）
+export const getMonthlyTarget = () => {
+  // staff用のハードコードされた月間目標
+  return 100
+}
+
+// 日割り目標を計算（staffのみ）
+export const calculateDailyTarget = () => {
+  const monthlyTarget = getMonthlyTarget()
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  
+  // 今月の総日数
+  const totalDaysInMonth = new Date(year, month + 1, 0).getDate()
+  
+  // 今日が何日目か
+  const currentDay = now.getDate()
+  
+  // 日割り目標 = 月間目標 / 今月の総日数 * 今日までの日数
+  const dailyTarget = Math.ceil((monthlyTarget / totalDaysInMonth) * currentDay)
+  
+  return {
+    monthlyTarget,
+    totalDaysInMonth,
+    currentDay,
+    dailyTarget,
+    dailyRate: monthlyTarget / totalDaysInMonth
+  }
+}
+
+// 目標達成率を計算（staffのみ）
+export const calculateTargetAchievementRate = (currentCount) => {
+  const { dailyTarget, monthlyTarget } = calculateDailyTarget()
+  const dailyRate = (currentCount / dailyTarget) * 100
+  const monthlyRate = (currentCount / monthlyTarget) * 100
+  
+  return {
+    dailyRate: Math.round(dailyRate * 10) / 10, // 小数点第1位まで
+    monthlyRate: Math.round(monthlyRate * 10) / 10,
+    remainingToDaily: Math.max(0, dailyTarget - currentCount),
+    remainingToMonthly: Math.max(0, monthlyTarget - currentCount)
+  }
 } 
