@@ -622,7 +622,7 @@ const AdminDashboard = () => {
 
       {/* クイックアクション */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* 本日の営業店舗 */}
           <a
             href="/today-open-stores"
@@ -700,6 +700,22 @@ const AdminDashboard = () => {
             </div>
             <p className="text-sm text-gray-600">
               スタッフの登録・編集・削除を管理
+            </p>
+          </a>
+
+          {/* outstaff店舗設定 */}
+          <a
+            href="/outstaff-store-settings"
+            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-pink-300 transition-all group"
+          >
+            <div className="flex items-center mb-2">
+              <div className="text-2xl mr-3">🌸</div>
+              <h4 className="font-medium text-gray-900 group-hover:text-pink-600">
+                outstaff店舗設定
+              </h4>
+            </div>
+            <p className="text-sm text-gray-600">
+              アウトスタッフの推奨店舗を設定
             </p>
           </a>
         </div>

@@ -13,6 +13,7 @@ import StaffPerformancePage from './pages/StaffPerformancePage'
 import PastPerformancePage from './pages/PastPerformancePage'
 import StoreManagementPage from './pages/StoreManagementPage'
 import StaffManagementPage from './pages/StaffManagementPage'
+import OutstaffStoreSettingsPage from './pages/OutstaffStoreSettingsPage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
@@ -125,6 +126,16 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} requireAdminPermissions={true}>
               <StaffManagementPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* outstaff店舗設定ページ（admin専用） */}
+        <Route 
+          path="/outstaff-store-settings" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <OutstaffStoreSettingsPage />
             </ProtectedRoute>
           } 
         />

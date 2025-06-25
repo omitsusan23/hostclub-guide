@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import { useApp } from '../contexts/AppContext'
-import { getTodayOpenStores, getAllStoresLatestStatus } from '../lib/database'
+import { getTodayOpenStores, getAllStoresLatestStatus, getOutstaffRecommendations } from '../lib/database'
 
 const TodayOpenStoresPage = () => {
   const { user, getUserRole } = useApp()
@@ -11,6 +11,7 @@ const TodayOpenStoresPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [storeStatuses, setStoreStatuses] = useState({})
+  const [recommendedStores, setRecommendedStores] = useState(new Set())
   const [selectedStore, setSelectedStore] = useState(null)
   const [showStoreModal, setShowStoreModal] = useState(false)
 
@@ -37,19 +38,36 @@ const TodayOpenStoresPage = () => {
         setError('')
 
         // 本日の営業店舗と店舗状況を並行取得（outstaffフィルタリング対応）
-        const [storesResult, statusesResult] = await Promise.all([
+        const promises = [
           getTodayOpenStores(userRole),
           getAllStoresLatestStatus()
-        ])
+        ]
+
+        // outstaffの場合は推奨店舗データも取得
+        if (userRole === 'outstaff') {
+          promises.push(getOutstaffRecommendations())
+        }
+
+        const results = await Promise.all(promises)
+        const [storesResult, statusesResult, recommendationsResult] = results
 
         if (!storesResult.success) {
           throw new Error(storesResult.error)
         }
 
-        
         setOpenStores(storesResult.data)
         setTotalStoresWithMonthlyUpdate(storesResult.totalStoresWithMonthlyUpdate || 0)
         setStoreStatuses(statusesResult)
+
+        // outstaffの場合、推奨店舗のSetを作成
+        if (userRole === 'outstaff' && recommendationsResult?.success) {
+          const recommended = new Set(
+            recommendationsResult.data
+              .filter(rec => rec.is_recommended)
+              .map(rec => rec.store_id)
+          )
+          setRecommendedStores(recommended)
+        }
       } catch (err) {
         console.error('データ取得エラー:', err)
         setError('データの取得に失敗しました: ' + err.message)
@@ -197,11 +215,16 @@ const TodayOpenStoresPage = () => {
                   {openStores.map((store) => {
                     const latestStatus = storeStatuses[store.store_id]
                     const statusType = latestStatus?.status_type
+                    const isRecommended = userRole === 'outstaff' && recommendedStores.has(store.store_id)
                     
                     return (
                       <div 
                         key={store.id} 
-                        className="pt-2 px-3 pb-1.5 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className={`pt-2 px-3 pb-1.5 transition-colors cursor-pointer ${
+                          isRecommended 
+                            ? 'bg-green-50 hover:bg-green-100' 
+                            : 'hover:bg-gray-50'
+                        }`}
                         onClick={() => handleStoreClick(store)}
                       >
                         <div className="flex items-start justify-between">

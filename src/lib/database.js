@@ -284,10 +284,16 @@ export const getMonthlyIntroductionCounts = async (staffTypeFilter = 'both') => 
   }
 }
 
-// 案内記録を追加（staff_type自動設定対応）
+// 案内記録を追加（staff_type自動設定対応、推奨状態記録対応）
 export const addVisitRecord = async (visitData, userRole = 'staff') => {
   // staff_typeを自動設定
   const staffType = userRole === 'outstaff' ? 'outstaff' : 'staff'
+  
+  // outstaffの場合は現在の推奨状態を取得
+  let storeWasRecommended = false
+  if (userRole === 'outstaff') {
+    storeWasRecommended = await getCurrentRecommendationStatus(visitData.store_id)
+  }
 
   const { data, error } = await supabase
     .from('staff_logs')
@@ -296,7 +302,8 @@ export const addVisitRecord = async (visitData, userRole = 'staff') => {
       guest_count: visitData.guest_count,
       staff_name: visitData.staff_name,
       guided_at: visitData.guided_at || new Date().toISOString(),
-      staff_type: staffType
+      staff_type: staffType,
+      store_was_recommended: storeWasRecommended
     })
     .select()
 
@@ -384,4 +391,72 @@ export const sendStaffChat = async (message) => {
   // TODO: staff_chatsテーブル作成後に実装
   console.log('スタッフチャット送信:', message)
   return { success: true }
+}
+
+// outstaff推奨店舗システム関連
+// 全店舗の推奨状態を取得
+export const getOutstaffRecommendations = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('outstaff_store_recommendations')
+      .select(`
+        store_id,
+        is_recommended,
+        updated_at,
+        stores (
+          name,
+          store_id
+        )
+      `)
+      .order('stores(name)')
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('推奨店舗取得エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 推奨状態を一括更新
+export const updateOutstaffRecommendations = async (recommendations, userId) => {
+  try {
+    // トランザクション的に更新
+    const updates = recommendations.map(rec => ({
+      store_id: rec.store_id,
+      is_recommended: rec.is_recommended,
+      updated_at: new Date().toISOString(),
+      updated_by: userId
+    }))
+
+    const { error } = await supabase
+      .from('outstaff_store_recommendations')
+      .upsert(updates, { onConflict: 'store_id' })
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error) {
+    console.error('推奨状態更新エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 特定店舗の現在推奨状態を取得
+export const getCurrentRecommendationStatus = async (storeId) => {
+  try {
+    const { data, error } = await supabase
+      .from('outstaff_store_recommendations')
+      .select('is_recommended')
+      .eq('store_id', storeId)
+      .single()
+
+    if (error) throw error
+
+    return data?.is_recommended || false
+  } catch (error) {
+    console.error('推奨状態取得エラー:', error)
+    return false
+  }
 } 

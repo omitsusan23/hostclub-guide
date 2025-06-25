@@ -248,6 +248,7 @@ const StaffPerformancePage = () => {
                     record={record}
                     store={store}
                     onDelete={handleDeleteRequest}
+                    isRecommended={record.store_was_recommended}
                   />
                 )
               })

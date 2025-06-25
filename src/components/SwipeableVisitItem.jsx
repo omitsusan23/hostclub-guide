@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-const SwipeableVisitItem = ({ record, store, onDelete }) => {
+const SwipeableVisitItem = ({ record, store, onDelete, isRecommended = false }) => {
   const [translateX, setTranslateX] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [displayName, setDisplayName] = useState(record.staff_name || '不明');
@@ -102,7 +102,9 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
   }, [isDeleting]);
 
   return (
-    <div className="relative bg-gray-50 rounded-lg overflow-hidden">
+    <div className={`relative rounded-lg overflow-hidden ${
+      isRecommended ? 'bg-green-50' : 'bg-gray-50'
+    }`}>
       {/* 背景の削除ボタン */}
       <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center">
         <button
@@ -116,7 +118,9 @@ const SwipeableVisitItem = ({ record, store, onDelete }) => {
 
       {/* メインコンテンツ */}
       <div
-        className="relative bg-gray-50 rounded-lg transition-transform duration-200 ease-out"
+        className={`relative rounded-lg transition-transform duration-200 ease-out ${
+          isRecommended ? 'bg-green-50' : 'bg-gray-50'
+        }`}
         style={{
           transform: `translateX(${translateX}px)`,
           opacity: isDeleting ? 0.5 : 1
