@@ -22,7 +22,7 @@ const Layout = ({ children }) => {
 
   // トップページかどうかを判定
   const isTopPage = () => {
-    const topPaths = ['/', '/dashboard', '/admin', '/staff', '/customer']
+    const topPaths = ['/', '/dashboard', '/admin', '/staff', '/outstaff', '/customer']
     return topPaths.includes(location.pathname)
   }
 
@@ -75,6 +75,7 @@ const Layout = ({ children }) => {
                   <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                     {getUserRole() === 'admin' && '管理者'}
                     {getUserRole() === 'staff' && 'スタッフ'}
+                    {getUserRole() === 'outstaff' && 'アウトスタッフ'}
                     {getUserRole() === 'customer' && '店舗'}
                   </span>
                   <span className="ml-1 text-xs text-gray-700 truncate max-w-[60px]">
