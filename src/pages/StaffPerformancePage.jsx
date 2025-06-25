@@ -7,7 +7,7 @@ import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 
 const StaffPerformancePage = () => {
-  const { user } = useApp()
+  const { user, getUserRole } = useApp()
   const [todayRecords, setTodayRecords] = useState([])
   const [monthlyRecords, setMonthlyRecords] = useState([])
   const [stores, setStores] = useState([])
@@ -41,16 +41,20 @@ const StaffPerformancePage = () => {
       try {
         setLoading(true)
         
-        // 店舗データ取得
-        const storesData = await getStores()
+        // ユーザーロールを取得して分離表示フィルタリングを適用
+        const userRole = getUserRole()
+        const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+        
+        // 店舗データ取得（outstaffフィルタリング対応）
+        const storesData = await getStores(userRole)
         setStores(storesData)
         
-        // 今日の案内記録取得
-        const todayData = await getTodayVisitRecords()
+        // 今日の案内記録取得（分離表示）
+        const todayData = await getTodayVisitRecords(null, staffTypeFilter)
         setTodayRecords(todayData)
 
-        // 今月の案内記録取得
-        const monthlyData = await getMonthlyVisitRecords()
+        // 今月の案内記録取得（分離表示）
+        const monthlyData = await getMonthlyVisitRecords(null, null, null, staffTypeFilter)
         setMonthlyRecords(monthlyData)
         
       } catch (error) {

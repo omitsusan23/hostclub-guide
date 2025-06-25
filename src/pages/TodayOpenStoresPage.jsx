@@ -14,15 +14,15 @@ const TodayOpenStoresPage = () => {
   const [selectedStore, setSelectedStore] = useState(null)
   const [showStoreModal, setShowStoreModal] = useState(false)
 
-  // admin と staff 以外はアクセス不可
+  // admin、staff、outstaffのみアクセス可能
   const userRole = getUserRole()
-  if (userRole !== 'admin' && userRole !== 'staff') {
+  if (userRole !== 'admin' && userRole !== 'staff' && userRole !== 'outstaff') {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
             <h2 className="text-lg font-semibold mb-2">アクセス権限がありません</h2>
-            <p>このページは管理者またはスタッフのみアクセスできます。</p>
+            <p>このページは管理者、スタッフ、またはアウトスタッフのみアクセスできます。</p>
           </div>
         </div>
       </Layout>
@@ -36,9 +36,9 @@ const TodayOpenStoresPage = () => {
         setLoading(true)
         setError('')
 
-        // 本日の営業店舗と店舗状況を並行取得
+        // 本日の営業店舗と店舗状況を並行取得（outstaffフィルタリング対応）
         const [storesResult, statusesResult] = await Promise.all([
-          getTodayOpenStores(),
+          getTodayOpenStores(userRole),
           getAllStoresLatestStatus()
         ])
 

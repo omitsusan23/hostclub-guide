@@ -23,15 +23,15 @@ const PastPerformancePage = () => {
   const [storeSelectedRecords, setStoreSelectedRecords] = useState([])
   const [storeLoading, setStoreLoading] = useState(false)
 
-  // staff ロール以外はアクセス不可
+  // staff、outstaffロールのみアクセス可能
   const userRole = getUserRole()
-  if (userRole !== 'staff') {
+  if (userRole !== 'staff' && userRole !== 'outstaff') {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
             <h2 className="text-lg font-semibold mb-2">アクセス権限がありません</h2>
-            <p>このページはスタッフのみアクセスできます。</p>
+            <p>このページはスタッフまたはアウトスタッフのみアクセスできます。</p>
           </div>
         </div>
       </Layout>
@@ -52,17 +52,22 @@ const PastPerformancePage = () => {
     return weekdays[date.getDay()]
   }
 
-  // 月の案内記録を取得
+  // 月の案内記録を取得（分離表示）
   const fetchMonthlyData = async (year, month) => {
     try {
       setLoading(true)
       const startDate = new Date(year, month, 1)
       const endDate = new Date(year, month + 1, 0)
       
+      // 分離表示のためstaff_typeフィルタリングを適用
+      const userRole = getUserRole()
+      const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+      
       const records = await getVisitRecords(
         null, 
         startDate.toISOString(), 
-        endDate.toISOString()
+        endDate.toISOString(),
+        staffTypeFilter
       )
 
       // 日付別にグループ化
@@ -83,10 +88,11 @@ const PastPerformancePage = () => {
     }
   }
 
-  // 店舗データ取得
+  // 店舗データ取得（outstaffフィルタリング対応）
   useEffect(() => {
     const fetchStores = async () => {
-      const storesData = await getStores()
+      const userRole = getUserRole()
+      const storesData = await getStores(userRole)
       setStores(storesData)
     }
     fetchStores()
@@ -202,17 +208,22 @@ const PastPerformancePage = () => {
 
   // 店舗別案内実績用の関数群
   
-  // 特定店舗の月次データ取得
+  // 特定店舗の月次データ取得（分離表示）
   const fetchStoreMonthlyData = async (storeId, year, month) => {
     try {
       setStoreLoading(true)
       const startDate = new Date(year, month, 1)
       const endDate = new Date(year, month + 1, 0)
       
+      // 分離表示のためstaff_typeフィルタリングを適用
+      const userRole = getUserRole()
+      const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+      
       const records = await getVisitRecords(
         storeId, 
         startDate.toISOString(), 
-        endDate.toISOString()
+        endDate.toISOString(),
+        staffTypeFilter
       )
 
       // 日付別にグループ化
@@ -315,7 +326,7 @@ const PastPerformancePage = () => {
       const userStoreId = getUserStoreId()
       return stores.filter(store => store.store_id === userStoreId)
     }
-    // staff の場合は全店舗を表示
+    // staff、outstaffの場合は取得済みの店舗（既にフィルタリング済み）を表示
     return stores.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
   }
 
