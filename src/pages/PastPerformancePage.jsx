@@ -26,9 +26,14 @@ const PastPerformancePage = () => {
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
 
-  // staff、outstaffロールのみアクセス可能
+  // staff、outstaff、adminロールのみアクセス可能
   const userRole = getUserRole()
-  if (userRole !== 'staff' && userRole !== 'outstaff') {
+  
+  // URLパラメータからtypeを取得（adminの場合）
+  const urlParams = new URLSearchParams(window.location.search)
+  const forceType = urlParams.get('type') // 'staff'、'outstaff' または null
+  
+  if (userRole !== 'staff' && userRole !== 'outstaff' && userRole !== 'admin') {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto p-6">
@@ -40,6 +45,9 @@ const PastPerformancePage = () => {
       </Layout>
     )
   }
+
+  // 実際に使用するロール（adminの場合はURLパラメータで決定）
+  const effectiveRole = forceType || userRole
 
   // 日付フォーマット関数
   const formatLocalDate = (date) => {
@@ -63,8 +71,7 @@ const PastPerformancePage = () => {
       const endDate = new Date(year, month + 1, 0)
       
       // 分離表示のためstaff_typeフィルタリングを適用
-      const userRole = getUserRole()
-      const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+      const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'
       
       const records = await getVisitRecords(
         null, 
@@ -94,12 +101,11 @@ const PastPerformancePage = () => {
   // 店舗データ取得（outstaffフィルタリング対応）
   useEffect(() => {
     const fetchInitialData = async () => {
-      const userRole = getUserRole()
-      const storesData = await getStores(userRole)
+      const storesData = await getStores(effectiveRole)
       setStores(storesData)
 
       // スタッフ情報と当月推奨状態別案内数を取得（outstaffの場合のみ）
-      if (userRole === 'outstaff' && user?.id) {
+      if (effectiveRole === 'outstaff' && user?.id) {
         const { data: staffData, error } = await supabase
           .from('staffs')
           .select('display_name')
@@ -190,8 +196,10 @@ const PastPerformancePage = () => {
     setSelectedDate(date)
   }
 
-  // 削除確認
+  // 削除確認（adminの場合は無効）
   const handleDeleteRequest = (recordId) => {
+    if (userRole === 'admin') return // adminは削除不可
+    
     const record = selectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
     setDeleteModal({
@@ -237,8 +245,7 @@ const PastPerformancePage = () => {
       const endDate = new Date(year, month + 1, 0)
       
       // 分離表示のためstaff_typeフィルタリングを適用
-      const userRole = getUserRole()
-      const staffTypeFilter = userRole === 'outstaff' ? 'outstaff' : 'staff'
+      const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'
       
       const records = await getVisitRecords(
         storeId, 
@@ -342,17 +349,18 @@ const PastPerformancePage = () => {
 
   // 表示する店舗をフィルタリング
   const getDisplayStores = () => {
-    const userRole = getUserRole()
-    if (userRole === 'customer') {
+    if (effectiveRole === 'customer') {
       const userStoreId = getUserStoreId()
       return stores.filter(store => store.store_id === userStoreId)
     }
-    // staff、outstaffの場合は取得済みの店舗（既にフィルタリング済み）を表示
+    // staff、outstaff、adminの場合は取得済みの店舗（既にフィルタリング済み）を表示
     return stores.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
   }
 
-  // 店舗カレンダーの削除確認
+  // 店舗カレンダーの削除確認（adminの場合は無効）
   const handleStoreDeleteRequest = (recordId) => {
+    if (userRole === 'admin') return // adminは削除不可
+    
     const record = storeSelectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
     setDeleteModal({
@@ -402,7 +410,7 @@ const PastPerformancePage = () => {
   // staff向けの目標達成度を取得
   useEffect(() => {
     const calculateStaffAchievement = async () => {
-      if (userRole === 'staff') {
+      if (effectiveRole === 'staff') {
         const currentMonthCount = getCurrentMonthGuidanceCount()
         const achievementResult = await calculateTargetAchievementRate(currentMonthCount)
         setStaffAchievementData(achievementResult)
@@ -412,13 +420,13 @@ const PastPerformancePage = () => {
     if (!loading) {
       calculateStaffAchievement()
     }
-  }, [monthlyData, userRole, loading])
+  }, [monthlyData, effectiveRole, loading])
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto p-4">
         {/* outstaffの場合のみ当月統計カードを表示 */}
-        {userRole === 'outstaff' && !selectedDate && !storeSelectedDate && !selectedStore && (
+        {effectiveRole === 'outstaff' && !selectedDate && !storeSelectedDate && !selectedStore && (
           <div className="grid grid-cols-3 gap-2 mb-6">
             {/* 当月の案内数 */}
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
@@ -456,7 +464,7 @@ const PastPerformancePage = () => {
         )}
 
         {/* staffの場合のみ目標達成度カードを表示 */}
-        {userRole === 'staff' && !selectedDate && !storeSelectedDate && !selectedStore && staffAchievementData && (
+        {effectiveRole === 'staff' && !selectedDate && !storeSelectedDate && !selectedStore && staffAchievementData && (
           <div className="grid grid-cols-2 gap-2 mb-6">
             {/* 目標達成度 */}
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">

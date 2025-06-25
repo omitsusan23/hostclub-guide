@@ -126,8 +126,11 @@ const StaffPerformancePage = () => {
 
 
 
-  // 削除確認モーダルを開く
+  // 削除確認モーダルを開く（adminの場合は無効）
   const handleDeleteRequest = (record, storeName) => {
+    const userRole = getUserRole()
+    if (userRole === 'admin') return // adminは削除不可
+    
     setDeleteModal({
       isOpen: true,
       record: record,
@@ -180,7 +183,7 @@ const StaffPerformancePage = () => {
             📊 {forceType === 'outstaff' ? 'outstaff案内実績' : '案内実績'}
           </h1>
           <a
-            href="/past-performance"
+            href={`/past-performance${forceType ? `?type=${forceType}` : ''}`}
             className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             📋 過去の案内実績
