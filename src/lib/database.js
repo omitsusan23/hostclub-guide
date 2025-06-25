@@ -459,4 +459,97 @@ export const getCurrentRecommendationStatus = async (storeId) => {
     console.error('推奨状態取得エラー:', error)
     return false
   }
+}
+
+// outstaffスタッフ一覧を取得
+export const getOutstaffStaffs = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('staffs')
+      .select('staff_id, display_name, email')
+      .eq('is_active', true)
+      .order('display_name')
+
+    if (error) throw error
+
+    // outstaffに関連するスタッフをフィルタ（staff_typeカラムがない場合の対応）
+    const outstaffStaffs = data.filter(staff => 
+      staff.staff_id === 'yuhi' || 
+      staff.display_name?.includes('夕日') ||
+      staff.email?.includes('outstaff')
+    )
+
+    return { success: true, data: outstaffStaffs || [] }
+  } catch (error) {
+    console.error('outstaffスタッフ取得エラー:', error)
+    return { success: false, error: error.message, data: [] }
+  }
+}
+
+// スタッフ別・推奨状態別の当月案内数を取得
+export const getMonthlyIntroductionCountsByStaffAndRecommendation = async () => {
+  try {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+    // outstaffの案内記録を取得
+    const { data: logs, error: logsError } = await supabase
+      .from('staff_logs')
+      .select('staff_name, guest_count, store_was_recommended, staff_type')
+      .eq('staff_type', 'outstaff')
+      .gte('guided_at', startOfMonth)
+      .lte('guided_at', endOfMonth)
+
+    if (logsError) throw logsError
+
+    // 全スタッフ情報を取得（メールアドレスから表示名を変換するため）
+    const { data: staffs, error: staffsError } = await supabase
+      .from('staffs')
+      .select('email, display_name')
+
+    if (staffsError) throw staffsError
+
+    // メールアドレス→表示名のマップを作成
+    const emailToDisplayName = {}
+    staffs.forEach(staff => {
+      if (staff.email && staff.display_name) {
+        emailToDisplayName[staff.email] = staff.display_name
+      }
+    })
+
+    // スタッフ別・推奨状態別に集計
+    const countsByStaffAndRecommendation = {}
+    
+    logs.forEach(record => {
+      // staff_nameがメールアドレスの場合は表示名に変換
+      let displayName = record.staff_name
+      if (record.staff_name && record.staff_name.includes('@')) {
+        displayName = emailToDisplayName[record.staff_name] || record.staff_name
+      }
+
+      const isRecommended = record.store_was_recommended
+      const guestCount = record.guest_count
+
+      if (!countsByStaffAndRecommendation[displayName]) {
+        countsByStaffAndRecommendation[displayName] = {
+          recommended: 0,
+          notRecommended: 0,
+          total: 0
+        }
+      }
+
+      if (isRecommended) {
+        countsByStaffAndRecommendation[displayName].recommended += guestCount
+      } else {
+        countsByStaffAndRecommendation[displayName].notRecommended += guestCount
+      }
+      countsByStaffAndRecommendation[displayName].total += guestCount
+    })
+
+    return { success: true, data: countsByStaffAndRecommendation }
+  } catch (error) {
+    console.error('スタッフ別案内数取得エラー:', error)
+    return { success: false, error: error.message, data: {} }
+  }
 } 

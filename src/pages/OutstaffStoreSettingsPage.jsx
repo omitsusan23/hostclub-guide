@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
-import { getOutstaffRecommendations, updateOutstaffRecommendations, getStores, getMonthlyIntroductionCounts } from '../lib/database'
+import { getOutstaffRecommendations, updateOutstaffRecommendations, getStores, getMonthlyIntroductionCounts, getOutstaffStaffs, getMonthlyIntroductionCountsByStaffAndRecommendation } from '../lib/database'
 
 const OutstaffStoreSettingsPage = () => {
   const { user } = useApp()
@@ -10,6 +10,8 @@ const OutstaffStoreSettingsPage = () => {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
+  const [outstaffStaffs, setOutstaffStaffs] = useState([])
+  const [staffIntroductions, setStaffIntroductions] = useState({})
 
   // データ取得
   useEffect(() => {
@@ -19,16 +21,27 @@ const OutstaffStoreSettingsPage = () => {
   const loadRecommendations = async () => {
     setLoading(true)
     try {
-      // outstaff対象店舗のみ取得
-      const storesResult = await getStores('outstaff')
+      // 並行してデータを取得
+      const [
+        storesResult,
+        monthlyIntroductionsResult,
+        recommendationsResult,
+        outstaffStaffsResult,
+        staffIntroductionsResult
+      ] = await Promise.all([
+        getStores('outstaff'),
+        getMonthlyIntroductionCounts('both'),
+        getOutstaffRecommendations(),
+        getOutstaffStaffs(),
+        getMonthlyIntroductionCountsByStaffAndRecommendation()
+      ])
       
-      // 当月紹介数を取得（合算データ）
-      const monthlyIntroductionsResult = await getMonthlyIntroductionCounts('both')
       const monthlyIntroductions = monthlyIntroductionsResult.success ? monthlyIntroductionsResult.data : {}
-
-      // 推奨設定を取得
-      const recommendationsResult = await getOutstaffRecommendations()
       const existingRecommendations = recommendationsResult.success ? recommendationsResult.data : []
+      
+      // outstaffスタッフ情報を保存
+      setOutstaffStaffs(outstaffStaffsResult.success ? outstaffStaffsResult.data : [])
+      setStaffIntroductions(staffIntroductionsResult.success ? staffIntroductionsResult.data : {})
       
       // 推奨設定のマップを作成
       const recommendationMap = new Map()
@@ -46,8 +59,12 @@ const OutstaffStoreSettingsPage = () => {
           guarantee_count: store.guarantee_count || 0
         },
         monthlyIntroductions: monthlyIntroductions[store.store_id] || 0,
+        guaranteeShortfall: Math.max(0, (store.guarantee_count || 0) - (monthlyIntroductions[store.store_id] || 0)),
         updated_at: null
       }))
+
+      // 保証人数と当月紹介数の差が大きい順でソート
+      outstaffRecommendations.sort((a, b) => b.guaranteeShortfall - a.guaranteeShortfall)
 
       setRecommendations(outstaffRecommendations)
     } catch (error) {
@@ -107,8 +124,7 @@ const OutstaffStoreSettingsPage = () => {
     }
   }
 
-  // 推奨店舗数を計算
-  const recommendedCount = recommendations.filter(rec => rec.is_recommended).length
+  // 総店舗数を計算
   const totalCount = recommendations.length
 
   if (loading) {
@@ -145,14 +161,32 @@ const OutstaffStoreSettingsPage = () => {
               <div className="text-sm text-gray-600">outstaff対象店舗数</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{recommendedCount}</div>
-              <div className="text-sm text-gray-600">推奨店舗数</div>
+              <div className="text-2xl font-bold text-green-600">
+                {Object.values(staffIntroductions).reduce((sum, staff) => sum + staff.recommended, 0)}
+              </div>
+              <div className="text-sm text-gray-600">チェックマークあり案内数</div>
+              {outstaffStaffs.map(staff => {
+                const staffData = staffIntroductions[staff.display_name] || { recommended: 0 }
+                return (
+                  <div key={staff.staff_id} className="text-xs text-gray-500 mt-1">
+                    {staff.display_name}: {staffData.recommended}本
+                  </div>
+                )
+              })}
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {totalCount > 0 ? Math.round((recommendedCount / totalCount) * 100) : 0}%
+              <div className="text-2xl font-bold text-red-600">
+                {Object.values(staffIntroductions).reduce((sum, staff) => sum + staff.notRecommended, 0)}
               </div>
-              <div className="text-sm text-gray-600">推奨率</div>
+              <div className="text-sm text-gray-600">チェックマークなし案内数</div>
+              {outstaffStaffs.map(staff => {
+                const staffData = staffIntroductions[staff.display_name] || { notRecommended: 0 }
+                return (
+                  <div key={staff.staff_id} className="text-xs text-gray-500 mt-1">
+                    {staff.display_name}: {staffData.notRecommended}本
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
