@@ -888,7 +888,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* スタッフチャット */}
-      <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-96 flex flex-col">
+              <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-[576px] flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800">
             💬 スタッフチャット

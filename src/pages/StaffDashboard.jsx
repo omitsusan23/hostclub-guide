@@ -85,12 +85,19 @@ const StaffDashboard = () => {
             .single()
           
           console.log('📊 スタッフクエリ結果:', { staffData, error })
+          console.log('🔍 クエリパラメータ確認:', { userId: user.id })
           
           if (!error && staffData) {
             console.log('✅ スタッフ情報設定:', staffData)
             setCurrentStaff(staffData)
           } else {
             console.log('❌ スタッフ情報取得失敗:', error)
+            console.log('🔍 エラー詳細:', {
+              errorCode: error?.code,
+              errorMessage: error?.message,
+              errorDetails: error?.details,
+              hint: error?.hint
+            })
           }
         } else {
           console.log('❌ ユーザー情報なし')
@@ -221,9 +228,19 @@ const StaffDashboard = () => {
     if (!newMessage.trim() || !user?.id || !currentStaff) {
       console.log('❌ 送信条件未満:', { 
         messageOK: !!newMessage.trim(),
+        message: newMessage,
         userIdOK: !!user?.id,
-        currentStaffOK: !!currentStaff
+        userId: user?.id,
+        currentStaffOK: !!currentStaff,
+        currentStaffData: currentStaff,
+        currentStaffDisplayName: currentStaff?.display_name
       })
+      
+      // 特に問題のある部分を詳細に確認
+      if (!currentStaff) {
+        console.log('🚨 currentStaffが設定されていません！スタッフ情報を再取得してください。')
+        alert('⚠️ スタッフ情報の読み込みに問題があります。ページを再読み込みしてください。')
+      }
       return
     }
 
@@ -445,7 +462,7 @@ const StaffDashboard = () => {
       {/* メインコンテンツ */}
       <div className="space-y-6">
           {/* スタッフチャット */}
-          <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
+          <div className="bg-white rounded-lg shadow-md p-6 h-[576px] flex flex-col">
                       <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">
               💬 スタッフチャット
@@ -478,6 +495,41 @@ const StaffDashboard = () => {
                 className="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-md hover:bg-yellow-200 text-xs"
               >
                 🐛
+              </button>
+              <button
+                onClick={async () => {
+                  console.log('🔧 スタッフ情報を緊急再取得中...')
+                  
+                  if (!user?.id) {
+                    alert('❌ ユーザー情報がありません')
+                    return
+                  }
+                  
+                  try {
+                    const { data: staffData, error } = await supabase
+                      .from('staffs')
+                      .select('display_name, staff_id, email, user_id, is_active')
+                      .eq('user_id', user.id)
+                      .single()
+                    
+                    console.log('🔧 緊急再取得結果:', { staffData, error })
+                    
+                    if (!error && staffData) {
+                      setCurrentStaff(staffData)
+                      console.log('✅ スタッフ情報を強制再設定しました:', staffData)
+                      alert('✅ スタッフ情報を再取得しました！')
+                    } else {
+                      console.log('❌ 緊急再取得も失敗:', error)
+                      alert('❌ スタッフ情報の再取得に失敗しました: ' + error?.message)
+                    }
+                  } catch (error) {
+                    console.error('🔧 緊急再取得エラー:', error)
+                    alert('❌ エラーが発生しました: ' + error.message)
+                  }
+                }}
+                className="px-2 py-1 bg-green-100 text-green-600 rounded-md hover:bg-green-200 text-xs"
+              >
+                🔧
               </button>
             </div>
           </div>
