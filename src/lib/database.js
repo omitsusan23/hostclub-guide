@@ -484,7 +484,7 @@ export const deleteStaffChat = async (chatId, userId, userRole) => {
 // リアルタイムチャット購読
 export const subscribeToStaffChats = (callback) => {
   const subscription = supabase
-    .channel('staff_chats')
+    .channel('staff_chats_channel')
     .on(
       'postgres_changes',
       {
@@ -492,9 +492,14 @@ export const subscribeToStaffChats = (callback) => {
         schema: 'public',
         table: 'staff_chats'
       },
-      callback
+      (payload) => {
+        console.log('📨 リアルタイムイベント受信:', payload)
+        callback(payload)
+      }
     )
-    .subscribe()
+    .subscribe((status) => {
+      console.log('📡 チャット購読状態:', status)
+    })
 
   return subscription
 }

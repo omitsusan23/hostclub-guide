@@ -8,7 +8,13 @@ import TargetSettingsModal from '../components/TargetSettingsModal'
 import { useApp } from '../contexts/AppContext'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
-import { getMonthlyIntroductionCounts } from '../lib/database.js'
+import { 
+  getMonthlyIntroductionCounts,
+  getStaffChats,
+  sendStaffChat,
+  subscribeToStaffChats,
+  unsubscribeFromStaffChats
+} from '../lib/database.js'
 
 const AdminDashboard = () => {
   const { user, getUserRole, getUserStoreId } = useApp()
@@ -55,12 +61,25 @@ const AdminDashboard = () => {
   const [selectedStaff, setSelectedStaff] = useState(null)
   const [showStaffEditModal, setShowStaffEditModal] = useState(false)
   const [showTargetSettingsModal, setShowTargetSettingsModal] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const [chatLoading, setChatLoading] = useState(true)
+  const [chatSubscription, setChatSubscription] = useState(null)
 
   // 店舗データを取得
   useEffect(() => {
     loadStores()
     loadStaffs()
     loadMonthlyStats()
+    loadChatMessages()
+    setupChatSubscription()
+
+    // クリーンアップ
+    return () => {
+      if (chatSubscription) {
+        unsubscribeFromStaffChats(chatSubscription)
+      }
+    }
   }, [])
 
   const loadStores = async () => {
@@ -141,6 +160,73 @@ const AdminDashboard = () => {
       })
     } finally {
       setLoadingStats(false)
+    }
+  }
+
+  // チャットデータを読み込む関数
+  const loadChatMessages = async () => {
+    try {
+      setChatLoading(true)
+      const result = await getStaffChats()
+      if (result.success) {
+        setChatMessages(result.data)
+      }
+    } catch (error) {
+      console.error('チャット取得エラー:', error)
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  // リアルタイムチャット購読を設定
+  const setupChatSubscription = () => {
+    const subscription = subscribeToStaffChats((payload) => {
+      console.log('📨 チャット更新:', payload)
+      
+      if (payload.eventType === 'INSERT') {
+        setChatMessages(prev => [...prev, payload.new])
+      } else if (payload.eventType === 'UPDATE') {
+        setChatMessages(prev => 
+          prev.map(msg => 
+            msg.id === payload.new.id ? payload.new : msg
+          )
+        )
+      } else if (payload.eventType === 'DELETE') {
+        setChatMessages(prev => 
+          prev.filter(msg => msg.id !== payload.old.id)
+        )
+      }
+    })
+    
+    setChatSubscription(subscription)
+  }
+
+  // チャットメッセージ送信
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user?.id) return
+
+    try {
+      const messageData = {
+        message: newMessage.trim(),
+        sender_id: user.id,
+        sender_name: 'Admin', // 管理者は固定で「Admin」として表示
+        sender_role: 'admin',
+        message_type: 'text'
+      }
+
+      const result = await sendStaffChat(messageData)
+      
+      if (result.success) {
+        setNewMessage('')
+        // リアルタイム機能により自動的にメッセージが追加される
+      } else {
+        console.error('チャット送信エラー:', result.error)
+        alert('❌ 送信に失敗しました: ' + result.error)
+      }
+      
+    } catch (error) {
+      console.error('チャット送信エラー:', error)
+      alert('❌ 送信に失敗しました')
     }
   }
 
@@ -782,6 +868,79 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* スタッフチャット */}
+      <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-96 flex flex-col">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          💬 スタッフチャット
+        </h3>
+        
+        {/* チャットメッセージ */}
+        <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+          {chatLoading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
+              <p className="text-gray-500 text-sm mt-2">チャットを読み込み中...</p>
+            </div>
+          ) : chatMessages.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              チャットメッセージはありません
+            </p>
+          ) : (
+            chatMessages.map((chat) => {
+              const isMyMessage = chat.sender_id === user?.id
+              return (
+                <div key={chat.id} className={`p-3 rounded-lg ${
+                  isMyMessage ? 'bg-red-100 ml-8' : 'bg-gray-50 mr-8'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-sm">{chat.sender_name}</span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        chat.sender_role === 'admin' ? 'bg-red-100 text-red-700' :
+                        chat.sender_role === 'outstaff' ? 'bg-pink-100 text-pink-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {chat.sender_role === 'admin' ? '管理者' :
+                         chat.sender_role === 'outstaff' ? 'outstaff' : 'staff'}
+                      </span>
+                      {chat.is_edited && (
+                        <span className="text-xs text-gray-500">(編集済み)</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap">{chat.message}</p>
+                </div>
+              )
+            })
+          )}
+        </div>
+        
+        {/* メッセージ入力 */}
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="メッセージを入力..."
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!newMessage.trim()}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+          >
+            送信
+          </button>
         </div>
       </div>
 
