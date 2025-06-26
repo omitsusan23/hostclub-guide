@@ -52,6 +52,21 @@ const StaffDashboard = () => {
     return `${month}/${day}(${dayOfWeek})`
   }
 
+  // チャットデータを読み込む関数（外部から呼び出し可能）
+  const loadChatMessages = async () => {
+    try {
+      setChatLoading(true)
+      const result = await getStaffChats()
+      if (result.success) {
+        setChatMessages(result.data)
+      }
+    } catch (error) {
+      console.error('チャット取得エラー:', error)
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
   // データ取得
   useEffect(() => {
     const fetchData = async () => {
@@ -114,21 +129,6 @@ const StaffDashboard = () => {
         console.error('データ取得エラー:', error)
       } finally {
         setLoading(false)
-      }
-    }
-
-    // チャットデータを読み込む関数
-    const loadChatMessages = async () => {
-      try {
-        setChatLoading(true)
-        const result = await getStaffChats()
-        if (result.success) {
-          setChatMessages(result.data)
-        }
-      } catch (error) {
-        console.error('チャット取得エラー:', error)
-      } finally {
-        setChatLoading(false)
       }
     }
 
@@ -530,6 +530,27 @@ const StaffDashboard = () => {
                 className="px-2 py-1 bg-green-100 text-green-600 rounded-md hover:bg-green-200 text-xs"
               >
                 🔧
+              </button>
+              <button
+                onClick={async () => {
+                  console.log('🚑 緊急チャット送信テスト（currentStaff強制設定）')
+                  
+                  // 遥の情報を強制設定
+                  const emergencyStaffInfo = {
+                    display_name: '遥',
+                    staff_id: 'haruka',
+                    email: 'haruka@hostclub.local',
+                    user_id: '4c26f80d-2caf-40df-b745-febe4fd8482e',
+                    is_active: true
+                  }
+                  
+                  setCurrentStaff(emergencyStaffInfo)
+                  console.log('🚑 緊急設定完了:', emergencyStaffInfo)
+                  alert('🚑 緊急設定完了！チャット送信を試してください')
+                }}
+                className="px-2 py-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
+              >
+                🚑
               </button>
             </div>
           </div>
