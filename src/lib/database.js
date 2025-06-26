@@ -381,16 +381,129 @@ export const getInvoiceSettings = async (storeId) => {
   }
 }
 
-// スタッフチャット関連（将来のテーブル用）
-export const getStaffChats = async () => {
-  // TODO: staff_chatsテーブル作成後に実装
-  return []
+// スタッフチャット関連
+// チャット履歴を取得（最新100件）
+export const getStaffChats = async (limit = 100) => {
+  try {
+    const { data, error } = await supabase
+      .from('staff_chats')
+      .select(`
+        id,
+        message,
+        sender_id,
+        sender_name,
+        sender_role,
+        sent_at,
+        message_type,
+        is_edited,
+        edited_at,
+        reply_to_id
+      `)
+      .order('sent_at', { ascending: true })
+      .limit(limit)
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('チャット取得エラー:', error)
+    return { success: false, error: error.message, data: [] }
+  }
 }
 
-export const sendStaffChat = async (message) => {
-  // TODO: staff_chatsテーブル作成後に実装
-  console.log('スタッフチャット送信:', message)
-  return { success: true }
+// チャットメッセージを送信
+export const sendStaffChat = async (messageData) => {
+  try {
+    const { data, error } = await supabase
+      .from('staff_chats')
+      .insert({
+        message: messageData.message,
+        sender_id: messageData.sender_id,
+        sender_name: messageData.sender_name,
+        sender_role: messageData.sender_role || 'staff',
+        message_type: messageData.message_type || 'text',
+        reply_to_id: messageData.reply_to_id || null
+      })
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data?.[0] }
+  } catch (error) {
+    console.error('チャット送信エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// チャットメッセージを編集
+export const editStaffChat = async (chatId, newMessage, userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('staff_chats')
+      .update({
+        message: newMessage,
+        is_edited: true,
+        edited_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', chatId)
+      .eq('sender_id', userId) // 自分のメッセージのみ編集可能
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data?.[0] }
+  } catch (error) {
+    console.error('チャット編集エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// チャットメッセージを削除（管理者のみ）
+export const deleteStaffChat = async (chatId, userId, userRole) => {
+  try {
+    // 管理者権限チェック
+    if (userRole !== 'admin') {
+      throw new Error('管理者のみがメッセージを削除できます')
+    }
+
+    const { error } = await supabase
+      .from('staff_chats')
+      .delete()
+      .eq('id', chatId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error) {
+    console.error('チャット削除エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// リアルタイムチャット購読
+export const subscribeToStaffChats = (callback) => {
+  const subscription = supabase
+    .channel('staff_chats')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'staff_chats'
+      },
+      callback
+    )
+    .subscribe()
+
+  return subscription
+}
+
+// リアルタイム購読解除
+export const unsubscribeFromStaffChats = (subscription) => {
+  if (subscription) {
+    supabase.removeChannel(subscription)
+  }
 }
 
 // outstaff推奨店舗システム関連

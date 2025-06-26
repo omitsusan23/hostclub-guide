@@ -10,7 +10,11 @@ import {
   getMonthlyVisitRecords,
   addVisitRecord,
   deleteVisitRecord,
-  getPersonalMonthlyIntroductionsByRecommendation
+  getPersonalMonthlyIntroductionsByRecommendation,
+  getStaffChats,
+  sendStaffChat,
+  subscribeToStaffChats,
+  unsubscribeFromStaffChats
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
@@ -25,6 +29,10 @@ const OutstaffDashboard = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
+  const [chatMessages, setChatMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const [chatLoading, setChatLoading] = useState(true)
+  const [chatSubscription, setChatSubscription] = useState(null)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -83,7 +91,8 @@ const OutstaffDashboard = () => {
           }
         }
 
-
+        // スタッフチャットデータを取得
+        await loadChatMessages()
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -92,7 +101,53 @@ const OutstaffDashboard = () => {
       }
     }
 
+    // チャットデータを読み込む関数
+    const loadChatMessages = async () => {
+      try {
+        setChatLoading(true)
+        const result = await getStaffChats()
+        if (result.success) {
+          setChatMessages(result.data)
+        }
+      } catch (error) {
+        console.error('チャット取得エラー:', error)
+      } finally {
+        setChatLoading(false)
+      }
+    }
+
+    // リアルタイムチャット購読を設定
+    const setupChatSubscription = () => {
+      const subscription = subscribeToStaffChats((payload) => {
+        console.log('📨 チャット更新:', payload)
+        
+        if (payload.eventType === 'INSERT') {
+          setChatMessages(prev => [...prev, payload.new])
+        } else if (payload.eventType === 'UPDATE') {
+          setChatMessages(prev => 
+            prev.map(msg => 
+              msg.id === payload.new.id ? payload.new : msg
+            )
+          )
+        } else if (payload.eventType === 'DELETE') {
+          setChatMessages(prev => 
+            prev.filter(msg => msg.id !== payload.old.id)
+          )
+        }
+      })
+      
+      setChatSubscription(subscription)
+    }
+
     fetchData()
+    setupChatSubscription()
+
+    // クリーンアップ
+    return () => {
+      if (chatSubscription) {
+        unsubscribeFromStaffChats(chatSubscription)
+      }
+    }
   }, [user?.id])
 
   // 本日の案内数を計算
@@ -124,6 +179,35 @@ const OutstaffDashboard = () => {
     } catch (error) {
       console.error('案内記録保存エラー:', error)
       alert('❌ 保存に失敗しました')
+    }
+  }
+
+  // チャットメッセージ送信
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user?.id || !currentStaff) return
+
+    try {
+      const messageData = {
+        message: newMessage.trim(),
+        sender_id: user.id,
+        sender_name: currentStaff.display_name,
+        sender_role: getUserRole(),
+        message_type: 'text'
+      }
+
+      const result = await sendStaffChat(messageData)
+      
+      if (result.success) {
+        setNewMessage('')
+        // リアルタイム機能により自動的にメッセージが追加される
+      } else {
+        console.error('チャット送信エラー:', result.error)
+        alert('❌ 送信に失敗しました: ' + result.error)
+      }
+      
+    } catch (error) {
+      console.error('チャット送信エラー:', error)
+      alert('❌ 送信に失敗しました')
     }
   }
 
@@ -254,6 +338,79 @@ const OutstaffDashboard = () => {
 
         {/* メインコンテンツ */}
         <div className="space-y-6">
+          {/* スタッフチャット */}
+          <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              💬 スタッフチャット
+            </h3>
+            
+            {/* チャットメッセージ */}
+            <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+              {chatLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="text-gray-500 text-sm mt-2">チャットを読み込み中...</p>
+                </div>
+              ) : chatMessages.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  チャットメッセージはありません
+                </p>
+              ) : (
+                chatMessages.map((chat) => {
+                  const isMyMessage = chat.sender_id === user?.id
+                  return (
+                    <div key={chat.id} className={`p-3 rounded-lg ${
+                      isMyMessage ? 'bg-purple-100 ml-8' : 'bg-gray-50 mr-8'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-sm">{chat.sender_name}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            chat.sender_role === 'admin' ? 'bg-red-100 text-red-700' :
+                            chat.sender_role === 'outstaff' ? 'bg-pink-100 text-pink-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {chat.sender_role === 'admin' ? '管理者' :
+                             chat.sender_role === 'outstaff' ? 'outstaff' : 'staff'}
+                          </span>
+                          {chat.is_edited && (
+                            <span className="text-xs text-gray-500">(編集済み)</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{chat.message}</p>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+            
+            {/* メッセージ入力 */}
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="メッセージを入力..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+              >
+                送信
+              </button>
+            </div>
+          </div>
+
           {/* 担当可能店舗一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">

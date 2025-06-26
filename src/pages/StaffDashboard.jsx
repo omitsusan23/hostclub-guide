@@ -10,7 +10,13 @@ import {
   getMonthlyVisitRecords,
   addVisitRecord,
   deleteVisitRecord,
-  getMonthlyTarget
+  getMonthlyTarget,
+  getStaffChats,
+  sendStaffChat,
+  editStaffChat,
+  deleteStaffChat,
+  subscribeToStaffChats,
+  unsubscribeFromStaffChats
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
@@ -24,9 +30,11 @@ const StaffDashboard = () => {
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [chatLoading, setChatLoading] = useState(true)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
   const [monthlyTarget, setMonthlyTarget] = useState(0)
+  const [chatSubscription, setChatSubscription] = useState(null)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -83,8 +91,8 @@ const StaffDashboard = () => {
         const target = await getMonthlyTarget()
         setMonthlyTarget(target)
 
-        // TODO: staff専用チャットデータ取得（テーブル作成後）
-        setChatMessages([])
+        // スタッフチャットデータを取得
+        await loadChatMessages()
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -93,7 +101,56 @@ const StaffDashboard = () => {
       }
     }
 
+    // チャットデータを読み込む関数
+    const loadChatMessages = async () => {
+      try {
+        setChatLoading(true)
+        const result = await getStaffChats()
+        if (result.success) {
+          setChatMessages(result.data)
+        }
+      } catch (error) {
+        console.error('チャット取得エラー:', error)
+      } finally {
+        setChatLoading(false)
+      }
+    }
+
+    // リアルタイムチャット購読を設定
+    const setupChatSubscription = () => {
+      const subscription = subscribeToStaffChats((payload) => {
+        console.log('📨 チャット更新:', payload)
+        
+        if (payload.eventType === 'INSERT') {
+          // 新しいメッセージが追加された場合
+          setChatMessages(prev => [...prev, payload.new])
+        } else if (payload.eventType === 'UPDATE') {
+          // メッセージが編集された場合
+          setChatMessages(prev => 
+            prev.map(msg => 
+              msg.id === payload.new.id ? payload.new : msg
+            )
+          )
+        } else if (payload.eventType === 'DELETE') {
+          // メッセージが削除された場合
+          setChatMessages(prev => 
+            prev.filter(msg => msg.id !== payload.old.id)
+          )
+        }
+      })
+      
+      setChatSubscription(subscription)
+    }
+
     fetchData()
+    setupChatSubscription()
+
+    // クリーンアップ
+    return () => {
+      if (chatSubscription) {
+        unsubscribeFromStaffChats(chatSubscription)
+      }
+    }
   }, [user?.id])
 
   // 本日の案内数を計算
@@ -138,23 +195,26 @@ const StaffDashboard = () => {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || !user?.id || !currentStaff) return
 
     try {
-      // TODO: 実際のSupabaseへのstaff用チャット保存
-      console.log('スタッフチャット送信:', newMessage)
-      
-      // 一時的にローカル状態を更新
-      const newChatMessage = {
-        id: Date.now().toString(),
-        sender_id: user?.id || 'staff-1',
-        sender_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'スタッフ',
-        message: newMessage,
-        created_at: new Date().toISOString()
+      const messageData = {
+        message: newMessage.trim(),
+        sender_id: user.id,
+        sender_name: currentStaff.display_name,
+        sender_role: getUserRole(),
+        message_type: 'text'
       }
+
+      const result = await sendStaffChat(messageData)
       
-      setChatMessages(prev => [...prev, newChatMessage])
-      setNewMessage('')
+      if (result.success) {
+        setNewMessage('')
+        // リアルタイム機能により自動的にメッセージが追加される
+      } else {
+        console.error('チャット送信エラー:', result.error)
+        alert('❌ 送信に失敗しました: ' + result.error)
+      }
       
     } catch (error) {
       console.error('チャット送信エラー:', error)
@@ -356,25 +416,48 @@ const StaffDashboard = () => {
             
             {/* チャットメッセージ */}
             <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-              {chatMessages.length === 0 ? (
+              {chatLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-500 text-sm mt-2">チャットを読み込み中...</p>
+                </div>
+              ) : chatMessages.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">
                   チャットメッセージはありません
                 </p>
               ) : (
-                chatMessages.map((chat) => (
-                  <div key={chat.id} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{chat.sender_name}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(chat.created_at).toLocaleTimeString('ja-JP', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
+                chatMessages.map((chat) => {
+                  const isMyMessage = chat.sender_id === user?.id
+                  return (
+                    <div key={chat.id} className={`p-3 rounded-lg ${
+                      isMyMessage ? 'bg-blue-100 ml-8' : 'bg-gray-50 mr-8'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium text-sm">{chat.sender_name}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            chat.sender_role === 'admin' ? 'bg-red-100 text-red-700' :
+                            chat.sender_role === 'outstaff' ? 'bg-pink-100 text-pink-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {chat.sender_role === 'admin' ? '管理者' :
+                             chat.sender_role === 'outstaff' ? 'outstaff' : 'staff'}
+                          </span>
+                          {chat.is_edited && (
+                            <span className="text-xs text-gray-500">(編集済み)</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{chat.message}</p>
                     </div>
-                    <p className="text-sm">{chat.message}</p>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
             
