@@ -467,92 +467,15 @@ const StaffDashboard = () => {
             <h3 className="text-lg font-semibold text-gray-800">
               💬 スタッフチャット
             </h3>
-            <div className="flex space-x-2">
-              <button
-                onClick={async () => {
-                  console.log('🔄 チャット手動リロード')
-                  await loadChatMessages()
-                }}
-                className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-sm"
-              >
-                🔄 更新
-              </button>
-              <button
-                onClick={async () => {
-                  console.log('🔍 デバッグ情報:')
-                  console.log('User:', user)
-                  console.log('CurrentStaff:', currentStaff)
-                  console.log('UserRole:', getUserRole())
-                  
-                  // スタッフテーブル情報を手動確認
-                  const { data, error } = await supabase
-                    .from('staffs')
-                    .select('*')
-                    .eq('user_id', user?.id)
-                  
-                  console.log('スタッフテーブル全情報:', { data, error })
-                }}
-                className="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-md hover:bg-yellow-200 text-xs"
-              >
-                🐛
-              </button>
-              <button
-                onClick={async () => {
-                  console.log('🔧 スタッフ情報を緊急再取得中...')
-                  
-                  if (!user?.id) {
-                    alert('❌ ユーザー情報がありません')
-                    return
-                  }
-                  
-                  try {
-                    const { data: staffData, error } = await supabase
-                      .from('staffs')
-                      .select('display_name, staff_id, email, user_id, is_active')
-                      .eq('user_id', user.id)
-                      .single()
-                    
-                    console.log('🔧 緊急再取得結果:', { staffData, error })
-                    
-                    if (!error && staffData) {
-                      setCurrentStaff(staffData)
-                      console.log('✅ スタッフ情報を強制再設定しました:', staffData)
-                      alert('✅ スタッフ情報を再取得しました！')
-                    } else {
-                      console.log('❌ 緊急再取得も失敗:', error)
-                      alert('❌ スタッフ情報の再取得に失敗しました: ' + error?.message)
-                    }
-                  } catch (error) {
-                    console.error('🔧 緊急再取得エラー:', error)
-                    alert('❌ エラーが発生しました: ' + error.message)
-                  }
-                }}
-                className="px-2 py-1 bg-green-100 text-green-600 rounded-md hover:bg-green-200 text-xs"
-              >
-                🔧
-              </button>
-              <button
-                onClick={async () => {
-                  console.log('🚑 緊急チャット送信テスト（currentStaff強制設定）')
-                  
-                  // 遥の情報を強制設定
-                  const emergencyStaffInfo = {
-                    display_name: '遥',
-                    staff_id: 'haruka',
-                    email: 'haruka@hostclub.local',
-                    user_id: '4c26f80d-2caf-40df-b745-febe4fd8482e',
-                    is_active: true
-                  }
-                  
-                  setCurrentStaff(emergencyStaffInfo)
-                  console.log('🚑 緊急設定完了:', emergencyStaffInfo)
-                  alert('🚑 緊急設定完了！チャット送信を試してください')
-                }}
-                className="px-2 py-1 bg-red-100 text-red-600 rounded-md hover:bg-red-200 text-xs"
-              >
-                🚑
-              </button>
-            </div>
+            <button
+              onClick={async () => {
+                console.log('🔄 チャット手動リロード')
+                await loadChatMessages()
+              }}
+              className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-sm"
+            >
+              🔄 更新
+            </button>
           </div>
             
             {/* チャットメッセージ */}
