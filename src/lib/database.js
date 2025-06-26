@@ -414,23 +414,32 @@ export const getStaffChats = async (limit = 100) => {
 // チャットメッセージを送信
 export const sendStaffChat = async (messageData) => {
   try {
+    console.log('🔥 database.js sendStaffChat 開始:', messageData)
+    
+    const insertData = {
+      message: messageData.message,
+      sender_id: messageData.sender_id,
+      sender_name: messageData.sender_name,
+      sender_role: messageData.sender_role || 'staff',
+      message_type: messageData.message_type || 'text',
+      reply_to_id: messageData.reply_to_id || null
+    }
+    
+    console.log('📊 Supabase INSERT データ:', insertData)
+    
     const { data, error } = await supabase
       .from('staff_chats')
-      .insert({
-        message: messageData.message,
-        sender_id: messageData.sender_id,
-        sender_name: messageData.sender_name,
-        sender_role: messageData.sender_role || 'staff',
-        message_type: messageData.message_type || 'text',
-        reply_to_id: messageData.reply_to_id || null
-      })
+      .insert(insertData)
       .select()
+
+    console.log('📥 Supabase レスポンス:', { data, error })
 
     if (error) throw error
 
+    console.log('✅ database.js sendStaffChat 成功:', data?.[0])
     return { success: true, data: data?.[0] }
   } catch (error) {
-    console.error('チャット送信エラー:', error)
+    console.error('❌ database.js sendStaffChat エラー:', error)
     return { success: false, error: error.message }
   }
 }
@@ -493,12 +502,27 @@ export const subscribeToStaffChats = (callback) => {
         table: 'staff_chats'
       },
       (payload) => {
-        console.log('📨 リアルタイムイベント受信:', payload)
-        callback(payload)
+        console.log('📨 リアルタイムイベント受信 RAW:', payload)
+        
+        // Supabaseのリアルタイム構造を統一
+        const normalizedPayload = {
+          eventType: payload.eventType || payload.event_type,
+          new: payload.new,
+          old: payload.old
+        }
+        
+        console.log('📨 正規化されたペイロード:', normalizedPayload)
+        callback(normalizedPayload)
       }
     )
     .subscribe((status) => {
       console.log('📡 チャット購読状態:', status)
+      
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ チャットリアルタイム購読成功')
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ チャットリアルタイム購読エラー')
+      }
     })
 
   return subscription

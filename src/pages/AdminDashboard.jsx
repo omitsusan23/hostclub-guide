@@ -181,17 +181,24 @@ const AdminDashboard = () => {
   // リアルタイムチャット購読を設定
   const setupChatSubscription = () => {
     const subscription = subscribeToStaffChats((payload) => {
-      console.log('📨 チャット更新:', payload)
+      console.log('📨 Admin チャット更新:', payload)
       
-      if (payload.eventType === 'INSERT') {
+      // Supabaseのリアルタイム構造に合わせて修正
+      const eventType = payload.eventType || payload.event_type
+      console.log('🔍 Admin イベントタイプ:', eventType)
+      
+      if (eventType === 'INSERT') {
+        console.log('➕ Admin 新しいメッセージ追加:', payload.new)
         setChatMessages(prev => [...prev, payload.new])
-      } else if (payload.eventType === 'UPDATE') {
+      } else if (eventType === 'UPDATE') {
+        console.log('✏️ Admin メッセージ編集:', payload.new)
         setChatMessages(prev => 
           prev.map(msg => 
             msg.id === payload.new.id ? payload.new : msg
           )
         )
-      } else if (payload.eventType === 'DELETE') {
+      } else if (eventType === 'DELETE') {
+        console.log('🗑️ Admin メッセージ削除:', payload.old)
         setChatMessages(prev => 
           prev.filter(msg => msg.id !== payload.old.id)
         )
@@ -203,9 +210,14 @@ const AdminDashboard = () => {
 
   // チャットメッセージ送信
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user?.id) return
+    if (!newMessage.trim() || !user?.id) {
+      console.log('❌ 送信条件未満:', { message: newMessage.trim(), userId: user?.id })
+      return
+    }
 
     try {
+      console.log('🚀 チャット送信開始...')
+      
       const messageData = {
         message: newMessage.trim(),
         sender_id: user.id,
@@ -214,19 +226,23 @@ const AdminDashboard = () => {
         message_type: 'text'
       }
 
+      console.log('📊 送信データ:', messageData)
+      
       const result = await sendStaffChat(messageData)
+      console.log('📝 送信結果:', result)
       
       if (result.success) {
         setNewMessage('')
+        console.log('✅ チャット送信成功')
         // リアルタイム機能により自動的にメッセージが追加される
       } else {
-        console.error('チャット送信エラー:', result.error)
+        console.error('❌ チャット送信エラー:', result.error)
         alert('❌ 送信に失敗しました: ' + result.error)
       }
       
     } catch (error) {
-      console.error('チャット送信エラー:', error)
-      alert('❌ 送信に失敗しました')
+      console.error('❌ チャット送信例外:', error)
+      alert('❌ 送信に失敗しました: ' + error.message)
     }
   }
 
@@ -873,9 +889,20 @@ const AdminDashboard = () => {
 
       {/* スタッフチャット */}
       <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-96 flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          💬 スタッフチャット
-        </h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">
+            💬 スタッフチャット
+          </h3>
+          <button
+            onClick={async () => {
+              console.log('🔄 Admin チャット手動リロード')
+              await loadChatMessages()
+            }}
+            className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-sm"
+          >
+            🔄 更新
+          </button>
+        </div>
         
         {/* チャットメッセージ */}
         <div className="flex-1 overflow-y-auto space-y-3 mb-4">

@@ -76,15 +76,24 @@ const StaffDashboard = () => {
 
         // 現在のスタッフ情報取得
         if (user?.id) {
+          console.log('🔍 ユーザー情報:', { userId: user.id, userEmail: user.email })
+          
           const { data: staffData, error } = await supabase
             .from('staffs')
-            .select('display_name')
+            .select('display_name, staff_id, email, user_id, is_active')
             .eq('user_id', user.id)
             .single()
           
+          console.log('📊 スタッフクエリ結果:', { staffData, error })
+          
           if (!error && staffData) {
+            console.log('✅ スタッフ情報設定:', staffData)
             setCurrentStaff(staffData)
+          } else {
+            console.log('❌ スタッフ情報取得失敗:', error)
           }
+        } else {
+          console.log('❌ ユーザー情報なし')
         }
 
         // staff用の月間目標を取得
@@ -119,20 +128,27 @@ const StaffDashboard = () => {
     // リアルタイムチャット購読を設定
     const setupChatSubscription = () => {
       const subscription = subscribeToStaffChats((payload) => {
-        console.log('📨 チャット更新:', payload)
+        console.log('📨 Staff チャット更新:', payload)
         
-        if (payload.eventType === 'INSERT') {
+        // Supabaseのリアルタイム構造に合わせて修正
+        const eventType = payload.eventType || payload.event_type
+        console.log('🔍 イベントタイプ:', eventType)
+        
+        if (eventType === 'INSERT') {
           // 新しいメッセージが追加された場合
+          console.log('➕ 新しいメッセージ追加:', payload.new)
           setChatMessages(prev => [...prev, payload.new])
-        } else if (payload.eventType === 'UPDATE') {
+        } else if (eventType === 'UPDATE') {
           // メッセージが編集された場合
+          console.log('✏️ メッセージ編集:', payload.new)
           setChatMessages(prev => 
             prev.map(msg => 
               msg.id === payload.new.id ? payload.new : msg
             )
           )
-        } else if (payload.eventType === 'DELETE') {
+        } else if (eventType === 'DELETE') {
           // メッセージが削除された場合
+          console.log('🗑️ メッセージ削除:', payload.old)
           setChatMessages(prev => 
             prev.filter(msg => msg.id !== payload.old.id)
           )
@@ -195,9 +211,25 @@ const StaffDashboard = () => {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user?.id || !currentStaff) return
+    console.log('🔍 送信チェック開始:', { 
+      message: newMessage.trim(), 
+      userId: user?.id, 
+      currentStaff: currentStaff,
+      userRole: getUserRole()
+    })
+
+    if (!newMessage.trim() || !user?.id || !currentStaff) {
+      console.log('❌ 送信条件未満:', { 
+        messageOK: !!newMessage.trim(),
+        userIdOK: !!user?.id,
+        currentStaffOK: !!currentStaff
+      })
+      return
+    }
 
     try {
+      console.log('🚀 チャット送信開始...')
+      
       const messageData = {
         message: newMessage.trim(),
         sender_id: user.id,
@@ -206,19 +238,23 @@ const StaffDashboard = () => {
         message_type: 'text'
       }
 
+      console.log('📊 送信データ:', messageData)
+      
       const result = await sendStaffChat(messageData)
+      console.log('📝 送信結果:', result)
       
       if (result.success) {
         setNewMessage('')
+        console.log('✅ チャット送信成功')
         // リアルタイム機能により自動的にメッセージが追加される
       } else {
-        console.error('チャット送信エラー:', result.error)
+        console.error('❌ チャット送信エラー:', result.error)
         alert('❌ 送信に失敗しました: ' + result.error)
       }
       
     } catch (error) {
-      console.error('チャット送信エラー:', error)
-      alert('❌ 送信に失敗しました')
+      console.error('❌ チャット送信例外:', error)
+      alert('❌ 送信に失敗しました: ' + error.message)
     }
   }
 
@@ -410,9 +446,20 @@ const StaffDashboard = () => {
       <div className="space-y-6">
           {/* スタッフチャット */}
           <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">
               💬 スタッフチャット
             </h3>
+            <button
+              onClick={async () => {
+                console.log('🔄 チャット手動リロード')
+                await loadChatMessages()
+              }}
+              className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 text-sm"
+            >
+              🔄 更新
+            </button>
+          </div>
             
             {/* チャットメッセージ */}
             <div className="flex-1 overflow-y-auto space-y-3 mb-4">
