@@ -399,7 +399,7 @@ export const getStaffChats = async (limit = 100) => {
         edited_at,
         reply_to_id
       `)
-      .order('sent_at', { ascending: true })
+      .order('sent_at', { ascending: false })
       .limit(limit)
 
     if (error) throw error

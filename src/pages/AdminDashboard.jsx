@@ -189,7 +189,7 @@ const AdminDashboard = () => {
       
       if (eventType === 'INSERT') {
         console.log('➕ Admin 新しいメッセージ追加:', payload.new)
-        setChatMessages(prev => [...prev, payload.new])
+        setChatMessages(prev => [payload.new, ...prev])
       } else if (eventType === 'UPDATE') {
         console.log('✏️ Admin メッセージ編集:', payload.new)
         setChatMessages(prev => 
@@ -905,7 +905,7 @@ const AdminDashboard = () => {
         </div>
         
         {/* チャットメッセージ */}
-        <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-4">
           {chatLoading ? (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mx-auto"></div>
@@ -919,32 +919,32 @@ const AdminDashboard = () => {
             chatMessages.map((chat) => {
               const isMyMessage = chat.sender_id === user?.id
               return (
-                <div key={chat.id} className={`p-3 rounded-lg ${
-                  isMyMessage ? 'bg-red-100 ml-8' : 'bg-gray-50 mr-8'
+                <div key={chat.id} className={`p-2 rounded-md ${
+                  isMyMessage ? 'bg-red-100 ml-6' : 'bg-gray-50 mr-6'
                 }`}>
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-sm">{chat.sender_name}</span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        chat.sender_role === 'admin' ? 'bg-red-100 text-red-700' :
-                        chat.sender_role === 'outstaff' ? 'bg-pink-100 text-pink-700' :
-                        'bg-blue-100 text-blue-700'
+                    <div className="flex items-center space-x-1">
+                      <span className="font-medium text-xs">{chat.sender_name}</span>
+                      <span className={`px-1 py-0.5 text-xs rounded ${
+                        chat.sender_role === 'admin' ? 'bg-red-200 text-red-800' :
+                        chat.sender_role === 'outstaff' ? 'bg-pink-200 text-pink-800' :
+                        'bg-blue-200 text-blue-800'
                       }`}>
-                        {chat.sender_role === 'admin' ? '管理者' :
-                         chat.sender_role === 'outstaff' ? 'outstaff' : 'staff'}
+                        {chat.sender_role === 'admin' ? '管理' :
+                         chat.sender_role === 'outstaff' ? 'out' : 'staff'}
                       </span>
                       {chat.is_edited && (
-                        <span className="text-xs text-gray-500">(編集済み)</span>
+                        <span className="text-xs text-gray-400">(編集)</span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-400">
                       {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
                     </span>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{chat.message}</p>
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap">{chat.message}</p>
                 </div>
               )
             })
