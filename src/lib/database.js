@@ -1086,7 +1086,7 @@ export const sendStoreStatusRequest = async (requestData) => {
   }
 }
 
-// 店舗の月間リクエスト数を取得（回数制限があるもののみ）
+// 店舗の月間リクエスト数を取得（回数制限があり、実際に消化されたもののみ）
 export const getMonthlyRequestCount = async (storeId, statusType = null) => {
   try {
     const now = new Date()
@@ -1098,6 +1098,7 @@ export const getMonthlyRequestCount = async (storeId, statusType = null) => {
       .select('id')
       .eq('store_id', storeId)
       .eq('has_count_limit', true)
+      .eq('is_consumed', true) // 実際に消化されたもののみをカウント
       .gte('requested_at', startOfMonth)
       .lte('requested_at', endOfMonth)
 
@@ -1109,6 +1110,7 @@ export const getMonthlyRequestCount = async (storeId, statusType = null) => {
 
     if (error) throw error
 
+    console.log(`📊 店舗 ${storeId} の月間消化済みリクエスト数:`, data?.length || 0)
     return { success: true, count: data?.length || 0 }
   } catch (error) {
     console.error('月間リクエスト数取得エラー:', error)
