@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
+import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { 
@@ -195,7 +196,8 @@ const OutstaffDashboard = () => {
   return (
     <Layout>
       <div className="pb-24">
-
+        {/* Push通知設定 */}
+        <PushNotificationSettings />
 
         {/* 実績カード */}
         <div className="grid grid-cols-3 gap-2 mb-6">

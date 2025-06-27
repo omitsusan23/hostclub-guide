@@ -7,6 +7,7 @@ import StoreEditModal from '../components/StoreEditModal'
 import StaffEditModal from '../components/StaffEditModal'
 import TargetSettingsModal from '../components/TargetSettingsModal'
 import StoreRequestCountdown from '../components/StoreRequestCountdown'
+import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
@@ -900,6 +901,11 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Push通知設定 */}
+      <div className="mt-8">
+        <PushNotificationSettings />
       </div>
 
       {/* スタッフチャット */}

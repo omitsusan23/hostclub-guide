@@ -5,6 +5,7 @@ import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
+import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { 
@@ -485,6 +486,9 @@ const StaffDashboard = () => {
 
       {/* メインコンテンツ */}
       <div className="space-y-6">
+          {/* Push通知設定 */}
+          <PushNotificationSettings />
+          
           {/* スタッフチャット */}
           <div className="bg-white rounded-lg shadow-md p-6 h-[576px] flex flex-col">
                       <div className="flex justify-between items-center mb-4">
