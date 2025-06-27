@@ -217,6 +217,7 @@ export const usePushNotifications = (currentUser = null) => {
 
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
+    console.log('🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!')
     console.log('🔔 sendChatNotification 開始:', {
       chatMessage,
       subscription: !!subscription,
