@@ -79,6 +79,86 @@ const StaffDashboard = () => {
     }
   }
 
+  // 購読を再接続する関数
+  const reconnectChatSubscription = () => {
+    console.log('🔄 Staff チャット購読再接続開始')
+    
+    // 既存の購読を解除
+    if (chatSubscription) {
+      console.log('🔌 Staff 既存購読を解除')
+      unsubscribeFromStaffChats(chatSubscription)
+    }
+    
+    // 新しい購読を開始
+    setupChatSubscription()
+    
+    // データも再読み込み
+    loadChatMessages()
+    
+    console.log('✅ Staff チャット購読再接続完了')
+  }
+
+  // setupChatSubscription関数を定義
+  const setupChatSubscription = () => {
+    console.log('🔥 Staff setupChatSubscription 開始')
+    console.log('🔍 Staff ユーザー情報:', { userId: user?.id, userEmail: user?.email })
+    
+    const subscription = subscribeToStaffChats((payload) => {
+      console.log('📨 Staff チャット更新 RAW:', payload)
+      console.log('🔍 Staff 現在のユーザー:', user?.id)
+      console.log('🔍 Staff 現在のパス:', location.pathname)
+      
+      // Supabaseのリアルタイム構造に合わせて修正
+      const eventType = payload.eventType || payload.event_type
+      console.log('🔍 Staff イベントタイプ:', eventType)
+      
+      if (eventType === 'INSERT') {
+        // 新しいメッセージが追加された場合（最上部に追加）
+        console.log('➕ Staff 新しいメッセージ追加:', payload.new)
+        console.log('🔍 Staff メッセージ送信者:', payload.new.sender_id)
+        console.log('🔍 Staff 自分かどうか:', payload.new.sender_id === user?.id)
+        
+        // チャットメッセージリストを更新
+        setChatMessages(prev => {
+          console.log('📊 Staff 更新前チャット数:', prev.length)
+          const newList = [payload.new, ...prev]
+          console.log('📊 Staff 更新後チャット数:', newList.length)
+          return newList
+        })
+        
+        // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
+        if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
+          console.log('🔔 Staff 未読数増加実行')
+          incrementUnreadCount()
+        }
+        
+        // プッシュ通知を送信（自分以外のメッセージの場合）
+        if (payload.new.sender_id !== user?.id) {
+          console.log('🔔 Staff プッシュ通知送信実行')
+          sendChatNotification(payload.new)
+        }
+      } else if (eventType === 'UPDATE') {
+        // メッセージが編集された場合
+        console.log('✏️ Staff メッセージ編集:', payload.new)
+        setChatMessages(prev => 
+          prev.map(msg => 
+            msg.id === payload.new.id ? payload.new : msg
+          )
+        )
+      } else if (eventType === 'DELETE') {
+        // メッセージが削除された場合
+        console.log('🗑️ Staff メッセージ削除:', payload.old)
+        setChatMessages(prev => 
+          prev.filter(msg => msg.id !== payload.old.id)
+        )
+      }
+    })
+    
+    console.log('📡 Staff 購読オブジェクト:', subscription)
+    setChatSubscription(subscription)
+    console.log('✅ Staff setupChatSubscription 完了')
+  }
+
   // データ取得
   useEffect(() => {
     const fetchData = async () => {
@@ -147,66 +227,7 @@ const StaffDashboard = () => {
       }
     }
 
-    // リアルタイムチャット購読を設定 - 一時的に無効化
-    const setupChatSubscription = () => {
-      console.log('🔥 Staff setupChatSubscription 開始')
-      console.log('🔍 Staff ユーザー情報:', { userId: user?.id, userEmail: user?.email })
-      
-      const subscription = subscribeToStaffChats((payload) => {
-        console.log('📨 Staff チャット更新 RAW:', payload)
-        console.log('🔍 Staff 現在のユーザー:', user?.id)
-        console.log('🔍 Staff 現在のパス:', location.pathname)
-        
-        // Supabaseのリアルタイム構造に合わせて修正
-        const eventType = payload.eventType || payload.event_type
-        console.log('🔍 Staff イベントタイプ:', eventType)
-        
-        if (eventType === 'INSERT') {
-          // 新しいメッセージが追加された場合（最上部に追加）
-          console.log('➕ Staff 新しいメッセージ追加:', payload.new)
-          console.log('🔍 Staff メッセージ送信者:', payload.new.sender_id)
-          console.log('🔍 Staff 自分かどうか:', payload.new.sender_id === user?.id)
-          
-          // チャットメッセージリストを更新
-          setChatMessages(prev => {
-            console.log('📊 Staff 更新前チャット数:', prev.length)
-            const newList = [payload.new, ...prev]
-            console.log('📊 Staff 更新後チャット数:', newList.length)
-            return newList
-          })
-          
-          // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
-          if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
-            console.log('🔔 Staff 未読数増加実行')
-            incrementUnreadCount()
-          }
-          
-          // プッシュ通知を送信（自分以外のメッセージの場合）
-          if (payload.new.sender_id !== user?.id) {
-            console.log('🔔 Staff プッシュ通知送信実行')
-            sendChatNotification(payload.new)
-          }
-        } else if (eventType === 'UPDATE') {
-          // メッセージが編集された場合
-          console.log('✏️ Staff メッセージ編集:', payload.new)
-          setChatMessages(prev => 
-            prev.map(msg => 
-              msg.id === payload.new.id ? payload.new : msg
-            )
-          )
-        } else if (eventType === 'DELETE') {
-          // メッセージが削除された場合
-          console.log('🗑️ Staff メッセージ削除:', payload.old)
-          setChatMessages(prev => 
-            prev.filter(msg => msg.id !== payload.old.id)
-          )
-        }
-      })
-      
-      console.log('📡 Staff 購読オブジェクト:', subscription)
-      setChatSubscription(subscription)
-      console.log('✅ Staff setupChatSubscription 完了')
-    }
+
 
     fetchData()
     setupChatSubscription()
@@ -218,6 +239,78 @@ const StaffDashboard = () => {
       }
     }
   }, [user?.id])
+
+  // Page Visibility API でバックグラウンド復帰時の再接続
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      console.log('🔍 Staff ページ可視性変更:', {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState
+      })
+      
+      if (!document.hidden && document.visibilityState === 'visible') {
+        console.log('👁️ Staff ページがアクティブになりました - 再接続実行')
+        
+        // 少し遅延させて確実に再接続
+        setTimeout(() => {
+          reconnectChatSubscription()
+        }, 500)
+      }
+    }
+
+    const handleFocus = () => {
+      console.log('🔍 Staff ウィンドウフォーカス取得')
+      
+      // フォーカス取得時も再接続
+      setTimeout(() => {
+        reconnectChatSubscription()
+      }, 300)
+    }
+
+    // イベントリスナー追加
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    // クリーンアップ
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [chatSubscription])
+
+  // Service Worker Heartbeat受信
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'HEARTBEAT') {
+        console.log('💓 Staff Heartbeat受信:', event.data.timestamp)
+        
+        // Heartbeat受信時にチャット購読が生きているかチェック
+        if (!chatSubscription) {
+          console.log('⚠️ Staff チャット購読が切断されています - 再接続')
+          reconnectChatSubscription()
+        } else {
+          // 購読が生きている場合はpingを送信して接続維持
+          console.log('📡 Staff リアルタイム接続 ping送信')
+          try {
+            // Supabaseリアルタイム接続にpingを送信
+            if (chatSubscription && chatSubscription.send) {
+              chatSubscription.send({ type: 'ping' })
+            }
+          } catch (error) {
+            console.error('📡 Staff ping送信エラー:', error)
+            // ping送信に失敗した場合は再接続
+            reconnectChatSubscription()
+          }
+        }
+      }
+    }
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage)
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage)
+    }
+  }, [chatSubscription])
 
   // 本日の案内数を計算
   const todayCount = visitRecords.reduce((total, record) => total + record.guest_count, 0)

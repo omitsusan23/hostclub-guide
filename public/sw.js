@@ -7,6 +7,9 @@ const urlsToCache = [
   '/manifest.json'
 ]
 
+// Heartbeat用の変数
+let heartbeatInterval = null
+
 // Service Worker インストール時
 self.addEventListener('install', event => {
   console.log('🔧 Service Worker installing...')
@@ -34,7 +37,37 @@ self.addEventListener('activate', event => {
       )
     })
   )
+  
+  // Heartbeat開始
+  startHeartbeat()
 })
+
+// Heartbeat機能 - バックグラウンドでの接続保持
+function startHeartbeat() {
+  console.log('💓 Heartbeat 開始')
+  
+  // 既存のintervalがあれば停止
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+  }
+  
+  // 30秒間隔でpingを送信
+  heartbeatInterval = setInterval(() => {
+    console.log('💓 Heartbeat ping')
+    
+    // すべてのクライアントにheartbeat通知
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'HEARTBEAT',
+          timestamp: Date.now()
+        })
+      })
+    }).catch(error => {
+      console.error('💓 Heartbeat エラー:', error)
+    })
+  }, 30000) // 30秒間隔
+}
 
 // プッシュ通知受信時
 self.addEventListener('push', event => {
@@ -136,6 +169,9 @@ self.addEventListener('message', event => {
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting()
+  } else if (event.data && event.data.type === 'RESTART_HEARTBEAT') {
+    console.log('🔄 Heartbeat 再開始要求')
+    startHeartbeat()
   }
 })
 

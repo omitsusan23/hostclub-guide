@@ -96,6 +96,78 @@ const AdminDashboard = () => {
     }
   }, [user?.id])
 
+  // Page Visibility API でバックグラウンド復帰時の再接続
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      console.log('🔍 Admin ページ可視性変更:', {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState
+      })
+      
+      if (!document.hidden && document.visibilityState === 'visible') {
+        console.log('👁️ Admin ページがアクティブになりました - 再接続実行')
+        
+        // 少し遅延させて確実に再接続
+        setTimeout(() => {
+          reconnectChatSubscription()
+        }, 500)
+      }
+    }
+
+    const handleFocus = () => {
+      console.log('🔍 Admin ウィンドウフォーカス取得')
+      
+      // フォーカス取得時も再接続
+      setTimeout(() => {
+        reconnectChatSubscription()
+      }, 300)
+    }
+
+    // イベントリスナー追加
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    // クリーンアップ
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [chatSubscription])
+
+  // Service Worker Heartbeat受信
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'HEARTBEAT') {
+        console.log('💓 Admin Heartbeat受信:', event.data.timestamp)
+        
+        // Heartbeat受信時にチャット購読が生きているかチェック
+        if (!chatSubscription) {
+          console.log('⚠️ Admin チャット購読が切断されています - 再接続')
+          reconnectChatSubscription()
+        } else {
+          // 購読が生きている場合はpingを送信して接続維持
+          console.log('📡 Admin リアルタイム接続 ping送信')
+          try {
+            // Supabaseリアルタイム接続にpingを送信
+            if (chatSubscription && chatSubscription.send) {
+              chatSubscription.send({ type: 'ping' })
+            }
+          } catch (error) {
+            console.error('📡 Admin ping送信エラー:', error)
+            // ping送信に失敗した場合は再接続
+            reconnectChatSubscription()
+          }
+        }
+      }
+    }
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage)
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage)
+    }
+  }, [chatSubscription])
+
   const loadStores = async () => {
     setLoadingStores(true)
     try {
@@ -190,6 +262,25 @@ const AdminDashboard = () => {
     } finally {
       setChatLoading(false)
     }
+  }
+
+  // 購読を再接続する関数
+  const reconnectChatSubscription = () => {
+    console.log('🔄 Admin チャット購読再接続開始')
+    
+    // 既存の購読を解除
+    if (chatSubscription) {
+      console.log('🔌 Admin 既存購読を解除')
+      unsubscribeFromStaffChats(chatSubscription)
+    }
+    
+    // 新しい購読を開始
+    setupChatSubscription()
+    
+    // データも再読み込み
+    loadChatMessages()
+    
+    console.log('✅ Admin チャット購読再接続完了')
   }
 
   // リアルタイムチャット購読を設定
