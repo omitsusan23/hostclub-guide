@@ -8,7 +8,7 @@ import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
-import { usePushNotifications } from '../hooks/usePushNotifications'
+// import { usePushNotifications } from '../hooks/usePushNotifications'
 import { 
   getStores,
   getTodayVisitRecords,
@@ -45,8 +45,8 @@ const StaffDashboard = () => {
   
   // 通知機能
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
-  const pushNotifications = usePushNotifications(user || null)
-  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {})
+  // const pushNotifications = usePushNotifications(user || null)
+  const sendChatNotification = () => {} // 一時的に無効化
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {

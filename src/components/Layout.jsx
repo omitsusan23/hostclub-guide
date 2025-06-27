@@ -14,13 +14,14 @@ const Layout = ({ children }) => {
   const userRole = getUserRole()
   const showChatNotifications = ['staff', 'outstaff', 'admin'].includes(userRole)
   
-  // フックは必ず同じ順序で呼び出す
-  const { unreadCount } = useStaffChatNotifications(
-    showChatNotifications ? user?.id : null
-  )
+  // フックは必ず同じ順序で呼び出す - 一時的に無効化
+  // const { unreadCount } = useStaffChatNotifications(
+  //   showChatNotifications ? user?.id : null
+  // )
+  const unreadCount = 0
   
-  // ページタイトル通知
-  usePageTitleNotifications(showChatNotifications ? (unreadCount || 0) : 0)
+  // ページタイトル通知 - 一時的に無効化
+  // usePageTitleNotifications(showChatNotifications ? (unreadCount || 0) : 0)
 
   const handleLogout = async () => {
     try {
@@ -130,10 +131,10 @@ const Layout = ({ children }) => {
                 </button>
               )}
               
-              {/* Push通知設定 */}
-              {user && showChatNotifications && (
+              {/* Push通知設定 - 一時的に無効化 */}
+              {/* {user && showChatNotifications && (
                 <PushNotificationSettings compact={true} />
-              )}
+              )} */}
               
               {/* ログアウトボタン */}
               {user && (

@@ -22,11 +22,13 @@ export const useStaffChatNotifications = (userId) => {
 
   // 未読数を計算
   const calculateUnreadCount = async () => {
+    if (!userId) return // userId がない場合は早期リターン
+    
     try {
       const lastViewTime = getLastViewTime()
       const result = await getStaffChats(200) // 過去200件を取得
       
-      if (result.success) {
+      if (result?.success && result?.data) {
         const unreadChats = result.data.filter(chat => {
           const chatTime = new Date(chat.created_at || chat.sent_at)
           const isAfterLastView = chatTime > lastViewTime
@@ -44,6 +46,7 @@ export const useStaffChatNotifications = (userId) => {
       }
     } catch (error) {
       console.error('未読数計算エラー:', error)
+      setUnreadCount(0) // エラー時は0に設定
     }
   }
 

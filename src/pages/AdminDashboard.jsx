@@ -10,7 +10,7 @@ import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
-import { usePushNotifications } from '../hooks/usePushNotifications'
+// import { usePushNotifications } from '../hooks/usePushNotifications'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 import { 
@@ -39,8 +39,8 @@ const AdminDashboard = () => {
   
   // 通知機能
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
-  const pushNotifications = usePushNotifications(user || null)
-  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {})
+  // const pushNotifications = usePushNotifications(user || null)
+  const sendChatNotification = () => {} // 一時的に無効化
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
