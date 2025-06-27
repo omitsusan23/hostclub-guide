@@ -116,7 +116,12 @@ const CustomerDashboard = () => {
     if (!storeId || !store) return
     
     // 回数制限チェック
-    if (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit) {
+    if (store.first_request_limit === 0) {
+      alert('❌ この機能は利用できません。')
+      return
+    }
+    
+    if (monthlyRequestCount >= store.first_request_limit) {
       alert('❌ 今月の回数制限に達しています。')
       return
     }
@@ -160,41 +165,7 @@ const CustomerDashboard = () => {
     }
   }
 
-  // その他の状況発信ハンドラー（制限なし）
-  const handleGeneralStatusUpdate = async (status) => {
-    if (!storeId || !store) return
-    
-    setLoading(true)
-    try {
-      // スタッフチャットに発信
-      const chatResult = await sendStaffChat({
-        message: `📢 ${store.name} - ${status}`,
-        sender_id: user?.id || 'system',
-        sender_name: store.name,
-        sender_role: 'customer',
-        message_type: 'status_info'
-      })
-      
-      if (chatResult.success) {
-        // リクエスト履歴を記録（制限なし）
-        await sendStoreStatusRequest({
-          store_id: storeId,
-          status_type: status,
-          message: `📢 ${store.name} - ${status}`,
-          has_time_limit: false,
-          has_count_limit: false,
-          chat_message_id: chatResult.data.id
-        })
-        
-        alert(`✅ 「${status}」を発信しました！`)
-      }
-    } catch (error) {
-      console.error('発信エラー:', error)
-      alert('❌ 発信に失敗しました。')
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   if (dataLoading) {
     return (
@@ -277,7 +248,7 @@ const CustomerDashboard = () => {
                 <h4 className="font-medium text-red-800">🔥 今初回ほしいです</h4>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">
-                    回数制限: {store.first_request_limit === 0 ? '制限なし' : `${store.first_request_limit}回/月`}
+                    回数制限: {store.first_request_limit === 0 ? '利用不可' : `${store.first_request_limit}回/月`}
                   </div>
                   {store.first_request_limit > 0 && (
                     <div className="text-xs text-gray-500">
@@ -304,36 +275,17 @@ const CustomerDashboard = () => {
               
               <button
                 onClick={() => handleFirstTimeRequest()}
-                disabled={loading || (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit)}
+                disabled={loading || store.first_request_limit === 0 || monthlyRequestCount >= store.first_request_limit}
                 className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '発信中...' : 
-                 (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit) ? 
+                 store.first_request_limit === 0 ? '利用不可' :
+                 monthlyRequestCount >= store.first_request_limit ? 
                  '今月の上限に達しました' : 'スタッフチャットに発信'}
               </button>
             </div>
 
-            {/* その他の状況発信 - 制限なし */}
-            <div className="mt-6">
-              <h4 className="font-medium text-gray-700 mb-3">その他の状況</h4>
-              <div className="space-y-2">
-                {[
-                  '席に余裕があります',
-                  '満席に近いです',
-                  '本日は満席です',
-                  '特別イベント開催中'
-                ].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleGeneralStatusUpdate(status)}
-                    disabled={loading}
-                    className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
 

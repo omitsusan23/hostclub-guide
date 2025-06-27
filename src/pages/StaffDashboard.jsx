@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
+import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import { useApp } from '../contexts/AppContext'
 import { 
@@ -492,9 +493,15 @@ const StaffDashboard = () => {
               ) : (
                 chatMessages.map((chat) => {
                   const isMyMessage = chat.sender_id === user?.id
+                  const isStoreStatusRequest = chat.sender_role === 'customer' && chat.message_type === 'status_request'
+                  const isFirstTimeRequest = chat.message?.includes('今初回ほしいです')
+                  
                   return (
                     <div key={chat.id} className={`p-2 rounded-md ${
-                      isMyMessage ? 'bg-blue-100 ml-6' : 'bg-gray-50 mr-6'
+                      isMyMessage ? 'bg-blue-100 ml-6' : 
+                      isFirstTimeRequest ? 'bg-red-50 border border-red-200 mr-6' :
+                      isStoreStatusRequest ? 'bg-yellow-50 border border-yellow-200 mr-6' :
+                      'bg-gray-50 mr-6'
                     }`}>
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-1">
@@ -502,13 +509,18 @@ const StaffDashboard = () => {
                           <span className={`px-1 py-0.5 text-xs rounded ${
                             chat.sender_role === 'admin' ? 'bg-red-200 text-red-800' :
                             chat.sender_role === 'outstaff' ? 'bg-pink-200 text-pink-800' :
+                            chat.sender_role === 'customer' ? 'bg-green-200 text-green-800' :
                             'bg-blue-200 text-blue-800'
                           }`}>
                             {chat.sender_role === 'admin' ? '管理' :
-                             chat.sender_role === 'outstaff' ? 'out' : 'staff'}
+                             chat.sender_role === 'outstaff' ? 'out' : 
+                             chat.sender_role === 'customer' ? '店舗' : 'staff'}
                           </span>
                           {chat.is_edited && (
                             <span className="text-xs text-gray-400">(編集)</span>
+                          )}
+                          {isFirstTimeRequest && (
+                            <span className="text-xs text-red-600 font-bold">🔥 緊急</span>
                           )}
                         </div>
                         <span className="text-xs text-gray-400">
@@ -519,6 +531,9 @@ const StaffDashboard = () => {
                         </span>
                       </div>
                       <p className="text-xs leading-relaxed whitespace-pre-wrap">{chat.message}</p>
+                      {isFirstTimeRequest && (
+                        <StoreRequestCountdown chatMessageId={chat.id} />
+                      )}
                     </div>
                   )
                 })

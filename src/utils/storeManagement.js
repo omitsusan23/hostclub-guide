@@ -235,7 +235,8 @@ export const updateStore = async (storeId, formData) => {
       charge_per_person: formData.charge_per_person,
       is_transfer: formData.is_transfer,
       hoshos_url: formData.hoshos_url,
-      store_phone: formData.store_phone
+      store_phone: formData.store_phone,
+      first_request_limit: formData.first_request_limit
     };
 
     console.log('📝 Update data prepared:', updateData);
