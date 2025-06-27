@@ -392,8 +392,25 @@ const AdminDashboard = () => {
         
         // プッシュ通知を送信（自分以外のメッセージの場合）
         if (payload.new.sender_id !== user?.id) {
-          console.log('🔔 Admin プッシュ通知送信実行')
-          sendChatNotification(payload.new)
+          console.log('🔔 Admin プッシュ通知送信条件クリア:', {
+            senderID: payload.new.sender_id,
+            currentUserID: user?.id,
+            message: payload.new.message,
+            senderName: payload.new.sender_name
+          })
+          
+          try {
+            console.log('📞 Admin sendChatNotification 呼び出し前')
+            sendChatNotification(payload.new)
+            console.log('📞 Admin sendChatNotification 呼び出し後')
+          } catch (error) {
+            console.error('❌ Admin sendChatNotification 呼び出しエラー:', error)
+          }
+        } else {
+          console.log('👤 Admin 自分のメッセージなので通知スキップ:', {
+            senderID: payload.new.sender_id,
+            currentUserID: user?.id
+          })
         }
       } else if (eventType === 'UPDATE') {
         console.log('✏️ Admin メッセージ編集:', payload.new)

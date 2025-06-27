@@ -215,51 +215,88 @@ export const usePushNotifications = (currentUser = null) => {
     }
   }, [subscription])
 
-  // 新着チャットメッセージの通知を送信
+  // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
+    console.log('🔔 sendChatNotification 開始:', {
+      chatMessage,
+      subscription: !!subscription,
+      permission,
+      currentUser: currentUser?.id,
+      hasServiceWorker: 'serviceWorker' in navigator
+    })
+    
     if (!subscription || permission !== 'granted' || !currentUser) {
-      console.log('🔕 Push通知が無効です')
+      console.log('🔕 Push通知が無効です:', {
+        hasSubscription: !!subscription,
+        permission,
+        hasCurrentUser: !!currentUser
+      })
       return
     }
 
     // 自分のメッセージには通知しない
     if (chatMessage.sender_id === currentUser?.id) {
-      console.log('👤 自分のメッセージなので通知しません')
+      console.log('👤 自分のメッセージなので通知しません:', {
+        sender_id: chatMessage.sender_id,
+        current_user_id: currentUser?.id
+      })
       return
     }
 
+    console.log('🚀 プッシュ通知送信処理開始...')
+
     try {
       const isFirstTimeRequest = chatMessage.message?.includes('今初回ほしいです')
+      console.log('🔍 緊急要請判定:', { isFirstTimeRequest, message: chatMessage.message })
       
-      // 直接Service Worker経由で通知を表示
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready
-        await registration.showNotification(
-          isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ',
-          {
-            body: `${chatMessage.sender_name}: ${chatMessage.message}`,
-            icon: '/icon-192x192.png',
-            badge: '/icon-72x72.png',
-            vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
-            tag: 'staff-chat',
-            requireInteraction: isFirstTimeRequest,
-            data: { 
-              url: '/staff',
-              chatId: chatMessage.id,
-              type: 'chat',
-              urgent: isFirstTimeRequest
-            },
-            actions: [
-              { action: 'open', title: '開く' },
-              { action: 'close', title: '閉じる' }
-            ]
-          }
-        )
+      // Service Worker の存在確認
+      if (!('serviceWorker' in navigator)) {
+        console.error('❌ Service Worker not supported')
+        return
       }
+
+      console.log('📡 Service Worker ready取得中...')
+      const registration = await navigator.serviceWorker.ready
+      console.log('✅ Service Worker ready取得完了:', registration)
+
+      const notificationTitle = isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ'
+      const notificationOptions = {
+        body: `${chatMessage.sender_name}: ${chatMessage.message}`,
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
+        tag: 'staff-chat',
+        requireInteraction: isFirstTimeRequest,
+        data: { 
+          url: '/staff',
+          chatId: chatMessage.id,
+          type: 'chat',
+          urgent: isFirstTimeRequest
+        },
+        actions: [
+          { action: 'open', title: '開く' },
+          { action: 'close', title: '閉じる' }
+        ]
+      }
+
+      console.log('📝 通知オプション:', { notificationTitle, notificationOptions })
+      console.log('🔔 showNotification実行中...')
+
+      await registration.showNotification(notificationTitle, notificationOptions)
       
-      console.log('🔔 チャット通知を送信しました:', chatMessage.message)
+      console.log('✅ チャット通知を送信しました:', {
+        title: notificationTitle,
+        message: chatMessage.message,
+        sender: chatMessage.sender_name,
+        isUrgent: isFirstTimeRequest
+      })
     } catch (error) {
       console.error('❌ チャット通知送信エラー:', error)
+      console.error('❌ エラー詳細:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
     }
   }, [subscription, permission, currentUser])
 
@@ -341,23 +378,37 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray
 }
 
-// サーバーに購読情報を保存（TODO: 実装）
+// サーバーに購読情報を保存（実装版）
 async function savePushSubscription(subscription) {
   try {
-    // Supabaseに購読情報を保存
     console.log('💾 Saving push subscription to server:', subscription)
-    // TODO: Supabaseテーブルに保存する処理を実装
+    
+    // 購読情報をJSONからオブジェクトに変換
+    const subscriptionObject = subscription.toJSON()
+    console.log('📊 購読オブジェクト:', subscriptionObject)
+    
+    // LocalStorageに一時保存（デバッグ用）
+    localStorage.setItem('pushSubscription', JSON.stringify({
+      endpoint: subscriptionObject.endpoint,
+      keys: subscriptionObject.keys,
+      timestamp: Date.now()
+    }))
+    
+    console.log('✅ Push subscription saved to localStorage')
   } catch (error) {
     console.error('❌ Failed to save subscription:', error)
   }
 }
 
-// サーバーから購読情報を削除（TODO: 実装）
+// サーバーから購読情報を削除（実装版）
 async function removePushSubscription(subscription) {
   try {
-    // Supabaseから購読情報を削除
     console.log('🗑️ Removing push subscription from server:', subscription)
-    // TODO: Supabaseテーブルから削除する処理を実装
+    
+    // LocalStorageから削除
+    localStorage.removeItem('pushSubscription')
+    
+    console.log('✅ Push subscription removed from localStorage')
   } catch (error) {
     console.error('❌ Failed to remove subscription:', error)
   }

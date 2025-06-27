@@ -151,8 +151,25 @@ const StaffDashboard = () => {
         
         // プッシュ通知を送信（自分以外のメッセージの場合）
         if (payload.new.sender_id !== user?.id) {
-          console.log('🔔 Staff プッシュ通知送信実行')
-          sendChatNotification(payload.new)
+          console.log('🔔 Staff プッシュ通知送信条件クリア:', {
+            senderID: payload.new.sender_id,
+            currentUserID: user?.id,
+            message: payload.new.message,
+            senderName: payload.new.sender_name
+          })
+          
+          try {
+            console.log('📞 Staff sendChatNotification 呼び出し前')
+            sendChatNotification(payload.new)
+            console.log('📞 Staff sendChatNotification 呼び出し後')
+          } catch (error) {
+            console.error('❌ Staff sendChatNotification 呼び出しエラー:', error)
+          }
+        } else {
+          console.log('👤 Staff 自分のメッセージなので通知スキップ:', {
+            senderID: payload.new.sender_id,
+            currentUserID: user?.id
+          })
         }
       } else if (eventType === 'UPDATE') {
         // メッセージが編集された場合
