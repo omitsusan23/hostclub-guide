@@ -10,7 +10,7 @@ import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
-// import { usePushNotifications } from '../hooks/usePushNotifications'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 import { 
@@ -39,8 +39,8 @@ const AdminDashboard = () => {
   
   // 通知機能 - 一時的に完全無効化
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
-  // const pushNotifications = usePushNotifications(user || null)
-  const sendChatNotification = () => {} // 一時的に無効化
+  const pushNotifications = usePushNotifications(user || null)
+  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {})
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -82,17 +82,17 @@ const AdminDashboard = () => {
     loadStores()
     loadStaffs()
     loadMonthlyStats()
-    // loadChatMessages() // 一時的に無効化
-    // setupChatSubscription() // 一時的に無効化
+    loadChatMessages()
+    setupChatSubscription()
     
-    // ダッシュボードアクセス時にチャット通知をクリア - 一時的に無効化
-    // markAsRead()
+    // ダッシュボードアクセス時にチャット通知をクリア
+    markAsRead()
 
     // クリーンアップ
     return () => {
-      // if (chatSubscription) {
-      //   unsubscribeFromStaffChats(chatSubscription)
-      // }
+      if (chatSubscription) {
+        unsubscribeFromStaffChats(chatSubscription)
+      }
     }
   }, [])
 
@@ -936,10 +936,10 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Push通知設定 - 一時的に無効化 */}
-      {/* <div className="mt-8">
+      {/* Push通知設定 */}
+      <div className="mt-8">
         <PushNotificationSettings />
-      </div> */}
+      </div>
 
       {/* スタッフチャット */}
               <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-[576px] flex flex-col">
