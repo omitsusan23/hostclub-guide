@@ -211,20 +211,7 @@ const CustomerDashboard = () => {
 
 
 
-          {/* 現在の営業状況 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              🏪 現在の営業状況
-            </h3>
-            
-            <div className="flex items-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-              <div>
-                <div className="font-medium text-green-800">営業中</div>
-                <div className="text-sm text-green-600">18:00 - 03:00 | 実際のデータ使用中</div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </Layout>
