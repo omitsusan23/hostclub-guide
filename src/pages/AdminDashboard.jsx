@@ -94,7 +94,7 @@ const AdminDashboard = () => {
         unsubscribeFromStaffChats(chatSubscription)
       }
     }
-  }, [])
+  }, [user?.id])
 
   const loadStores = async () => {
     setLoadingStores(true)
@@ -194,8 +194,13 @@ const AdminDashboard = () => {
 
   // リアルタイムチャット購読を設定
   const setupChatSubscription = () => {
+    console.log('🔥 Admin setupChatSubscription 開始')
+    console.log('🔍 Admin ユーザー情報:', { userId: user?.id, userEmail: user?.email })
+    
     const subscription = subscribeToStaffChats((payload) => {
-      console.log('📨 Admin チャット更新:', payload)
+      console.log('📨 Admin チャット更新 RAW:', payload)
+      console.log('🔍 Admin 現在のユーザー:', user?.id)
+      console.log('🔍 Admin 現在のパス:', location.pathname)
       
       // Supabaseのリアルタイム構造に合わせて修正
       const eventType = payload.eventType || payload.event_type
@@ -203,15 +208,26 @@ const AdminDashboard = () => {
       
       if (eventType === 'INSERT') {
         console.log('➕ Admin 新しいメッセージ追加:', payload.new)
-        setChatMessages(prev => [payload.new, ...prev])
+        console.log('🔍 Admin メッセージ送信者:', payload.new.sender_id)
+        console.log('🔍 Admin 自分かどうか:', payload.new.sender_id === user?.id)
+        
+        // チャットメッセージリストを更新
+        setChatMessages(prev => {
+          console.log('📊 Admin 更新前チャット数:', prev.length)
+          const newList = [payload.new, ...prev]
+          console.log('📊 Admin 更新後チャット数:', newList.length)
+          return newList
+        })
         
         // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
         if (payload.new.sender_id !== user?.id && location.pathname !== '/admin') {
+          console.log('🔔 Admin 未読数増加実行')
           incrementUnreadCount()
         }
         
         // プッシュ通知を送信（自分以外のメッセージの場合）
         if (payload.new.sender_id !== user?.id) {
+          console.log('🔔 Admin プッシュ通知送信実行')
           sendChatNotification(payload.new)
         }
       } else if (eventType === 'UPDATE') {
@@ -229,7 +245,9 @@ const AdminDashboard = () => {
       }
     })
     
+    console.log('📡 Admin 購読オブジェクト:', subscription)
     setChatSubscription(subscription)
+    console.log('✅ Admin setupChatSubscription 完了')
   }
 
   // チャットメッセージ送信

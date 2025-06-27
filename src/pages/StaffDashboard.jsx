@@ -149,30 +149,46 @@ const StaffDashboard = () => {
 
     // リアルタイムチャット購読を設定 - 一時的に無効化
     const setupChatSubscription = () => {
+      console.log('🔥 Staff setupChatSubscription 開始')
+      console.log('🔍 Staff ユーザー情報:', { userId: user?.id, userEmail: user?.email })
+      
       const subscription = subscribeToStaffChats((payload) => {
-        console.log('📨 Staff チャット更新:', payload)
+        console.log('📨 Staff チャット更新 RAW:', payload)
+        console.log('🔍 Staff 現在のユーザー:', user?.id)
+        console.log('🔍 Staff 現在のパス:', location.pathname)
         
         // Supabaseのリアルタイム構造に合わせて修正
         const eventType = payload.eventType || payload.event_type
-        console.log('🔍 イベントタイプ:', eventType)
+        console.log('🔍 Staff イベントタイプ:', eventType)
         
         if (eventType === 'INSERT') {
           // 新しいメッセージが追加された場合（最上部に追加）
-          console.log('➕ 新しいメッセージ追加:', payload.new)
-          setChatMessages(prev => [payload.new, ...prev])
+          console.log('➕ Staff 新しいメッセージ追加:', payload.new)
+          console.log('🔍 Staff メッセージ送信者:', payload.new.sender_id)
+          console.log('🔍 Staff 自分かどうか:', payload.new.sender_id === user?.id)
+          
+          // チャットメッセージリストを更新
+          setChatMessages(prev => {
+            console.log('📊 Staff 更新前チャット数:', prev.length)
+            const newList = [payload.new, ...prev]
+            console.log('📊 Staff 更新後チャット数:', newList.length)
+            return newList
+          })
           
           // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
           if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
+            console.log('🔔 Staff 未読数増加実行')
             incrementUnreadCount()
           }
           
           // プッシュ通知を送信（自分以外のメッセージの場合）
           if (payload.new.sender_id !== user?.id) {
+            console.log('🔔 Staff プッシュ通知送信実行')
             sendChatNotification(payload.new)
           }
         } else if (eventType === 'UPDATE') {
           // メッセージが編集された場合
-          console.log('✏️ メッセージ編集:', payload.new)
+          console.log('✏️ Staff メッセージ編集:', payload.new)
           setChatMessages(prev => 
             prev.map(msg => 
               msg.id === payload.new.id ? payload.new : msg
@@ -180,14 +196,16 @@ const StaffDashboard = () => {
           )
         } else if (eventType === 'DELETE') {
           // メッセージが削除された場合
-          console.log('🗑️ メッセージ削除:', payload.old)
+          console.log('🗑️ Staff メッセージ削除:', payload.old)
           setChatMessages(prev => 
             prev.filter(msg => msg.id !== payload.old.id)
           )
         }
       })
       
+      console.log('📡 Staff 購読オブジェクト:', subscription)
       setChatSubscription(subscription)
+      console.log('✅ Staff setupChatSubscription 完了')
     }
 
     fetchData()
