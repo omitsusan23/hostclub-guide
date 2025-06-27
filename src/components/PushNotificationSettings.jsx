@@ -4,6 +4,12 @@ import { useApp } from '../contexts/AppContext'
 
 const PushNotificationSettings = ({ compact = false }) => {
   const { user } = useApp()
+  
+  // ユーザーが存在しない場合は何も表示しない
+  if (!user) {
+    return null
+  }
+  
   const {
     isSupported,
     permission,

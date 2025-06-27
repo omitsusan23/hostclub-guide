@@ -206,7 +206,7 @@ export const usePushNotifications = (currentUser = null) => {
 
   // 新着チャットメッセージの通知を送信
   const sendChatNotification = useCallback(async (chatMessage) => {
-    if (!subscription || permission !== 'granted') {
+    if (!subscription || permission !== 'granted' || !currentUser) {
       console.log('🔕 Push通知が無効です')
       return
     }
@@ -240,7 +240,7 @@ export const usePushNotifications = (currentUser = null) => {
     } catch (error) {
       console.error('❌ チャット通知送信エラー:', error)
     }
-  }, [subscription, permission, getCurrentUserId, showNotification])
+  }, [subscription, permission, getCurrentUserId, showNotification, currentUser])
 
   // ネイティブ通知を表示
   const showNotification = useCallback(async (options) => {
