@@ -22,7 +22,8 @@ import {
   editStaffChat,
   deleteStaffChat,
   subscribeToStaffChats,
-  unsubscribeFromStaffChats
+  unsubscribeFromStaffChats,
+  cleanupAllChatChannels
 } from '../lib/database'
 import { supabase } from '../lib/supabase'
 
@@ -79,21 +80,27 @@ const StaffDashboard = () => {
     }
   }
 
-  // 購読を再接続する関数
+  // 購読を再接続する関数（改善版）
   const reconnectChatSubscription = () => {
     console.log('🔄 Staff チャット購読再接続開始')
     
-    // 既存の購読を解除
+    // 1. 既存の購読を解除
     if (chatSubscription) {
       console.log('🔌 Staff 既存購読を解除')
       unsubscribeFromStaffChats(chatSubscription)
     }
     
-    // chatSubscriptionをクリア
+    // 2. 全チャットチャンネルをクリーンアップ（重複防止）
+    console.log('🧹 Staff 全チャンネルクリーンアップ実行')
+    cleanupAllChatChannels()
+    
+    // 3. chatSubscriptionをクリア
     setChatSubscription(null)
     
-    // 少し遅延してから再接続
+    // 4. 少し遅延してから再接続
     setTimeout(() => {
+      console.log('🔄 Staff 新規チャット購読開始')
+      
       // 新しい購読を開始
       setupChatSubscription()
       
@@ -101,13 +108,17 @@ const StaffDashboard = () => {
       loadChatMessages()
       
       console.log('✅ Staff チャット購読再接続完了')
-    }, 100)
+    }, 200) // 遅延時間を少し長くして確実性向上
   }
 
   // setupChatSubscription関数を定義
   const setupChatSubscription = () => {
     console.log('🔥 Staff setupChatSubscription 開始')
     console.log('🔍 Staff ユーザー情報:', { userId: user?.id, userEmail: user?.email })
+    
+    // 初期化時に既存チャンネルをクリーンアップ
+    console.log('🧹 Staff 初期チャンネルクリーンアップ')
+    cleanupAllChatChannels()
     
     const subscription = subscribeToStaffChats((payload) => {
       console.log('📨 Staff チャット更新 RAW:', payload)

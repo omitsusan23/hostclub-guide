@@ -144,13 +144,39 @@ export const AppProvider = ({ children }) => {
     }
   }
 
-  // ログアウト
+  // ログアウト（改善版）
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      // セッションが存在する場合のみログアウト実行
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      
+      if (currentSession) {
+        console.log('📤 ログアウト実行中...')
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+        console.log('✅ ログアウト成功')
+      } else {
+        console.log('ℹ️ セッションが存在しないため、ローカル状態のみクリア')
+        // セッションが存在しない場合はローカル状態をクリア
+        setSession(null)
+        setUser(null)
+        setUserStaff(null)
+      }
     } catch (error) {
-      console.error('ログアウトエラー:', error)
+      console.error('❌ ログアウトエラー:', error)
+      
+      // エラーが発生してもローカル状態はクリア
+      setSession(null)
+      setUser(null)
+      setUserStaff(null)
+      
+      // AuthSessionMissingErrorの場合は無視（既にログアウト済み）
+      if (error.message?.includes('Auth session missing')) {
+        console.log('ℹ️ セッション既に無効 - ローカル状態をクリアしました')
+      } else {
+        // その他のエラーは表示
+        throw error
+      }
     }
   }
 

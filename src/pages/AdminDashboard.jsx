@@ -18,7 +18,8 @@ import {
   getStaffChats,
   sendStaffChat,
   subscribeToStaffChats,
-  unsubscribeFromStaffChats
+  unsubscribeFromStaffChats,
+  cleanupAllChatChannels
 } from '../lib/database.js'
 
 const AdminDashboard = () => {
@@ -321,21 +322,27 @@ const AdminDashboard = () => {
     }
   }
 
-  // 購読を再接続する関数
+  // 購読を再接続する関数（改善版）
   const reconnectChatSubscription = () => {
     console.log('🔄 Admin チャット購読再接続開始')
     
-    // 既存の購読を解除
+    // 1. 既存の購読を解除
     if (chatSubscription) {
       console.log('🔌 Admin 既存購読を解除')
       unsubscribeFromStaffChats(chatSubscription)
     }
     
-    // chatSubscriptionをクリア
+    // 2. 全チャットチャンネルをクリーンアップ（重複防止）
+    console.log('🧹 Admin 全チャンネルクリーンアップ実行')
+    cleanupAllChatChannels()
+    
+    // 3. chatSubscriptionをクリア
     setChatSubscription(null)
     
-    // 少し遅延してから再接続
+    // 4. 少し遅延してから再接続
     setTimeout(() => {
+      console.log('🔄 Admin 新規チャット購読開始')
+      
       // 新しい購読を開始
       setupChatSubscription()
       
@@ -343,13 +350,17 @@ const AdminDashboard = () => {
       loadChatMessages()
       
       console.log('✅ Admin チャット購読再接続完了')
-    }, 100)
+    }, 200) // 遅延時間を少し長くして確実性向上
   }
 
   // リアルタイムチャット購読を設定
   const setupChatSubscription = () => {
     console.log('🔥 Admin setupChatSubscription 開始')
     console.log('🔍 Admin ユーザー情報:', { userId: user?.id, userEmail: user?.email })
+    
+    // 初期化時に既存チャンネルをクリーンアップ
+    console.log('🧹 Admin 初期チャンネルクリーンアップ')
+    cleanupAllChatChannels()
     
     const subscription = subscribeToStaffChats((payload) => {
       console.log('📨 Admin チャット更新 RAW:', payload)

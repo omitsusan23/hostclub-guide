@@ -556,8 +556,13 @@ export const deleteStaffChat = async (chatId, userId, userRole) => {
 
 // リアルタイムチャット購読
 export const subscribeToStaffChats = (callback) => {
+  // ユニークなチャンネル名を生成（重複防止）
+  const channelName = `staff_chats_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  
+  console.log('🔥 新規チャンネル作成:', channelName)
+  
   const subscription = supabase
-    .channel('staff_chats_channel')
+    .channel(channelName)
     .on(
       'postgres_changes',
       {
@@ -580,22 +585,70 @@ export const subscribeToStaffChats = (callback) => {
       }
     )
     .subscribe((status) => {
-      console.log('📡 チャット購読状態:', status)
+      console.log('📡 チャット購読状態:', status, 'チャンネル:', channelName)
       
       if (status === 'SUBSCRIBED') {
-        console.log('✅ チャットリアルタイム購読成功')
+        console.log('✅ チャットリアルタイム購読成功:', channelName)
       } else if (status === 'CHANNEL_ERROR') {
-        console.error('❌ チャットリアルタイム購読エラー')
+        console.error('❌ チャットリアルタイム購読エラー:', channelName)
+      } else if (status === 'CLOSED') {
+        console.log('🔌 チャット購読クローズ:', channelName)
       }
     })
 
   return subscription
 }
 
-// リアルタイム購読解除
+// リアルタイム購読解除（改善版）
 export const unsubscribeFromStaffChats = (subscription) => {
   if (subscription) {
-    supabase.removeChannel(subscription)
+    try {
+      console.log('🔌 チャンネル解除開始:', subscription.topic)
+      
+      // unsubscribeを先に実行
+      subscription.unsubscribe()
+      
+      // その後removeChannelで完全削除
+      supabase.removeChannel(subscription)
+      
+      console.log('✅ チャンネル解除完了:', subscription.topic)
+    } catch (error) {
+      console.error('❌ チャンネル解除エラー:', error)
+      
+      // エラーが発生してもremoveChannelは実行
+      try {
+        supabase.removeChannel(subscription)
+      } catch (removeError) {
+        console.error('❌ removeChannel エラー:', removeError)
+      }
+    }
+  }
+}
+
+// 全てのチャットチャンネルをクリーンアップ（緊急用）
+export const cleanupAllChatChannels = () => {
+  try {
+    console.log('🧹 全チャットチャンネルクリーンアップ開始')
+    
+    // Supabaseから全てのチャンネルを取得してクリーンアップ
+    const channels = supabase.getChannels()
+    console.log('📡 現在のチャンネル数:', channels.length)
+    
+    channels.forEach(channel => {
+      if (channel.topic.includes('staff_chats')) {
+        console.log('🗑️ チャットチャンネル削除:', channel.topic)
+        try {
+          channel.unsubscribe()
+          supabase.removeChannel(channel)
+        } catch (error) {
+          console.error('チャンネル削除エラー:', error)
+        }
+      }
+    })
+    
+    console.log('✅ 全チャットチャンネルクリーンアップ完了')
+  } catch (error) {
+    console.error('❌ チャンネルクリーンアップエラー:', error)
   }
 }
 
