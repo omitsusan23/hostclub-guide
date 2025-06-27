@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 const VAPID_PUBLIC_KEY = 'BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js'
 
 export const usePushNotifications = (currentUser = null) => {
+  console.log('🚀 usePushNotifications.js: フック初期化開始')
+  
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState(null)
   const [permission, setPermission] = useState('default')
@@ -349,6 +351,14 @@ export const usePushNotifications = (currentUser = null) => {
     }
   }
 
+  console.log('🔧 usePushNotifications.js: return オブジェクト作成', {
+    isSupported,
+    permission,
+    hasSubscription: !!subscription,
+    isLoading,
+    sendChatNotificationType: typeof sendChatNotification
+  })
+
   return {
     isSupported: isSupported || false,
     permission: permission || 'default',
@@ -358,7 +368,9 @@ export const usePushNotifications = (currentUser = null) => {
     subscribeToPush: subscribeToPush || (() => Promise.resolve(null)),
     unsubscribeFromPush: unsubscribeFromPush || (() => Promise.resolve(true)),
     sendTestNotification: sendTestNotification || (() => {}),
-    sendChatNotification: sendChatNotification || (() => {}),
+    sendChatNotification: sendChatNotification || (() => {
+      console.log('🚫 usePushNotifications.js: デフォルト空関数が実行されました')
+    }),
     showNotification: showNotification || (() => {})
   }
 }
