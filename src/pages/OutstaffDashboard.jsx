@@ -9,6 +9,7 @@ import {
   getTodayVisitRecords,
   getMonthlyVisitRecords,
   addVisitRecord,
+  addVisitRecordWithRequestCheck,
   deleteVisitRecord,
   getPersonalMonthlyIntroductionsByRecommendation
 } from '../lib/database'
@@ -105,8 +106,8 @@ const OutstaffDashboard = () => {
     try {
       const userRole = getUserRole()
       
-      // Supabaseに案内記録を保存（staff_type='outstaff'で自動設定）
-      const savedRecord = await addVisitRecord({
+      // Supabaseに案内記録を保存（staff_type='outstaff'で自動設定） + リクエスト消化チェック
+      const savedRecord = await addVisitRecordWithRequestCheck({
         store_id: visitData.storeId,
         guest_count: visitData.guestCount,
         staff_name: currentStaff?.display_name || user?.user_metadata?.display_name || 'アウトスタッフ',

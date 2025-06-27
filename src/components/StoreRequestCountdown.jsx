@@ -30,6 +30,11 @@ const StoreRequestCountdown = ({ chatMessageId }) => {
 
     if (chatMessageId) {
       fetchRequestData()
+      
+      // リアルタイム更新のための定期的なリフレッシュ
+      const interval = setInterval(fetchRequestData, 10000) // 10秒ごと
+      
+      return () => clearInterval(interval)
     }
   }, [chatMessageId])
 
@@ -60,9 +65,26 @@ const StoreRequestCountdown = ({ chatMessageId }) => {
     }
   }, [requestData])
 
-  // リクエストデータがない、または消化済みの場合は何も表示しない
-  if (!requestData || requestData.is_consumed) {
+  // リクエストデータがない場合は何も表示しない
+  if (!requestData) {
     return null
+  }
+
+  // 消化済みの場合は完了状態を表示
+  if (requestData.is_consumed) {
+    const completedTime = new Date(requestData.consumed_at).toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    
+    return (
+      <div className="mt-2 p-2 rounded-md text-xs bg-green-100 text-green-800">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">✅ 案内完了</span>
+          <span className="font-mono text-green-900">{completedTime}</span>
+        </div>
+      </div>
+    )
   }
 
   return (

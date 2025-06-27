@@ -12,6 +12,7 @@ import {
   getMonthlyRequestCount,
   getActiveRequest
 } from '../lib/database'
+import { supabase } from '../lib/supabase'
 
 const CustomerDashboard = () => {
   const { getUserStoreId, getStoreIdFromSubdomain, user } = useApp()
@@ -27,6 +28,7 @@ const CustomerDashboard = () => {
   const [monthlyRequestCount, setMonthlyRequestCount] = useState(0)
   const [activeRequest, setActiveRequest] = useState(null)
   const [remainingTime, setRemainingTime] = useState(null)
+  const [requestSubscription, setRequestSubscription] = useState(null)
 
   // データ取得
   useEffect(() => {
@@ -68,7 +70,49 @@ const CustomerDashboard = () => {
       }
     }
 
+    // リアルタイムリクエスト購読を設定
+    const setupRequestSubscription = () => {
+      if (!storeId) return
+      
+      const subscription = supabase
+        .channel(`store_status_requests_${storeId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'store_status_requests',
+            filter: `store_id=eq.${storeId}`
+          },
+          (payload) => {
+            console.log('📨 リクエスト更新:', payload)
+            
+            if (payload.new && activeRequest && payload.new.id === activeRequest.id) {
+              setActiveRequest(payload.new)
+              
+              // 月間リクエスト数も更新
+              if (payload.new.is_consumed && !payload.old?.is_consumed) {
+                console.log('🎉 リクエスト消化完了')
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 リクエスト購読状態:', status)
+        })
+      
+      setRequestSubscription(subscription)
+    }
+
     fetchData()
+    setupRequestSubscription()
+
+    // クリーンアップ
+    return () => {
+      if (requestSubscription) {
+        supabase.removeChannel(requestSubscription)
+      }
+    }
   }, [storeId])
 
   // カウントダウンタイマー
@@ -248,28 +292,41 @@ const CustomerDashboard = () => {
                 <h4 className="font-medium text-red-800">🔥 今初回ほしいです</h4>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">
-                    回数制限: {store.first_request_limit === 0 ? '利用不可' : `${store.first_request_limit}回/月`}
+                    {store.first_request_limit === 0 ? '利用不可' : 
+                     `残り: ${Math.max(0, store.first_request_limit - monthlyRequestCount)}回`}
                   </div>
-                  {store.first_request_limit > 0 && (
-                    <div className="text-xs text-gray-500">
-                      今月使用: {monthlyRequestCount}回
-                    </div>
-                  )}
                 </div>
               </div>
               
               {/* アクティブなリクエスト表示 */}
               {activeRequest && (
-                <div className="mb-3 p-3 bg-orange-100 border border-orange-200 rounded-md">
+                <div className={`mb-3 p-3 border rounded-md ${
+                  activeRequest.is_consumed 
+                    ? 'bg-green-100 border-green-200' 
+                    : 'bg-orange-100 border-orange-200'
+                }`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-orange-800">⏱️ 発信中</span>
-                    <span className="text-xs text-orange-600">
-                      残り: {remainingTime || '計算中...'}
+                    <span className={`text-sm font-medium ${
+                      activeRequest.is_consumed ? 'text-green-800' : 'text-orange-800'
+                    }`}>
+                      {activeRequest.is_consumed ? '✅ 案内完了' : '⏱️ 発信中'}
+                    </span>
+                    <span className={`text-xs ${
+                      activeRequest.is_consumed ? 'text-green-600' : 'text-orange-600'
+                    }`}>
+                      {activeRequest.is_consumed 
+                        ? new Date(activeRequest.consumed_at).toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : `残り: ${remainingTime || '計算中...'}`}
                     </span>
                   </div>
-                  <div className="text-xs text-orange-700 mt-1">
-                    1時間以内の案内報告で消化されます
-                  </div>
+                  {!activeRequest.is_consumed && (
+                    <div className="text-xs text-orange-700 mt-1">
+                      1時間以内の案内報告で消化されます
+                    </div>
+                  )}
                 </div>
               )}
               

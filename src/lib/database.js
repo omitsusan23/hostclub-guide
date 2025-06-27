@@ -1160,4 +1160,80 @@ export const getLatestStoreStatusRequests = async (limit = 50) => {
     console.error('最新状況発信取得エラー:', error)
     return { success: false, error: error.message, data: [] }
   }
+}
+
+// 案内報告が上がったときにアクティブなリクエストを自動消化
+export const checkAndConsumeRequest = async (staffLogData) => {
+  try {
+    console.log('🔍 リクエスト消化チェック開始:', staffLogData)
+    
+    const { store_id, guided_at } = staffLogData
+    const guidedAtTime = new Date(guided_at)
+    
+    // その店舗のアクティブなリクエストを検索（1時間以内）
+    const oneHourAgo = new Date(guidedAtTime.getTime() - 60 * 60 * 1000)
+    
+    const { data: activeRequests, error } = await supabase
+      .from('store_status_requests')
+      .select('*')
+      .eq('store_id', store_id)
+      .eq('has_time_limit', true)
+      .eq('is_consumed', false)
+      .gte('requested_at', oneHourAgo.toISOString())
+      .lte('requested_at', guidedAtTime.toISOString())
+      .order('requested_at', { ascending: false })
+      .limit(1)
+    
+    if (error) throw error
+    
+    if (activeRequests && activeRequests.length > 0) {
+      const request = activeRequests[0]
+      console.log('✅ 消化対象リクエスト発見:', request)
+      
+      // リクエストを消化
+      const { data: updatedRequest, error: updateError } = await supabase
+        .from('store_status_requests')
+        .update({
+          is_consumed: true,
+          consumed_at: guidedAtTime.toISOString(),
+          staff_log_id: staffLogData.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', request.id)
+        .select()
+      
+      if (updateError) throw updateError
+      
+      console.log('🎉 リクエスト消化完了:', updatedRequest?.[0])
+      
+      return { success: true, consumed: true, request: updatedRequest?.[0] }
+    } else {
+      console.log('ℹ️ 消化対象のリクエストなし')
+      return { success: true, consumed: false }
+    }
+    
+  } catch (error) {
+    console.error('リクエスト消化チェックエラー:', error)
+    return { success: false, error: error.message, consumed: false }
+  }
+}
+
+// addVisitRecordを修正してリクエスト消化チェックを追加
+export const addVisitRecordWithRequestCheck = async (visitData, userRole = 'staff') => {
+  try {
+    console.log('📝 案内記録追加開始:', visitData)
+    
+    // 通常の案内記録追加
+    const result = await addVisitRecord(visitData, userRole)
+    
+    if (result && result.id) {
+      // リクエスト消化チェック
+      await checkAndConsumeRequest(result)
+    }
+    
+    return result
+  } catch (error) {
+    console.error('案内記録追加（リクエストチェック付き）エラー:', error)
+    throw error
+  }
 } 
