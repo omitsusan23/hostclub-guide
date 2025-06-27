@@ -938,10 +938,10 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Push通知設定 */}
-      <div className="mt-8">
+      {/* Push通知設定 - 一時的に無効化 */}
+      {/* <div className="mt-8">
         <PushNotificationSettings />
-      </div>
+      </div> */}
 
       {/* スタッフチャット */}
               <div className="bg-white rounded-lg shadow-md p-6 mt-8 h-[576px] flex flex-col">
