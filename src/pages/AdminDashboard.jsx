@@ -897,6 +897,18 @@ const AdminDashboard = () => {
                 >
                   👥 スタッフ管理ページで詳細管理
                 </a>
+                <a
+                  href="/staff-performance"
+                  className="block text-sm text-blue-600 hover:text-blue-800"
+                >
+                  📊 outstaff案内実績
+                </a>
+                <button
+                  onClick={() => setShowTargetSettingsModal(true)}
+                  className="block text-sm text-blue-600 hover:text-blue-800 text-left"
+                >
+                  🎯 staff目標設定
+                </button>
               </div>
             </div>
           </div>

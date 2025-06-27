@@ -31,15 +31,39 @@ const PushNotificationSettings = ({ compact = false }) => {
     }
   }
 
+  // デバイス/ブラウザ判定
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+
   // サポートされていない場合
   if (!isSupported) {
-    return compact ? null : (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-400">📵</span>
-          <span className="text-sm text-gray-600">
-            お使いのブラウザはプッシュ通知をサポートしていません
-          </span>
+    if (compact) return null
+    
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <span className="text-amber-600 text-xl">🍎</span>
+          <div className="flex-1">
+            <h4 className="font-medium text-amber-800 mb-2">プッシュ通知について</h4>
+            {isIOS && isSafari ? (
+              <div className="text-sm text-amber-700 space-y-2">
+                <p><strong>iOSでプッシュ通知を利用するには：</strong></p>
+                <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
+                  <li>Safari の <strong>共有ボタン（□↗）</strong> をタップ</li>
+                  <li><strong>「ホーム画面に追加」</strong> を選択</li>
+                  <li>追加された <strong>アプリアイコンから起動</strong></li>
+                  <li>プッシュ通知設定が利用可能になります</li>
+                </ol>
+                <div className="mt-2 p-2 bg-amber-100 rounded text-xs">
+                  ℹ️ iOS Safari ブラウザでは制限により、ホーム画面追加後のみプッシュ通知が利用できます（iOS 16.4以降）
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-amber-700">
+                お使いのブラウザはプッシュ通知をサポートしていません
+              </p>
+            )}
+          </div>
         </div>
       </div>
     )

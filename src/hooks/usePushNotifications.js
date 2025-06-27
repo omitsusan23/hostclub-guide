@@ -45,7 +45,14 @@ export const usePushNotifications = () => {
   // 通知許可を要求
   const requestPermission = useCallback(async () => {
     if (!isSupported) {
-      alert('❌ お使いのブラウザはプッシュ通知をサポートしていません')
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+      
+      if (isIOS && isSafari) {
+        alert('🍎 iOSでプッシュ通知を利用するには、Safari の共有ボタン（□↗）から「ホーム画面に追加」してアプリとして起動してください。')
+      } else {
+        alert('❌ お使いのブラウザはプッシュ通知をサポートしていません')
+      }
       return false
     }
 
