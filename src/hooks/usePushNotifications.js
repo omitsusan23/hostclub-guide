@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 const VAPID_PUBLIC_KEY = 'BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js'
 
-export const usePushNotifications = () => {
+export const usePushNotifications = (currentUser = null) => {
   const [isSupported, setIsSupported] = useState(false)
   const [subscription, setSubscription] = useState(null)
   const [permission, setPermission] = useState('default')
@@ -204,6 +204,79 @@ export const usePushNotifications = () => {
     }
   }, [subscription])
 
+  // 新着チャットメッセージの通知を送信
+  const sendChatNotification = useCallback(async (chatMessage) => {
+    if (!subscription || permission !== 'granted') {
+      console.log('🔕 Push通知が無効です')
+      return
+    }
+
+    // 自分のメッセージには通知しない
+    if (chatMessage.sender_id === getCurrentUserId()) {
+      console.log('👤 自分のメッセージなので通知しません')
+      return
+    }
+
+    try {
+      const isFirstTimeRequest = chatMessage.message?.includes('今初回ほしいです')
+      
+      await showNotification({
+        title: isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ',
+        body: `${chatMessage.sender_name}: ${chatMessage.message}`,
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
+        tag: 'staff-chat',
+        requireInteraction: isFirstTimeRequest,
+        data: { 
+          url: '/staff',
+          chatId: chatMessage.id,
+          type: 'chat',
+          urgent: isFirstTimeRequest
+        }
+      })
+      
+      console.log('🔔 チャット通知を送信しました:', chatMessage.message)
+    } catch (error) {
+      console.error('❌ チャット通知送信エラー:', error)
+    }
+  }, [subscription, permission, getCurrentUserId, showNotification])
+
+  // ネイティブ通知を表示
+  const showNotification = useCallback(async (options) => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        await registration.showNotification(options.title, {
+          body: options.body,
+          icon: options.icon || '/icon-192x192.png',
+          badge: options.badge || '/icon-72x72.png',
+          vibrate: options.vibrate || [100, 50, 100],
+          tag: options.tag || 'notification',
+          requireInteraction: options.requireInteraction || false,
+          data: options.data || {},
+          actions: [
+            {
+              action: 'open',
+              title: '開く'
+            },
+            {
+              action: 'close',
+              title: '閉じる'
+            }
+          ]
+        })
+      } catch (error) {
+        console.error('❌ Notification表示エラー:', error)
+      }
+    }
+  }, [])
+
+  // 現在のユーザーIDを取得
+  const getCurrentUserId = useCallback(() => {
+    return currentUser?.id || null
+  }, [currentUser])
+
   return {
     isSupported,
     permission,
@@ -212,7 +285,9 @@ export const usePushNotifications = () => {
     requestPermission,
     subscribeToPush,
     unsubscribeFromPush,
-    sendTestNotification
+    sendTestNotification,
+    sendChatNotification,
+    showNotification
   }
 }
 

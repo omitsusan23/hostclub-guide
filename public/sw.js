@@ -88,15 +88,18 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   console.log('👆 Notification clicked:', event)
   
+  const data = event.notification.data || {}
+  const action = event.action
+  
   event.notification.close()
 
   // アクションボタンの処理
-  if (event.action === 'close') {
+  if (action === 'close') {
     return
   }
 
   // メインの通知または「チャットを確認」ボタンをクリック
-  const urlToOpen = event.notification.data?.url || '/staff'
+  const urlToOpen = data.url || '/staff'
   
   event.waitUntil(
     clients.matchAll({
@@ -108,16 +111,21 @@ self.addEventListener('notificationclick', event => {
         if (client.url.includes(self.location.origin)) {
           // 既存のタブにフォーカス
           client.focus()
+          
+          // チャット通知の場合は該当メッセージにスクロール
           client.postMessage({
             type: 'NOTIFICATION_CLICKED',
-            url: urlToOpen
+            url: urlToOpen,
+            chatId: data.chatId,
+            urgent: data.urgent
           })
           return
         }
       }
       
       // 新しいタブで開く
-      return clients.openWindow(urlToOpen)
+      const fullUrl = data.chatId ? `${urlToOpen}?chatId=${data.chatId}` : urlToOpen
+      return clients.openWindow(fullUrl)
     })
   )
 })

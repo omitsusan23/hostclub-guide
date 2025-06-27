@@ -1,7 +1,9 @@
 import React from 'react'
 import { usePushNotifications } from '../hooks/usePushNotifications'
+import { useApp } from '../contexts/AppContext'
 
 const PushNotificationSettings = ({ compact = false }) => {
+  const { user } = useApp()
   const {
     isSupported,
     permission,
@@ -11,7 +13,7 @@ const PushNotificationSettings = ({ compact = false }) => {
     subscribeToPush,
     unsubscribeFromPush,
     sendTestNotification
-  } = usePushNotifications()
+  } = usePushNotifications(user)
 
   // Push通知を有効にする
   const handleEnablePush = async () => {
@@ -154,7 +156,7 @@ const PushNotificationSettings = ({ compact = false }) => {
                 disabled={isLoading}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {isLoading ? '送信中...' : 'テスト通知'}
+                {isLoading ? '送信中...' : '🔔 通知テスト'}
               </button>
               <button
                 onClick={handleDisablePush}

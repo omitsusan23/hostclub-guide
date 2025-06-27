@@ -8,6 +8,7 @@ import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 import { 
   getStores,
   getTodayVisitRecords,
@@ -44,6 +45,7 @@ const StaffDashboard = () => {
   
   // 通知機能
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  const { sendChatNotification } = usePushNotifications(user)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -161,6 +163,11 @@ const StaffDashboard = () => {
           // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
           if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
             incrementUnreadCount()
+          }
+          
+          // プッシュ通知を送信（自分以外のメッセージの場合）
+          if (payload.new.sender_id !== user?.id) {
+            sendChatNotification(payload.new)
           }
         } else if (eventType === 'UPDATE') {
           // メッセージが編集された場合
@@ -280,7 +287,20 @@ const StaffDashboard = () => {
       if (result.success) {
         setNewMessage('')
         console.log('✅ チャット送信成功')
-        // リアルタイム機能により自動的にメッセージが追加される
+        
+        // 送信したメッセージを即座にローカル状態に追加
+        const newChatMessage = {
+          id: result.data?.id || Date.now(), // 一時的なIDまたはサーバーからのID
+          message: messageData.message,
+          sender_id: messageData.sender_id,
+          sender_name: messageData.sender_name,
+          sender_role: messageData.sender_role,
+          message_type: messageData.message_type,
+          created_at: new Date().toISOString(),
+          is_edited: false
+        }
+        
+        setChatMessages(prev => [newChatMessage, ...prev])
       } else {
         console.error('❌ チャット送信エラー:', result.error)
         alert('❌ 送信に失敗しました: ' + result.error)

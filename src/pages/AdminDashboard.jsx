@@ -10,6 +10,7 @@ import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 import { 
@@ -38,6 +39,7 @@ const AdminDashboard = () => {
   
   // 通知機能
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  const { sendChatNotification } = usePushNotifications(user)
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -206,6 +208,11 @@ const AdminDashboard = () => {
         if (payload.new.sender_id !== user?.id && location.pathname !== '/admin') {
           incrementUnreadCount()
         }
+        
+        // プッシュ通知を送信（自分以外のメッセージの場合）
+        if (payload.new.sender_id !== user?.id) {
+          sendChatNotification(payload.new)
+        }
       } else if (eventType === 'UPDATE') {
         console.log('✏️ Admin メッセージ編集:', payload.new)
         setChatMessages(prev => 
@@ -250,7 +257,20 @@ const AdminDashboard = () => {
       if (result.success) {
         setNewMessage('')
         console.log('✅ チャット送信成功')
-        // リアルタイム機能により自動的にメッセージが追加される
+        
+        // 送信したメッセージを即座にローカル状態に追加
+        const newChatMessage = {
+          id: result.data?.id || Date.now(), // 一時的なIDまたはサーバーからのID
+          message: messageData.message,
+          sender_id: messageData.sender_id,
+          sender_name: messageData.sender_name,
+          sender_role: messageData.sender_role,
+          message_type: messageData.message_type,
+          created_at: new Date().toISOString(),
+          is_edited: false
+        }
+        
+        setChatMessages(prev => [newChatMessage, ...prev])
       } else {
         console.error('❌ チャット送信エラー:', result.error)
         alert('❌ 送信に失敗しました: ' + result.error)
