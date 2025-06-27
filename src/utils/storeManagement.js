@@ -244,12 +244,20 @@ export const updateStore = async (storeId, formData) => {
       panel_fee: updateData.panel_fee,
       guarantee_count: updateData.guarantee_count,
       penalty_fee: updateData.penalty_fee,
+      first_request_limit: updateData.first_request_limit,
       panel_fee_type: typeof updateData.panel_fee,
       guarantee_count_type: typeof updateData.guarantee_count,
-      penalty_fee_type: typeof updateData.penalty_fee
+      penalty_fee_type: typeof updateData.penalty_fee,
+      first_request_limit_type: typeof updateData.first_request_limit
     });
 
     // データベースを更新
+    console.log('🚀 About to send to Supabase:', {
+      updateData,
+      storeId,
+      updateDataKeys: Object.keys(updateData)
+    });
+    
     const { data, error } = await supabase
       .from('stores')
       .update(updateData)
@@ -257,6 +265,10 @@ export const updateStore = async (storeId, formData) => {
       .select()
 
     console.log('📤 Supabase update result:', { data, error });
+    
+    if (data && data.length > 0) {
+      console.log('✅ Updated record first_request_limit:', data[0].first_request_limit);
+    }
 
     if (error) {
       console.error('❌ Supabase update error:', error);

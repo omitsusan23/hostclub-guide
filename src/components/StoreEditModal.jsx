@@ -59,9 +59,11 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
       panel_fee: formData.panel_fee,
       guarantee_count: formData.guarantee_count,
       penalty_fee: formData.penalty_fee,
+      first_request_limit: formData.first_request_limit,
       panel_fee_type: typeof formData.panel_fee,
       guarantee_count_type: typeof formData.guarantee_count,
-      penalty_fee_type: typeof formData.penalty_fee
+      penalty_fee_type: typeof formData.penalty_fee,
+      first_request_limit_type: typeof formData.first_request_limit
     });
     onSave(formData);
   };
@@ -287,9 +289,9 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="0"
-                    placeholder="0 = 制限なし"
+                    placeholder="0 = 利用不可"
                   />
-                  <p className="text-xs text-gray-500 mt-1">0を設定すると制限なしになります</p>
+                  <p className="text-xs text-gray-500 mt-1">0を設定すると利用不可になります</p>
                 </div>
               </div>
             </div>
