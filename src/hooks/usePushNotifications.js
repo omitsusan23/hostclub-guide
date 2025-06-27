@@ -223,7 +223,7 @@ export const usePushNotifications = (currentUser = null) => {
     }
 
     // 自分のメッセージには通知しない
-    if (chatMessage.sender_id === getCurrentUserId()) {
+    if (chatMessage.sender_id === currentUser?.id) {
       console.log('👤 自分のメッセージなので通知しません')
       return
     }
@@ -231,27 +231,37 @@ export const usePushNotifications = (currentUser = null) => {
     try {
       const isFirstTimeRequest = chatMessage.message?.includes('今初回ほしいです')
       
-      await showNotification({
-        title: isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ',
-        body: `${chatMessage.sender_name}: ${chatMessage.message}`,
-        icon: '/icon-192x192.png',
-        badge: '/icon-72x72.png',
-        vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
-        tag: 'staff-chat',
-        requireInteraction: isFirstTimeRequest,
-        data: { 
-          url: '/staff',
-          chatId: chatMessage.id,
-          type: 'chat',
-          urgent: isFirstTimeRequest
-        }
-      })
+      // 直接Service Worker経由で通知を表示
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready
+        await registration.showNotification(
+          isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ',
+          {
+            body: `${chatMessage.sender_name}: ${chatMessage.message}`,
+            icon: '/icon-192x192.png',
+            badge: '/icon-72x72.png',
+            vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
+            tag: 'staff-chat',
+            requireInteraction: isFirstTimeRequest,
+            data: { 
+              url: '/staff',
+              chatId: chatMessage.id,
+              type: 'chat',
+              urgent: isFirstTimeRequest
+            },
+            actions: [
+              { action: 'open', title: '開く' },
+              { action: 'close', title: '閉じる' }
+            ]
+          }
+        )
+      }
       
       console.log('🔔 チャット通知を送信しました:', chatMessage.message)
     } catch (error) {
       console.error('❌ チャット通知送信エラー:', error)
     }
-  }, [subscription, permission, getCurrentUserId, showNotification, currentUser])
+  }, [subscription, permission, currentUser])
 
   // ネイティブ通知を表示
   const showNotification = useCallback(async (options) => {
@@ -283,10 +293,7 @@ export const usePushNotifications = (currentUser = null) => {
     }
   }, [])
 
-  // 現在のユーザーIDを取得
-  const getCurrentUserId = useCallback(() => {
-    return currentUser?.id || null
-  }, [currentUser])
+
 
   // 初期化完了前は安全なデフォルト値を返す
   if (!isInitialized) {
