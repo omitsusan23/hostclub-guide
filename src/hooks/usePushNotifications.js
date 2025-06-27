@@ -11,11 +11,16 @@ export const usePushNotifications = (currentUser = null) => {
   // Push通知のサポート状況を確認
   useEffect(() => {
     const checkSupport = () => {
-      const supported = 'serviceWorker' in navigator && 'PushManager' in window
-      setIsSupported(supported)
-      
-      if (supported) {
-        setPermission(Notification.permission)
+      try {
+        const supported = 'serviceWorker' in navigator && 'PushManager' in window
+        setIsSupported(supported)
+        
+        if (supported && typeof Notification !== 'undefined') {
+          setPermission(Notification.permission)
+        }
+      } catch (error) {
+        console.warn('Push通知サポート確認エラー:', error)
+        setIsSupported(false)
       }
     }
 
@@ -278,16 +283,16 @@ export const usePushNotifications = (currentUser = null) => {
   }, [currentUser])
 
   return {
-    isSupported,
-    permission,
-    subscription,
-    isLoading,
-    requestPermission,
-    subscribeToPush,
-    unsubscribeFromPush,
-    sendTestNotification,
-    sendChatNotification,
-    showNotification
+    isSupported: isSupported || false,
+    permission: permission || 'default',
+    subscription: subscription || null,
+    isLoading: isLoading || false,
+    requestPermission: requestPermission || (() => Promise.resolve(false)),
+    subscribeToPush: subscribeToPush || (() => Promise.resolve(null)),
+    unsubscribeFromPush: unsubscribeFromPush || (() => Promise.resolve(true)),
+    sendTestNotification: sendTestNotification || (() => {}),
+    sendChatNotification: sendChatNotification || (() => {}),
+    showNotification: showNotification || (() => {})
   }
 }
 

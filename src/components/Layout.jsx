@@ -13,12 +13,14 @@ const Layout = ({ children }) => {
   // スタッフ向け通知機能（staff, outstaff, adminのみ）
   const userRole = getUserRole()
   const showChatNotifications = ['staff', 'outstaff', 'admin'].includes(userRole)
+  
+  // フックは必ず同じ順序で呼び出す
   const { unreadCount } = useStaffChatNotifications(
     showChatNotifications ? user?.id : null
   )
   
   // ページタイトル通知
-  usePageTitleNotifications(showChatNotifications ? unreadCount : 0)
+  usePageTitleNotifications(showChatNotifications ? (unreadCount || 0) : 0)
 
   const handleLogout = async () => {
     try {

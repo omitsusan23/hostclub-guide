@@ -45,7 +45,8 @@ const StaffDashboard = () => {
   
   // 通知機能
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
-  const { sendChatNotification } = usePushNotifications(user || null)
+  const pushNotifications = usePushNotifications(user || null)
+  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {})
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -166,7 +167,7 @@ const StaffDashboard = () => {
           }
           
           // プッシュ通知を送信（自分以外のメッセージの場合）
-          if (payload.new.sender_id !== user?.id && sendChatNotification) {
+          if (payload.new.sender_id !== user?.id) {
             sendChatNotification(payload.new)
           }
         } else if (eventType === 'UPDATE') {
