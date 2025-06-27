@@ -2,6 +2,8 @@ import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
 import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
+import { usePageTitleNotifications } from '../hooks/usePageTitleNotifications'
+import PushNotificationSettings from './PushNotificationSettings'
 
 const Layout = ({ children }) => {
   const { user, signOut, getUserRole } = useApp()
@@ -14,6 +16,9 @@ const Layout = ({ children }) => {
   const { unreadCount } = useStaffChatNotifications(
     showChatNotifications ? user?.id : null
   )
+  
+  // ページタイトル通知
+  usePageTitleNotifications(showChatNotifications ? unreadCount : 0)
 
   const handleLogout = async () => {
     try {
@@ -121,6 +126,11 @@ const Layout = ({ children }) => {
                     </span>
                   )}
                 </button>
+              )}
+              
+              {/* Push通知設定 */}
+              {user && showChatNotifications && (
+                <PushNotificationSettings compact={true} />
               )}
               
               {/* ログアウトボタン */}

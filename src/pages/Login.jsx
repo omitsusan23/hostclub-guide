@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
+import PushNotificationSettings from '../components/PushNotificationSettings'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -113,6 +114,26 @@ const Login = () => {
             </div>
           </div>
         </form>
+
+        {/* Push通知設定 */}
+        <div className="mt-8">
+          <PushNotificationSettings />
+        </div>
+
+        {/* 説明 */}
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <span className="text-blue-600 text-xl">💡</span>
+            <div className="text-sm text-blue-800">
+              <h4 className="font-medium mb-1">Push通知について</h4>
+              <p className="text-blue-700">
+                ログイン前にプッシュ通知を有効にしておくと、アプリを閉じていても
+                <br />
+                スタッフチャットの新着メッセージをリアルタイムで受け取れます。
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
