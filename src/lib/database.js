@@ -333,17 +333,81 @@ export const updateVisitRecord = async (recordId, updateData) => {
 
 // 案内記録を削除
 export const deleteVisitRecord = async (recordId) => {
-  const { error } = await supabase
-    .from('staff_logs')
-    .delete()
-    .eq('id', recordId)
+  try {
+    console.log('🗑️ 案内記録削除開始:', recordId)
+    
+    // 1. 削除対象の案内記録情報を取得
+    const { data: staffLog, error: fetchError } = await supabase
+      .from('staff_logs')
+      .select('id, store_id, staff_name, guided_at')
+      .eq('id', recordId)
+      .single()
 
-  if (error) {
-    console.error('案内記録削除エラー:', error)
-    throw error
+    if (fetchError) {
+      console.error('案内記録情報取得エラー:', fetchError)
+      throw fetchError
+    }
+
+    console.log('📊 削除対象案内記録:', staffLog)
+
+    // 2. この案内記録で消化されたリクエストを確認
+    const { data: consumedRequests, error: requestError } = await supabase
+      .from('store_status_requests')
+      .select('id, store_id, status_type')
+      .eq('consumed_by_staff_log_id', recordId)
+      .eq('is_consumed', true)
+
+    if (requestError) {
+      console.error('関連リクエスト確認エラー:', requestError)
+      throw requestError
+    }
+
+    console.log('🔄 削除により影響を受けるリクエスト:', consumedRequests)
+
+    // 3. 関連リクエストがある場合は消化状態をリセット
+    if (consumedRequests && consumedRequests.length > 0) {
+      for (const request of consumedRequests) {
+        console.log(`🔄 リクエスト ID:${request.id} の消化状態をリセット中...`)
+        
+        const { error: resetError } = await supabase
+          .from('store_status_requests')
+          .update({
+            is_consumed: false,
+            consumed_by_staff_log_id: null,
+            consumed_at: null
+          })
+          .eq('id', request.id)
+
+        if (resetError) {
+          console.error('リクエスト消化状態リセットエラー:', resetError)
+          throw resetError
+        }
+        
+        console.log(`✅ リクエスト ID:${request.id} の消化状態をリセット完了`)
+      }
+    }
+
+    // 4. 案内記録を削除
+    const { error: deleteError } = await supabase
+      .from('staff_logs')
+      .delete()
+      .eq('id', recordId)
+
+    if (deleteError) {
+      console.error('案内記録削除エラー:', deleteError)
+      throw deleteError
+    }
+
+    console.log('✅ 案内記録削除完了:', recordId)
+    if (consumedRequests && consumedRequests.length > 0) {
+      console.log(`🔄 ${consumedRequests.length}件のリクエスト消化状態をリセットしました`)
+    }
+
+    return { success: true, restoredRequests: consumedRequests?.length || 0 }
+  } catch (error) {
+    console.error('❌ 案内記録削除エラー:', error)
+    return { success: false, error: error.message }
   }
-
-  return true
 }
 
 // 店舗の最新状況を取得（store_statusテーブル未作成のため無効化）

@@ -950,10 +950,10 @@ const AdminDashboard = () => {
                       )}
                     </div>
                     <span className="text-xs text-gray-400">
-                      {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                                                {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed whitespace-pre-wrap">{chat.message}</p>

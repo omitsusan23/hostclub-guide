@@ -261,19 +261,27 @@ const PastPerformancePage = () => {
   // 削除実行
   const handleConfirmDelete = async () => {
     try {
-      await deleteVisitRecord(deleteModal.recordId)
+      const result = await deleteVisitRecord(deleteModal.recordId)
       
-      // 選択中の記録リストから削除
-      setSelectedRecords(prev => prev.filter(r => r.id !== deleteModal.recordId))
-      
-      // 月次データからも削除
-      const selectedDateStr = formatLocalDate(selectedDate)
-      setMonthlyData(prev => ({
-        ...prev,
-        [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
-      }))
-      
-      setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+      if (result.success) {
+        // 選択中の記録リストから削除
+        setSelectedRecords(prev => prev.filter(r => r.id !== deleteModal.recordId))
+        
+        // 月次データからも削除
+        const selectedDateStr = formatLocalDate(selectedDate)
+        setMonthlyData(prev => ({
+          ...prev,
+          [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
+        }))
+        
+        setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+        
+        if (result.restoredRequests > 0) {
+          alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
+        }
+      } else {
+        alert('❌ 削除に失敗しました: ' + result.error)
+      }
     } catch (error) {
       console.error('削除エラー:', error)
       alert('削除に失敗しました')
@@ -429,19 +437,27 @@ const PastPerformancePage = () => {
   // 店舗カレンダーの削除実行
   const handleStoreConfirmDelete = async () => {
     try {
-      await deleteVisitRecord(deleteModal.recordId)
+      const result = await deleteVisitRecord(deleteModal.recordId)
       
-      // 選択中の記録リストから削除
-      setStoreSelectedRecords(prev => prev.filter(r => r.id !== deleteModal.recordId))
-      
-      // 月次データからも削除
-      const selectedDateStr = formatLocalDate(storeSelectedDate)
-      setStoreMonthlyData(prev => ({
-        ...prev,
-        [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
-      }))
-      
-      setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+      if (result.success) {
+        // 選択中の記録リストから削除
+        setStoreSelectedRecords(prev => prev.filter(r => r.id !== deleteModal.recordId))
+        
+        // 月次データからも削除
+        const selectedDateStr = formatLocalDate(storeSelectedDate)
+        setStoreMonthlyData(prev => ({
+          ...prev,
+          [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
+        }))
+        
+        setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+        
+        if (result.restoredRequests > 0) {
+          alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
+        }
+      } else {
+        alert('❌ 削除に失敗しました: ' + result.error)
+      }
     } catch (error) {
       console.error('削除エラー:', error)
       alert('削除に失敗しました')

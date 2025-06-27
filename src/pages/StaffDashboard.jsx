@@ -289,15 +289,23 @@ const StaffDashboard = () => {
   // 削除実行
   const handleConfirmDelete = async () => {
     try {
-      await deleteVisitRecord(deleteModal.record.id)
+      const result = await deleteVisitRecord(deleteModal.record.id)
       
-      // ローカル状態から削除
-      setVisitRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
-      
-      // モーダルを閉じる
-      setDeleteModal({ isOpen: false, record: null, storeName: '' })
-      
-      alert('✅ 案内記録を削除しました')
+      if (result.success) {
+        // ローカル状態から削除
+        setVisitRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
+        
+        // モーダルを閉じる
+        setDeleteModal({ isOpen: false, record: null, storeName: '' })
+        
+        if (result.restoredRequests > 0) {
+          alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
+        } else {
+          alert('✅ 案内記録を削除しました')
+        }
+      } else {
+        alert('❌ 削除に失敗しました: ' + result.error)
+      }
     } catch (error) {
       console.error('削除エラー:', error)
       alert('❌ 削除に失敗しました')
@@ -525,7 +533,7 @@ const StaffDashboard = () => {
                           )}
                         </div>
                         <span className="text-xs text-gray-400">
-                          {new Date(chat.sent_at).toLocaleTimeString('ja-JP', {
+                          {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
