@@ -203,68 +203,13 @@ const CustomerDashboard = () => {
               📊 今月の案内実績
             </h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{visitRecords.length}</div>
-                <div className="text-sm text-gray-600">案内件数</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">{totalVisitors}</div>
-                <div className="text-sm text-gray-600">総案内人数</div>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">保証本数: {guaranteedCount}本</div>
-              <div className="text-sm text-gray-600">
-                追加ボーナス: {Math.max(0, visitRecords.length - guaranteedCount)}本
-              </div>
+            <div className="text-center p-6 bg-blue-50 rounded-lg">
+              <div className="text-4xl font-bold text-blue-600">{totalVisitors}</div>
+              <div className="text-lg text-gray-600">総案内人数</div>
             </div>
           </div>
 
-          {/* 請求金額 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              💰 今月の請求金額
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">基本料金</span>
-                <span className="font-medium">¥{baseAmount.toLocaleString()}</span>
-              </div>
-              
-              {bonusAmount > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">追加ボーナス</span>
-                  <span className="font-medium text-green-600">+¥{bonusAmount.toLocaleString()}</span>
-                </div>
-              )}
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">小計</span>
-                <span className="font-medium">¥{totalAmount.toLocaleString()}</span>
-              </div>
-              
-              {invoiceSettings?.with_tax && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">税額（10%）</span>
-                  <span className="font-medium">¥{taxAmount.toLocaleString()}</span>
-                </div>
-              )}
-              
-              <div className="border-t pt-3">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>合計</span>
-                  <span className="text-blue-600">¥{finalAmount.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-              💡 請求書は月末に自動発行されます
-            </div>
-          </div>
+
 
           {/* 現在の営業状況 */}
           <div className="bg-white rounded-lg shadow-md p-6">
