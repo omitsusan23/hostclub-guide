@@ -354,7 +354,7 @@ export const deleteVisitRecord = async (recordId) => {
     const { data: consumedRequests, error: requestError } = await supabase
       .from('store_status_requests')
       .select('id, store_id, status_type')
-      .eq('consumed_by_staff_log_id', recordId)
+      .eq('staff_log_id', recordId)
       .eq('is_consumed', true)
 
     if (requestError) {
@@ -373,7 +373,7 @@ export const deleteVisitRecord = async (recordId) => {
           .from('store_status_requests')
           .update({
             is_consumed: false,
-            consumed_by_staff_log_id: null,
+            staff_log_id: null,
             consumed_at: null
           })
           .eq('id', request.id)
