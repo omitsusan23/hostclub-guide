@@ -43,9 +43,11 @@ const StaffDashboard = () => {
   const [monthlyTarget, setMonthlyTarget] = useState(0)
   const [chatSubscription, setChatSubscription] = useState(null)
   
-  // 通知機能
-  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  // 通知機能 - 一時的に完全無効化
+  // const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
   // const pushNotifications = usePushNotifications(user || null)
+  const markAsRead = () => {}
+  const incrementUnreadCount = () => {}
   const sendChatNotification = () => {} // 一時的に無効化
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
@@ -134,11 +136,11 @@ const StaffDashboard = () => {
         const target = await getMonthlyTarget()
         setMonthlyTarget(target)
 
-        // スタッフチャットデータを取得
-        await loadChatMessages()
+        // スタッフチャットデータを取得 - 一時的に無効化
+        // await loadChatMessages()
         
-        // ダッシュボードアクセス時にチャット通知をクリア
-        markAsRead()
+        // ダッシュボードアクセス時にチャット通知をクリア - 一時的に無効化
+        // markAsRead()
         
       } catch (error) {
         console.error('データ取得エラー:', error)
@@ -147,57 +149,58 @@ const StaffDashboard = () => {
       }
     }
 
-    // リアルタイムチャット購読を設定
+    // リアルタイムチャット購読を設定 - 一時的に無効化
     const setupChatSubscription = () => {
-      const subscription = subscribeToStaffChats((payload) => {
-        console.log('📨 Staff チャット更新:', payload)
-        
-        // Supabaseのリアルタイム構造に合わせて修正
-        const eventType = payload.eventType || payload.event_type
-        console.log('🔍 イベントタイプ:', eventType)
-        
-        if (eventType === 'INSERT') {
-          // 新しいメッセージが追加された場合（最上部に追加）
-          console.log('➕ 新しいメッセージ追加:', payload.new)
-          setChatMessages(prev => [payload.new, ...prev])
-          
-          // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
-          if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
-            incrementUnreadCount()
-          }
-          
-          // プッシュ通知を送信（自分以外のメッセージの場合）
-          if (payload.new.sender_id !== user?.id) {
-            sendChatNotification(payload.new)
-          }
-        } else if (eventType === 'UPDATE') {
-          // メッセージが編集された場合
-          console.log('✏️ メッセージ編集:', payload.new)
-          setChatMessages(prev => 
-            prev.map(msg => 
-              msg.id === payload.new.id ? payload.new : msg
-            )
-          )
-        } else if (eventType === 'DELETE') {
-          // メッセージが削除された場合
-          console.log('🗑️ メッセージ削除:', payload.old)
-          setChatMessages(prev => 
-            prev.filter(msg => msg.id !== payload.old.id)
-          )
-        }
-      })
-      
-      setChatSubscription(subscription)
+      console.log('チャット購読は一時的に無効化されています')
+      // const subscription = subscribeToStaffChats((payload) => {
+      //   console.log('📨 Staff チャット更新:', payload)
+      //   
+      //   // Supabaseのリアルタイム構造に合わせて修正
+      //   const eventType = payload.eventType || payload.event_type
+      //   console.log('🔍 イベントタイプ:', eventType)
+      //   
+      //   if (eventType === 'INSERT') {
+      //     // 新しいメッセージが追加された場合（最上部に追加）
+      //     console.log('➕ 新しいメッセージ追加:', payload.new)
+      //     setChatMessages(prev => [payload.new, ...prev])
+      //     
+      //     // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
+      //     if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
+      //       incrementUnreadCount()
+      //     }
+      //     
+      //     // プッシュ通知を送信（自分以外のメッセージの場合）
+      //     if (payload.new.sender_id !== user?.id) {
+      //       sendChatNotification(payload.new)
+      //     }
+      //   } else if (eventType === 'UPDATE') {
+      //     // メッセージが編集された場合
+      //     console.log('✏️ メッセージ編集:', payload.new)
+      //     setChatMessages(prev => 
+      //       prev.map(msg => 
+      //         msg.id === payload.new.id ? payload.new : msg
+      //       )
+      //     )
+      //   } else if (eventType === 'DELETE') {
+      //     // メッセージが削除された場合
+      //     console.log('🗑️ メッセージ削除:', payload.old)
+      //     setChatMessages(prev => 
+      //       prev.filter(msg => msg.id !== payload.old.id)
+      //     )
+      //   }
+      // })
+      // 
+      // setChatSubscription(subscription)
     }
 
     fetchData()
-    setupChatSubscription()
+    // setupChatSubscription() // 一時的に無効化
 
     // クリーンアップ
     return () => {
-      if (chatSubscription) {
-        unsubscribeFromStaffChats(chatSubscription)
-      }
+      // if (chatSubscription) {
+      //   unsubscribeFromStaffChats(chatSubscription)
+      // }
     }
   }, [user?.id])
 

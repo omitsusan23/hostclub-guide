@@ -37,9 +37,11 @@ const AdminDashboard = () => {
   })
   const [loadingStats, setLoadingStats] = useState(true)
   
-  // 通知機能
-  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  // 通知機能 - 一時的に完全無効化
+  // const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
   // const pushNotifications = usePushNotifications(user || null)
+  const markAsRead = () => {}
+  const incrementUnreadCount = () => {}
   const sendChatNotification = () => {} // 一時的に無効化
   const [newStore, setNewStore] = useState({
     name: '',
@@ -82,17 +84,17 @@ const AdminDashboard = () => {
     loadStores()
     loadStaffs()
     loadMonthlyStats()
-    loadChatMessages()
-    setupChatSubscription()
+    // loadChatMessages() // 一時的に無効化
+    // setupChatSubscription() // 一時的に無効化
     
-    // ダッシュボードアクセス時にチャット通知をクリア
-    markAsRead()
+    // ダッシュボードアクセス時にチャット通知をクリア - 一時的に無効化
+    // markAsRead()
 
     // クリーンアップ
     return () => {
-      if (chatSubscription) {
-        unsubscribeFromStaffChats(chatSubscription)
-      }
+      // if (chatSubscription) {
+      //   unsubscribeFromStaffChats(chatSubscription)
+      // }
     }
   }, [])
 
