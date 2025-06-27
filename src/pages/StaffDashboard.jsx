@@ -44,10 +44,27 @@ const StaffDashboard = () => {
   const [monthlyTarget, setMonthlyTarget] = useState(0)
   const [chatSubscription, setChatSubscription] = useState(null)
   
-  // 通知機能 - 一時的に完全無効化
+  // 通知機能 - 詳細デバッグ版
   const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  
+  console.log('🔍 Staff usePushNotifications 呼び出し前:', { 
+    user: user?.id, 
+    userObject: user 
+  })
+  
   const pushNotifications = usePushNotifications(user || null)
-  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {})
+  
+  console.log('🔍 Staff usePushNotifications 戻り値:', {
+    pushNotifications,
+    type: typeof pushNotifications,
+    keys: pushNotifications ? Object.keys(pushNotifications) : null,
+    sendChatNotification: pushNotifications?.sendChatNotification,
+    sendChatNotificationType: typeof pushNotifications?.sendChatNotification
+  })
+  
+  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {
+    console.log('🚫 Staff デフォルト空関数が呼ばれました - プッシュ通知が無効化されています')
+  })
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -160,8 +177,24 @@ const StaffDashboard = () => {
           
           try {
             console.log('📞 Staff sendChatNotification 呼び出し前')
-            sendChatNotification(payload.new)
-            console.log('📞 Staff sendChatNotification 呼び出し後')
+            console.log('🔍 Staff sendChatNotification の値:', {
+              type: typeof sendChatNotification,
+              isFunction: typeof sendChatNotification === 'function',
+              value: sendChatNotification,
+              pushNotifications: pushNotifications,
+              pushNotificationsType: typeof pushNotifications
+            })
+            
+            if (typeof sendChatNotification === 'function') {
+              console.log('✅ Staff sendChatNotification は関数です - 実行中...')
+              sendChatNotification(payload.new)
+              console.log('📞 Staff sendChatNotification 呼び出し後')
+            } else {
+              console.error('❌ Staff sendChatNotification が関数ではありません!', {
+                type: typeof sendChatNotification,
+                value: sendChatNotification
+              })
+            }
           } catch (error) {
             console.error('❌ Staff sendChatNotification 呼び出しエラー:', error)
           }
