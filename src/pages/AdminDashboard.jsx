@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
 import StoreDetailModal from '../components/StoreDetailModal'
@@ -20,6 +21,7 @@ import {
 
 const AdminDashboard = () => {
   const { user, getUserRole, getUserStoreId } = useApp()
+  const location = useLocation()
   const [showStoreModal, setShowStoreModal] = useState(false)
   const [showStaffModal, setShowStaffModal] = useState(false)
   const [stores, setStores] = useState([])
@@ -34,7 +36,7 @@ const AdminDashboard = () => {
   const [loadingStats, setLoadingStats] = useState(true)
   
   // 通知機能
-  const { markAsRead } = useStaffChatNotifications(user?.id)
+  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -198,6 +200,11 @@ const AdminDashboard = () => {
       if (eventType === 'INSERT') {
         console.log('➕ Admin 新しいメッセージ追加:', payload.new)
         setChatMessages(prev => [payload.new, ...prev])
+        
+        // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
+        if (payload.new.sender_id !== user?.id && location.pathname !== '/admin') {
+          incrementUnreadCount()
+        }
       } else if (eventType === 'UPDATE') {
         console.log('✏️ Admin メッセージ編集:', payload.new)
         setChatMessages(prev => 

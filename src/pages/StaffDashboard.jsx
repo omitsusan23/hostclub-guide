@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
@@ -25,6 +26,7 @@ import { supabase } from '../lib/supabase'
 
 const StaffDashboard = () => {
   const { user, hasAdminPermissions, getUserRole } = useApp()
+  const location = useLocation()
   const [showVisitForm, setShowVisitForm] = useState(false)
   const [selectedStore, setSelectedStore] = useState(null)
   const [stores, setStores] = useState([])
@@ -40,7 +42,7 @@ const StaffDashboard = () => {
   const [chatSubscription, setChatSubscription] = useState(null)
   
   // 通知機能
-  const { markAsRead } = useStaffChatNotifications(user?.id)
+  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -154,6 +156,11 @@ const StaffDashboard = () => {
           // 新しいメッセージが追加された場合（最上部に追加）
           console.log('➕ 新しいメッセージ追加:', payload.new)
           setChatMessages(prev => [payload.new, ...prev])
+          
+          // 自分以外のメッセージの場合は未読数を増加（他ページにいる場合）
+          if (payload.new.sender_id !== user?.id && location.pathname !== '/staff') {
+            incrementUnreadCount()
+          }
         } else if (eventType === 'UPDATE') {
           // メッセージが編集された場合
           console.log('✏️ メッセージ編集:', payload.new)

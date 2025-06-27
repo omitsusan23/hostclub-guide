@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
   // スタッフ向け通知機能（staff, outstaff, adminのみ）
   const userRole = getUserRole()
   const showChatNotifications = ['staff', 'outstaff', 'admin'].includes(userRole)
-  const { unreadCount, markAsRead } = useStaffChatNotifications(
+  const { unreadCount } = useStaffChatNotifications(
     showChatNotifications ? user?.id : null
   )
 

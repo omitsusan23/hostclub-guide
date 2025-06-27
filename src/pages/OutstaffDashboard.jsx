@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
@@ -18,6 +19,7 @@ import { supabase } from '../lib/supabase'
 
 const OutstaffDashboard = () => {
   const { user, getUserRole } = useApp()
+  const location = useLocation()
   const [showVisitForm, setShowVisitForm] = useState(false)
   const [selectedStore, setSelectedStore] = useState(null)
   const [stores, setStores] = useState([])
@@ -29,7 +31,7 @@ const OutstaffDashboard = () => {
   const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
   
   // 通知機能
-  const { markAsRead } = useStaffChatNotifications(user?.id)
+  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {

@@ -5,7 +5,6 @@ const LAST_CHAT_VIEW_KEY = 'lastStaffChatViewTime'
 
 export const useStaffChatNotifications = (userId) => {
   const [unreadCount, setUnreadCount] = useState(0)
-  const [chatSubscription, setChatSubscription] = useState(null)
 
   // 最後にチャットを見た時間を取得
   const getLastViewTime = () => {
@@ -48,47 +47,26 @@ export const useStaffChatNotifications = (userId) => {
     }
   }
 
-  // リアルタイム購読を設定
-  const setupChatSubscription = () => {
-    if (!userId) return
-
-    const subscription = subscribeToStaffChats((payload) => {
-      console.log('📨 通知用チャット更新:', payload)
-      
-      const eventType = payload.eventType || payload.event_type
-      
-      if (eventType === 'INSERT' && payload.new) {
-        // 自分以外のメッセージの場合のみ未読数を増加
-        if (payload.new.sender_id !== userId) {
-          setUnreadCount(prev => {
-            const newCount = prev + 1
-            console.log('🔔 未読数更新:', prev, '→', newCount)
-            return newCount
-          })
-        }
-      }
-    })
-    
-    setChatSubscription(subscription)
-  }
-
-  // 初期化とクリーンアップ
+  // 初期化（購読は各ダッシュボードに任せる）
   useEffect(() => {
     if (userId) {
       calculateUnreadCount()
-      setupChatSubscription()
-    }
-
-    return () => {
-      if (chatSubscription) {
-        unsubscribeFromStaffChats(chatSubscription)
-      }
     }
   }, [userId])
+
+  // 外部から未読数を更新する関数
+  const incrementUnreadCount = () => {
+    setUnreadCount(prev => {
+      const newCount = prev + 1
+      console.log('🔔 未読数増加:', prev, '→', newCount)
+      return newCount
+    })
+  }
 
   return {
     unreadCount,
     markAsRead,
-    calculateUnreadCount
+    calculateUnreadCount,
+    incrementUnreadCount
   }
 } 
