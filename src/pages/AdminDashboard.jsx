@@ -7,6 +7,7 @@ import StaffEditModal from '../components/StaffEditModal'
 import TargetSettingsModal from '../components/TargetSettingsModal'
 import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import { useApp } from '../contexts/AppContext'
+import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { addNewStore, getAllStores, generateStoreId, checkStoreIdExists, updateStore } from '../utils/storeManagement.js'
 import { addNewStaff, getAllStaffs, generateStaffId, checkStaffIdExists, updateStaff, deleteStaff } from '../utils/staffManagement.js'
 import { 
@@ -31,6 +32,9 @@ const AdminDashboard = () => {
     outstaffVisits: 0 
   })
   const [loadingStats, setLoadingStats] = useState(true)
+  
+  // 通知機能
+  const { markAsRead } = useStaffChatNotifications(user?.id)
   const [newStore, setNewStore] = useState({
     name: '',
     store_id: '',
@@ -74,6 +78,9 @@ const AdminDashboard = () => {
     loadMonthlyStats()
     loadChatMessages()
     setupChatSubscription()
+    
+    // ダッシュボードアクセス時にチャット通知をクリア
+    markAsRead()
 
     // クリーンアップ
     return () => {

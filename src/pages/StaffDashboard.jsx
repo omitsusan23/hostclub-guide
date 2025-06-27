@@ -5,6 +5,7 @@ import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import { useApp } from '../contexts/AppContext'
+import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { 
   getStores,
   getTodayVisitRecords,
@@ -37,6 +38,9 @@ const StaffDashboard = () => {
   const [currentStaff, setCurrentStaff] = useState(null)
   const [monthlyTarget, setMonthlyTarget] = useState(0)
   const [chatSubscription, setChatSubscription] = useState(null)
+  
+  // 通知機能
+  const { markAsRead } = useStaffChatNotifications(user?.id)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -126,6 +130,9 @@ const StaffDashboard = () => {
 
         // スタッフチャットデータを取得
         await loadChatMessages()
+        
+        // ダッシュボードアクセス時にチャット通知をクリア
+        markAsRead()
         
       } catch (error) {
         console.error('データ取得エラー:', error)

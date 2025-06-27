@@ -4,6 +4,7 @@ import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
 import { useApp } from '../contexts/AppContext'
+import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 import { 
   getStores,
   getTodayVisitRecords,
@@ -26,6 +27,9 @@ const OutstaffDashboard = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, record: null, storeName: '' })
   const [currentStaff, setCurrentStaff] = useState(null)
   const [personalMonthlyRecommendations, setPersonalMonthlyRecommendations] = useState({ recommended: 0, notRecommended: 0, total: 0 })
+  
+  // 通知機能
+  const { markAsRead } = useStaffChatNotifications(user?.id)
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -83,6 +87,9 @@ const OutstaffDashboard = () => {
             }
           }
         }
+        
+        // ダッシュボードアクセス時にチャット通知をクリア
+        markAsRead()
         
       } catch (error) {
         console.error('データ取得エラー:', error)

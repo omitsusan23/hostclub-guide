@@ -1,11 +1,19 @@
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
+import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 
 const Layout = ({ children }) => {
   const { user, signOut, getUserRole } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
+  
+  // スタッフ向け通知機能（staff, outstaff, adminのみ）
+  const userRole = getUserRole()
+  const showChatNotifications = ['staff', 'outstaff', 'admin'].includes(userRole)
+  const { unreadCount, markAsRead } = useStaffChatNotifications(
+    showChatNotifications ? user?.id : null
+  )
 
   const handleLogout = async () => {
     try {
@@ -85,8 +93,37 @@ const Layout = ({ children }) => {
               )}
             </div>
 
-            {/* ログアウトボタン */}
-            <div className="flex items-center ml-2">
+            {/* 通知とログアウト */}
+            <div className="flex items-center ml-2 space-x-2">
+              {/* スタッフチャット通知 */}
+              {user && showChatNotifications && (
+                <button
+                  onClick={() => {
+                    // ダッシュボードに戻る
+                    if (userRole === 'admin') {
+                      navigate('/admin')
+                    } else if (userRole === 'outstaff') {
+                      navigate('/outstaff')
+                    } else {
+                      navigate('/staff')
+                    }
+                  }}
+                  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  title="スタッフチャット"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.945 8.945 0 01-4.951-1.488c-1.035.124-2.091.193-3.161.193C3.635 18.705 2 17.07 2 15.121c0-.8.168-1.56.468-2.248L3 12a9 9 0 1118 0z" />
+                  </svg>
+                  {/* 未読数バッジ */}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              
+              {/* ログアウトボタン */}
               {user && (
                 <button
                   onClick={handleLogout}
