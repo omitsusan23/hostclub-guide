@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY' // TODO: 実際のVAPIDキーに置き換え
+const VAPID_PUBLIC_KEY = 'BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js'
 
 export const usePushNotifications = () => {
   const [isSupported, setIsSupported] = useState(false)
@@ -118,7 +118,21 @@ export const usePushNotifications = () => {
       return newSubscription
     } catch (error) {
       console.error('❌ Error subscribing to push:', error)
-      alert('❌ プッシュ通知の設定に失敗しました')
+      
+      // エラーの詳細を表示
+      let errorMessage = 'プッシュ通知の設定に失敗しました'
+      
+      if (error.message.includes('VAPID')) {
+        errorMessage = '🔑 VAPIDキーが設定されていません。PUSH_SETUP.mdを参考に設定してください。'
+      } else if (error.message.includes('InvalidStateError')) {
+        errorMessage = '⚠️ Service Workerの状態に問題があります。ページを再読み込みして再試行してください。'
+      } else if (error.message.includes('NotSupportedError')) {
+        errorMessage = '❌ お使いのブラウザはプッシュ通知をサポートしていません'
+      } else {
+        errorMessage = `❌ プッシュ通知の設定に失敗しました: ${error.message}`
+      }
+      
+      alert(errorMessage)
       return null
     } finally {
       setIsLoading(false)

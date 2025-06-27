@@ -13,8 +13,10 @@
 - ログインページでの通知設定
 - ヘッダーでのコンパクト通知設定
 
+### ✅ 設定済み
+- VAPIDキーペアの生成と設定（完了）
+
 ### ⚠️ 設定が必要
-- VAPIDキーペアの生成と設定
 - プッシュ通知送信機能（Supabase Edge Functions等）
 
 ## 🔑 VAPIDキーの生成手順
@@ -48,15 +50,22 @@ https://vapidkeys.com/ でも生成可能です。
 
 ### 1. VAPIDキーの設定
 
-`src/hooks/usePushNotifications.js` の3行目を更新：
+✅ **設定完了済み**
+
+**生成されたVAPIDキーペア:**
+```
+Public Key:  BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js
+Private Key: WlnNZp77PAmsDgwO7mGJsvpmjV4lOwvtgIUc9YdexBo
+```
+
+`src/hooks/usePushNotifications.js` 設定済み：
 
 ```javascript
-// 変更前
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY'
-
-// 変更後（生成されたPublic Keyを使用）
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa6-4NlAaM9F3YRyAMaKFN...'
+// ✅ 設定完了
+const VAPID_PUBLIC_KEY = 'BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js'
 ```
+
+⚠️ **Private Key（WlnNZp77PAmsDgwO7mGJsvpmjV4lOwvtgIUc9YdexBo）はサーバー側実装時に使用します。**
 
 ### 2. Supabase Edge Function（プッシュ通知送信）
 
