@@ -259,19 +259,8 @@ const AdminDashboard = () => {
         setNewMessage('')
         console.log('✅ チャット送信成功')
         
-        // 送信したメッセージを即座にローカル状態に追加
-        const newChatMessage = {
-          id: result.data?.id || Date.now(), // 一時的なIDまたはサーバーからのID
-          message: messageData.message,
-          sender_id: messageData.sender_id,
-          sender_name: messageData.sender_name,
-          sender_role: messageData.sender_role,
-          message_type: messageData.message_type,
-          created_at: new Date().toISOString(),
-          is_edited: false
-        }
-        
-        setChatMessages(prev => [newChatMessage, ...prev])
+        // リアルタイム購読で自動的に追加されるので、ローカル追加は不要
+        // 重複を防ぐため、ローカル追加を削除
       } else {
         console.error('❌ チャット送信エラー:', result.error)
         alert('❌ 送信に失敗しました: ' + result.error)
