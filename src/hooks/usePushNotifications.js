@@ -219,7 +219,9 @@ export const usePushNotifications = (currentUser = null) => {
 
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
-    console.log('🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!')
+    // 複数の確認ログを出力
+    console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
+    console.log('%c💀 PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
     console.log('🔔 sendChatNotification 開始:', {
       chatMessage,
       subscription: !!subscription,
@@ -227,6 +229,9 @@ export const usePushNotifications = (currentUser = null) => {
       currentUser: currentUser?.id,
       hasServiceWorker: 'serviceWorker' in navigator
     })
+    
+    // アラートでも確認
+    // alert('Push notification function called!')
     
     if (!subscription || permission !== 'granted' || !currentUser) {
       console.log('🔕 Push通知が無効です:', {

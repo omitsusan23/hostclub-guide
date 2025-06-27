@@ -63,7 +63,8 @@ const StaffDashboard = () => {
   })
   
   const sendChatNotification = pushNotifications?.sendChatNotification || (() => {
-    console.log('🚫 Staff デフォルト空関数が呼ばれました - プッシュ通知が無効化されています')
+    console.log('🚫🚫🚫 STAFF DEFAULT FUNCTION CALLED - プッシュ通知が無効化されています')
+    console.log('%c🔥 DEFAULT FUNCTION', 'background: orange; color: white; font-size: 16px;')
   })
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
@@ -187,6 +188,16 @@ const StaffDashboard = () => {
             
             if (typeof sendChatNotification === 'function') {
               console.log('✅ Staff sendChatNotification は関数です - 実行中...')
+              console.log('🚨 CALLING FUNCTION WITH PAYLOAD:', payload.new)
+              
+              // 関数に識別子を追加してテスト
+              if (sendChatNotification.toString().includes('usePushNotifications')) {
+                console.log('✅ 正しいusePushNotifications関数を呼び出し中')
+              } else {
+                console.log('⚠️ デフォルト関数を呼び出し中')
+                console.log('📝 関数のソース:', sendChatNotification.toString())
+              }
+              
               sendChatNotification(payload.new)
               console.log('📞 Staff sendChatNotification 呼び出し後')
             } else {
@@ -798,7 +809,8 @@ const StaffDashboard = () => {
                         <span className="text-xs text-gray-400">
                           {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            timeZone: 'Asia/Tokyo'
                           })}
                         </span>
                       </div>

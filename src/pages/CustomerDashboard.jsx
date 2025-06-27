@@ -317,7 +317,8 @@ const CustomerDashboard = () => {
                       {activeRequest.is_consumed 
                         ? new Date(activeRequest.consumed_at).toLocaleTimeString('ja-JP', {
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            timeZone: 'Asia/Tokyo'
                           })
                         : `残り: ${remainingTime || '計算中...'}`}
                     </span>

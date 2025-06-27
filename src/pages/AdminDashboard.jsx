@@ -1194,7 +1194,8 @@ const AdminDashboard = () => {
                     <span className="text-xs text-gray-400">
                                                 {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
+                            timeZone: 'Asia/Tokyo'
                           })}
                     </span>
                   </div>
