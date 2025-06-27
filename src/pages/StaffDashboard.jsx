@@ -89,13 +89,19 @@ const StaffDashboard = () => {
       unsubscribeFromStaffChats(chatSubscription)
     }
     
-    // 新しい購読を開始
-    setupChatSubscription()
+    // chatSubscriptionをクリア
+    setChatSubscription(null)
     
-    // データも再読み込み
-    loadChatMessages()
-    
-    console.log('✅ Staff チャット購読再接続完了')
+    // 少し遅延してから再接続
+    setTimeout(() => {
+      // 新しい購読を開始
+      setupChatSubscription()
+      
+      // データも再読み込み
+      loadChatMessages()
+      
+      console.log('✅ Staff チャット購読再接続完了')
+    }, 100)
   }
 
   // setupChatSubscription関数を定義
@@ -161,6 +167,12 @@ const StaffDashboard = () => {
 
   // データ取得
   useEffect(() => {
+    console.log('🔄 Staff データ取得 useEffect実行:', {
+      userId: user?.id,
+      pathname: location.pathname,
+      currentSubscription: !!chatSubscription
+    })
+    
     const fetchData = async () => {
       try {
         setLoading(true)
@@ -234,18 +246,21 @@ const StaffDashboard = () => {
 
     // クリーンアップ
     return () => {
+      console.log('🧹 Staff データ取得 useEffect クリーンアップ実行')
       if (chatSubscription) {
+        console.log('🔌 Staff チャット購読解除:', chatSubscription)
         unsubscribeFromStaffChats(chatSubscription)
       }
     }
-  }, [user?.id])
+  }, [user?.id, location.pathname]) // location.pathnameを依存配列に追加
 
   // Page Visibility API でバックグラウンド復帰時の再接続
   useEffect(() => {
     const handleVisibilityChange = () => {
       console.log('🔍 Staff ページ可視性変更:', {
         hidden: document.hidden,
-        visibilityState: document.visibilityState
+        visibilityState: document.visibilityState,
+        pathname: location.pathname
       })
       
       if (!document.hidden && document.visibilityState === 'visible') {
@@ -259,7 +274,7 @@ const StaffDashboard = () => {
     }
 
     const handleFocus = () => {
-      console.log('🔍 Staff ウィンドウフォーカス取得')
+      console.log('🔍 Staff ウィンドウフォーカス取得:', { pathname: location.pathname })
       
       // フォーカス取得時も再接続
       setTimeout(() => {
@@ -267,16 +282,64 @@ const StaffDashboard = () => {
       }, 300)
     }
 
+    // ページ遷移復帰検知（hashchangeやpopstateを監視）
+    const handlePageReturn = () => {
+      console.log('🔄 Staff ページ遷移復帰検知:', { pathname: location.pathname })
+      
+      // Staff ページに戻った場合のみ実行
+      if (location.pathname === '/staff') {
+        setTimeout(() => {
+          reconnectChatSubscription()
+        }, 200)
+      }
+    }
+
     // イベントリスナー追加
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleFocus)
+    window.addEventListener('popstate', handlePageReturn)
+    
+    // ページロード時も確認
+    if (location.pathname === '/staff') {
+      setTimeout(() => {
+        console.log('🔄 Staff ページ初期ロード確認')
+        if (!chatSubscription) {
+          reconnectChatSubscription()
+        }
+      }, 1000)
+    }
 
     // クリーンアップ
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('popstate', handlePageReturn)
     }
-  }, [chatSubscription])
+  }, [location.pathname]) // chatSubscriptionを除外してlocation.pathnameのみに
+
+  // React Router Navigation監視でページ遷移を検知
+  useEffect(() => {
+    console.log('🔄 Staff ページ遷移検知:', { pathname: location.pathname })
+    
+    // Staff ページに来た場合の初期化
+    if (location.pathname === '/staff') {
+      // 少し遅延させてからチャット状態確認
+      const timer = setTimeout(() => {
+        console.log('🔍 Staff チャット購読状態確認:', { 
+          hasSubscription: !!chatSubscription,
+          pathname: location.pathname 
+        })
+        
+        // 購読がない場合は再接続
+        if (!chatSubscription) {
+          console.log('🔄 Staff チャット購読なし - 再接続実行')
+          reconnectChatSubscription()
+        }
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [location.pathname])
 
   // Service Worker Heartbeat受信
   useEffect(() => {
@@ -310,7 +373,7 @@ const StaffDashboard = () => {
     return () => {
       navigator.serviceWorker?.removeEventListener('message', handleMessage)
     }
-  }, [chatSubscription])
+  }, []) // chatSubscriptionの依存を削除
 
   // 本日の案内数を計算
   const todayCount = visitRecords.reduce((total, record) => total + record.guest_count, 0)
