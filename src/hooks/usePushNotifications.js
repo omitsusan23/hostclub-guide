@@ -7,6 +7,9 @@ export const usePushNotifications = (currentUser = null) => {
   const [subscription, setSubscription] = useState(null)
   const [permission, setPermission] = useState('default')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // 早期リターン - ユーザーがいない場合は無効化
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Push通知のサポート状況を確認
   useEffect(() => {
@@ -18,9 +21,12 @@ export const usePushNotifications = (currentUser = null) => {
         if (supported && typeof Notification !== 'undefined') {
           setPermission(Notification.permission)
         }
+        
+        setIsInitialized(true)
       } catch (error) {
         console.warn('Push通知サポート確認エラー:', error)
         setIsSupported(false)
+        setIsInitialized(true) // エラーでも初期化完了とする
       }
     }
 
@@ -281,6 +287,22 @@ export const usePushNotifications = (currentUser = null) => {
   const getCurrentUserId = useCallback(() => {
     return currentUser?.id || null
   }, [currentUser])
+
+  // 初期化完了前は安全なデフォルト値を返す
+  if (!isInitialized) {
+    return {
+      isSupported: false,
+      permission: 'default',
+      subscription: null,
+      isLoading: false,
+      requestPermission: () => Promise.resolve(false),
+      subscribeToPush: () => Promise.resolve(null),
+      unsubscribeFromPush: () => Promise.resolve(true),
+      sendTestNotification: () => {},
+      sendChatNotification: () => {},
+      showNotification: () => {}
+    }
+  }
 
   return {
     isSupported: isSupported || false,

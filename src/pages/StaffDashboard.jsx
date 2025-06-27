@@ -5,9 +5,9 @@ import VisitForm from '../components/VisitForm'
 import DeleteConfirmModal from '../components/DeleteConfirmModal'
 import StoreRequestCountdown from '../components/StoreRequestCountdown'
 import SwipeableVisitItem from '../components/SwipeableVisitItem'
-// import PushNotificationSettings from '../components/PushNotificationSettings'
+import PushNotificationSettings from '../components/PushNotificationSettings'
 import { useApp } from '../contexts/AppContext'
-// import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
+import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
 // import { usePushNotifications } from '../hooks/usePushNotifications'
 import { 
   getStores,
@@ -44,10 +44,8 @@ const StaffDashboard = () => {
   const [chatSubscription, setChatSubscription] = useState(null)
   
   // 通知機能 - 一時的に完全無効化
-  // const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
+  const { markAsRead, incrementUnreadCount } = useStaffChatNotifications(user?.id)
   // const pushNotifications = usePushNotifications(user || null)
-  const markAsRead = () => {}
-  const incrementUnreadCount = () => {}
   const sendChatNotification = () => {} // 一時的に無効化
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
@@ -510,8 +508,8 @@ const StaffDashboard = () => {
 
       {/* メインコンテンツ */}
       <div className="space-y-6">
-          {/* Push通知設定 - 一時的に無効化 */}
-          {/* <PushNotificationSettings /> */}
+          {/* Push通知設定 */}
+          <PushNotificationSettings />
           
           {/* スタッフチャット */}
           <div className="bg-white rounded-lg shadow-md p-6 h-[576px] flex flex-col">
