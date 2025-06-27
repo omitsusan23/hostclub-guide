@@ -121,6 +121,12 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
                   </span>
                 </p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">初回要請回数制限</label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {store.first_request_limit === 0 ? '制限なし' : `${store.first_request_limit}回/月`}
+                </p>
+              </div>
             </div>
           </div>
 

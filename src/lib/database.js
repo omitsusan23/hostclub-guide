@@ -976,4 +976,188 @@ export const setBulkMonthlyTargets = async (targets) => {
     console.error('一括目標設定エラー:', error)
     return { success: false, error: error.message }
   }
+}
+
+// ============================================
+// 店舗状況発信関連機能
+// ============================================
+
+// 店舗状況発信リクエストを記録
+export const sendStoreStatusRequest = async (requestData) => {
+  try {
+    console.log('🔥 database.js sendStoreStatusRequest 開始:', requestData)
+    
+    const insertData = {
+      store_id: requestData.store_id,
+      status_type: requestData.status_type,
+      message: requestData.message,
+      has_time_limit: requestData.has_time_limit || false,
+      has_count_limit: requestData.has_count_limit || false,
+      chat_message_id: requestData.chat_message_id || null
+    }
+    
+    // 時間制限がある場合は有効期限を設定（1時間後）
+    if (requestData.has_time_limit) {
+      const expiresAt = new Date()
+      expiresAt.setHours(expiresAt.getHours() + 1)
+      insertData.expires_at = expiresAt.toISOString()
+    }
+    
+    console.log('📊 Supabase INSERT データ:', insertData)
+    
+    const { data, error } = await supabase
+      .from('store_status_requests')
+      .insert(insertData)
+      .select()
+
+    console.log('📥 Supabase レスポンス:', { data, error })
+
+    if (error) throw error
+
+    console.log('✅ database.js sendStoreStatusRequest 成功:', data?.[0])
+    return { success: true, data: data?.[0] }
+  } catch (error) {
+    console.error('❌ database.js sendStoreStatusRequest エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 店舗の月間リクエスト数を取得（回数制限があるもののみ）
+export const getMonthlyRequestCount = async (storeId, statusType = null) => {
+  try {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+    let query = supabase
+      .from('store_status_requests')
+      .select('id')
+      .eq('store_id', storeId)
+      .eq('has_count_limit', true)
+      .gte('requested_at', startOfMonth)
+      .lte('requested_at', endOfMonth)
+
+    if (statusType) {
+      query = query.eq('status_type', statusType)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return { success: true, count: data?.length || 0 }
+  } catch (error) {
+    console.error('月間リクエスト数取得エラー:', error)
+    return { success: false, error: error.message, count: 0 }
+  }
+}
+
+// 店舗のアクティブなリクエストを取得（時間制限があり、まだ有効期限内のもの）
+export const getActiveRequest = async (storeId, statusType = null) => {
+  try {
+    const now = new Date().toISOString()
+
+    let query = supabase
+      .from('store_status_requests')
+      .select('*')
+      .eq('store_id', storeId)
+      .eq('has_time_limit', true)
+      .eq('is_consumed', false)
+      .gt('expires_at', now)
+      .order('requested_at', { ascending: false })
+      .limit(1)
+
+    if (statusType) {
+      query = query.eq('status_type', statusType)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return { success: true, data: data?.[0] || null }
+  } catch (error) {
+    console.error('アクティブリクエスト取得エラー:', error)
+    return { success: false, error: error.message, data: null }
+  }
+}
+
+// リクエストを消化（案内報告があった場合）
+export const consumeRequest = async (requestId, staffLogId) => {
+  try {
+    const { data, error } = await supabase
+      .from('store_status_requests')
+      .update({
+        is_consumed: true,
+        consumed_at: new Date().toISOString(),
+        staff_log_id: staffLogId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId)
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data?.[0] }
+  } catch (error) {
+    console.error('リクエスト消化エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 期限切れリクエストを自動的に無効化
+export const cleanupExpiredRequests = async () => {
+  try {
+    const now = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('store_status_requests')
+      .update({
+        is_consumed: false, // 期限切れは消化扱いにしない
+        updated_at: new Date().toISOString()
+      })
+      .eq('has_time_limit', true)
+      .eq('is_consumed', false)
+      .lt('expires_at', now)
+      .select()
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('期限切れリクエスト処理エラー:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// 全店舗の最新状況発信を取得（スタッフチャット表示用）
+export const getLatestStoreStatusRequests = async (limit = 50) => {
+  try {
+    const { data, error } = await supabase
+      .from('store_status_requests')
+      .select(`
+        id,
+        store_id,
+        status_type,
+        message,
+        has_time_limit,
+        has_count_limit,
+        requested_at,
+        expires_at,
+        is_consumed,
+        consumed_at,
+        stores (
+          name
+        )
+      `)
+      .order('requested_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return { success: true, data: data || [] }
+  } catch (error) {
+    console.error('最新状況発信取得エラー:', error)
+    return { success: false, error: error.message, data: [] }
+  }
 } 

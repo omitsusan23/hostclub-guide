@@ -6,11 +6,15 @@ import {
   getStores,
   getVisitRecords,
   getLatestStoreStatus,
-  setStoreStatus
+  setStoreStatus,
+  sendStaffChat,
+  sendStoreStatusRequest,
+  getMonthlyRequestCount,
+  getActiveRequest
 } from '../lib/database'
 
 const CustomerDashboard = () => {
-  const { getUserStoreId, getStoreIdFromSubdomain } = useApp()
+  const { getUserStoreId, getStoreIdFromSubdomain, user } = useApp()
   
   // ユーザーのstore_idまたはサブドメインから店舗IDを取得
   const storeId = getUserStoreId() || getStoreIdFromSubdomain()
@@ -18,9 +22,11 @@ const CustomerDashboard = () => {
   const [store, setStore] = useState(null)
   const [visitRecords, setVisitRecords] = useState([])
   const [invoiceSettings, setInvoiceSettings] = useState(null)
-  const [currentStatus, setCurrentStatus] = useState('')
   const [loading, setLoading] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
+  const [monthlyRequestCount, setMonthlyRequestCount] = useState(0)
+  const [activeRequest, setActiveRequest] = useState(null)
+  const [remainingTime, setRemainingTime] = useState(null)
 
   // データ取得
   useEffect(() => {
@@ -47,6 +53,14 @@ const CustomerDashboard = () => {
           with_tax: !storeData?.exclude_tax
         })
 
+        // 月間リクエスト数を取得（「今初回ほしいです」のみ）
+        const monthlyCount = await getMonthlyRequestCount(storeId, '今初回ほしいです')
+        setMonthlyRequestCount(monthlyCount.count || 0)
+
+        // アクティブリクエストを取得
+        const activeReq = await getActiveRequest(storeId, '今初回ほしいです')
+        setActiveRequest(activeReq.data)
+
       } catch (error) {
         console.error('データ取得エラー:', error)
       } finally {
@@ -56,6 +70,34 @@ const CustomerDashboard = () => {
 
     fetchData()
   }, [storeId])
+
+  // カウントダウンタイマー
+  useEffect(() => {
+    let interval = null
+    
+    if (activeRequest?.expires_at) {
+      interval = setInterval(() => {
+        const now = new Date()
+        const expiresAt = new Date(activeRequest.expires_at)
+        const diff = expiresAt - now
+        
+        if (diff > 0) {
+          const minutes = Math.floor(diff / 60000)
+          const seconds = Math.floor((diff % 60000) / 1000)
+          setRemainingTime(`${minutes}:${seconds.toString().padStart(2, '0')}`)
+        } else {
+          setRemainingTime('期限切れ')
+          setActiveRequest(null) // 期限切れの場合はアクティブリクエストをクリア
+        }
+      }, 1000)
+    } else {
+      setRemainingTime(null)
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [activeRequest])
 
   // 総案内人数を計算
   const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
@@ -69,19 +111,85 @@ const CustomerDashboard = () => {
   const taxAmount = invoiceSettings?.with_tax ? totalAmount * 0.1 : 0
   const finalAmount = Math.floor(totalAmount + taxAmount)
 
-  const handleStatusUpdate = async () => {
-    if (!currentStatus || !storeId) {
-      alert('状況を選択してください')
+  // 「今初回ほしいです」専用ハンドラー（回数制限・時間制限付き）
+  const handleFirstTimeRequest = async () => {
+    if (!storeId || !store) return
+    
+    // 回数制限チェック
+    if (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit) {
+      alert('❌ 今月の回数制限に達しています。')
       return
     }
     
     setLoading(true)
     try {
-      await setStoreStatus(storeId, currentStatus)
-      alert(`✅ 「${currentStatus}」を発信しました！`)
-      setCurrentStatus('')
+      // スタッフチャットに発信
+      const chatResult = await sendStaffChat({
+        message: `🔥 ${store.name} - 今初回ほしいです！`,
+        sender_id: user?.id || 'system',
+        sender_name: store.name,
+        sender_role: 'customer',
+        message_type: 'status_request'
+      })
+      
+      if (chatResult.success) {
+        // リクエスト履歴を記録
+        await sendStoreStatusRequest({
+          store_id: storeId,
+          status_type: '今初回ほしいです',
+          message: `🔥 ${store.name} - 今初回ほしいです！`,
+          has_time_limit: true,
+          has_count_limit: true,
+          chat_message_id: chatResult.data.id
+        })
+        
+        alert('✅ 「今初回ほしいです」を発信しました！')
+        
+        // データを再取得して状態を更新
+        const updatedMonthlyCount = await getMonthlyRequestCount(storeId, '今初回ほしいです')
+        setMonthlyRequestCount(updatedMonthlyCount.count || 0)
+        
+        const updatedActiveReq = await getActiveRequest(storeId, '今初回ほしいです')
+        setActiveRequest(updatedActiveReq.data)
+      }
     } catch (error) {
-      console.error('状況更新エラー:', error)
+      console.error('発信エラー:', error)
+      alert('❌ 発信に失敗しました。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // その他の状況発信ハンドラー（制限なし）
+  const handleGeneralStatusUpdate = async (status) => {
+    if (!storeId || !store) return
+    
+    setLoading(true)
+    try {
+      // スタッフチャットに発信
+      const chatResult = await sendStaffChat({
+        message: `📢 ${store.name} - ${status}`,
+        sender_id: user?.id || 'system',
+        sender_name: store.name,
+        sender_role: 'customer',
+        message_type: 'status_info'
+      })
+      
+      if (chatResult.success) {
+        // リクエスト履歴を記録（制限なし）
+        await sendStoreStatusRequest({
+          store_id: storeId,
+          status_type: status,
+          message: `📢 ${store.name} - ${status}`,
+          has_time_limit: false,
+          has_count_limit: false,
+          chat_message_id: chatResult.data.id
+        })
+        
+        alert(`✅ 「${status}」を発信しました！`)
+      }
+    } catch (error) {
+      console.error('発信エラー:', error)
       alert('❌ 発信に失敗しました。')
     } finally {
       setLoading(false)
@@ -163,35 +271,69 @@ const CustomerDashboard = () => {
               📡 リアルタイム状況発信
             </h3>
             
-            <div className="space-y-3">
-              {[
-                '今初回ほしいです',
-                '席に余裕があります',
-                '満席に近いです',
-                '本日は満席です',
-                '特別イベント開催中'
-              ].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setCurrentStatus(status)}
-                  className={`w-full p-3 text-left rounded-lg border transition-colors ${
-                    currentStatus === status
-                      ? 'border-green-500 bg-green-50 text-green-800'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+            {/* 今初回ほしいです - 回数制限付き */}
+            <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-red-800">🔥 今初回ほしいです</h4>
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">
+                    回数制限: {store.first_request_limit === 0 ? '制限なし' : `${store.first_request_limit}回/月`}
+                  </div>
+                  {store.first_request_limit > 0 && (
+                    <div className="text-xs text-gray-500">
+                      今月使用: {monthlyRequestCount}回
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* アクティブなリクエスト表示 */}
+              {activeRequest && (
+                <div className="mb-3 p-3 bg-orange-100 border border-orange-200 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-orange-800">⏱️ 発信中</span>
+                    <span className="text-xs text-orange-600">
+                      残り: {remainingTime || '計算中...'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-orange-700 mt-1">
+                    1時間以内の案内報告で消化されます
+                  </div>
+                </div>
+              )}
+              
+              <button
+                onClick={() => handleFirstTimeRequest()}
+                disabled={loading || (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit)}
+                className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? '発信中...' : 
+                 (store.first_request_limit > 0 && monthlyRequestCount >= store.first_request_limit) ? 
+                 '今月の上限に達しました' : 'スタッフチャットに発信'}
+              </button>
             </div>
-            
-            <button
-              onClick={handleStatusUpdate}
-              disabled={!currentStatus || loading}
-              className="w-full mt-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? '発信中...' : 'スタッフチャットに発信'}
-            </button>
+
+            {/* その他の状況発信 - 制限なし */}
+            <div className="mt-6">
+              <h4 className="font-medium text-gray-700 mb-3">その他の状況</h4>
+              <div className="space-y-2">
+                {[
+                  '席に余裕があります',
+                  '満席に近いです',
+                  '本日は満席です',
+                  '特別イベント開催中'
+                ].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => handleGeneralStatusUpdate(status)}
+                    disabled={loading}
+                    className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

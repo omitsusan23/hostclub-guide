@@ -15,7 +15,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     charge_per_person: '',
     is_transfer: false,
     hoshos_url: '',
-    store_phone: ''
+    store_phone: '',
+    first_request_limit: ''
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -43,7 +44,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         charge_per_person: store.charge_per_person,
         is_transfer: store.is_transfer,
         hoshos_url: store.hoshos_url,
-        store_phone: store.store_phone
+        store_phone: store.store_phone,
+        first_request_limit: store.first_request_limit
       };
       console.log('📝 New form data:', newFormData);
       setFormData(newFormData);
@@ -272,6 +274,22 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     <option value={false}>現金</option>
                     <option value={true}>振込</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">初回要請回数制限</label>
+                  <input
+                    type="number"
+                    value={formData.first_request_limit}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                      console.log('🔢 First request limit changed:', { input: e.target.value, parsed: value });
+                      setFormData({...formData, first_request_limit: value});
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                    placeholder="0 = 制限なし"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">0を設定すると制限なしになります</p>
                 </div>
               </div>
             </div>
