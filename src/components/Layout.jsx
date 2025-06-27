@@ -1,9 +1,9 @@
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
-import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
-import { usePageTitleNotifications } from '../hooks/usePageTitleNotifications'
-import PushNotificationSettings from './PushNotificationSettings'
+// import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
+// import { usePageTitleNotifications } from '../hooks/usePageTitleNotifications'
+// import PushNotificationSettings from './PushNotificationSettings'
 
 const Layout = ({ children }) => {
   const { user, signOut, getUserRole } = useApp()
