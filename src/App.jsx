@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import OutstaffDashboard from './pages/OutstaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
+import CustomerBillingPage from './pages/CustomerBillingPage'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
 import StaffPerformancePage from './pages/StaffPerformancePage'
@@ -146,6 +147,16 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <CustomerDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 請求確認ページ */}
+        <Route 
+          path="/customer/billing" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerBillingPage />
             </ProtectedRoute>
           } 
         />
