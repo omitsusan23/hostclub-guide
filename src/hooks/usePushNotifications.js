@@ -217,8 +217,8 @@ export const usePushNotifications = (currentUser = null) => {
     }
   }, [subscription])
 
-  // 新着チャットメッセージの通知を送信（詳細ログ版）
-  const sendChatNotification = useCallback(async (chatMessage) => {
+  // 新着チャットメッセージの通知を送信（useCallback削除版 - 常に最新状態を参照）
+  const sendChatNotification = async (chatMessage) => {
     try {
       // 確実に見えるログを出力
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
@@ -334,7 +334,7 @@ export const usePushNotifications = (currentUser = null) => {
         stack: mainError.stack
       })
     }
-  }, []) // 依存配列を空にして、常に最新の状態を参照
+  }
 
   // ネイティブ通知を表示
   const showNotification = useCallback(async (options) => {
