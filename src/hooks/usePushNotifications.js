@@ -282,7 +282,7 @@ export const usePushNotifications = (currentUser = null) => {
         icon: '/icon-192x192.png',
         badge: '/icon-72x72.png',
         vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
-        tag: 'staff-chat',
+        tag: `staff-chat-${chatMessage.id}`, // メッセージIDを含めて一意にする
         requireInteraction: isFirstTimeRequest,
         data: { 
           url: '/staff',
