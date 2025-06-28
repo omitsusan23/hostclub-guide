@@ -71,56 +71,105 @@ function startHeartbeat() {
 self.addEventListener('push', event => {
   console.log('📨 Push notification received:', event)
   
-  let title = '💬 新着メッセージ'
-  let options = {
-    body: 'スタッフチャットに新しいメッセージがあります',
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    tag: `push-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    requireInteraction: false,
-    silent: false,
-    renotify: true,
-    timestamp: Date.now(),
-    data: {
-      dateOfArrival: Date.now(),
-      url: '/staff'
-    },
-    actions: [
-      { action: 'open', title: '開く' },
-      { action: 'close', title: '閉じる' }
-    ]
-  }
-
-  // プッシュデータがある場合は内容を使用
-  if (event.data) {
-    try {
-      const payload = event.data.json()
-      console.log('📨 プッシュペイロード:', payload)
-      
-      title = payload.title || title
-      options.body = payload.body || options.body
-      options.data.url = payload.url || options.data.url
-      
-      if (payload.sender_name && payload.message) {
-        options.body = `${payload.sender_name}: ${payload.message}`
-      }
-      
-      if (payload.urgent) {
-        title = '🔥 緊急要請'
-        options.vibrate = [200, 100, 200, 100, 200]
-      }
-    } catch (e) {
-      console.log('📋 プッシュデータ解析エラー:', e)
-    }
-  }
-
-  console.log('📱 プッシュ通知表示:', { title, options })
-
+  // 最新のチャットメッセージを取得して通知に使用
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    getLatestChatMessage().then(chatData => {
+      const isFirstTimeRequest = chatData && chatData.message && chatData.message.includes('今初回ほしいです')
+      
+      let title = isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ'
+      let body = 'スタッフチャットに新しいメッセージがあります'
+      
+      // 実際のメッセージ内容を使用
+      if (chatData && chatData.sender_name && chatData.message) {
+        body = `${chatData.sender_name}: ${chatData.message}`
+      }
+      
+      let options = {
+        body: body,
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
+        tag: `push-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // 毎回ユニーク
+        requireInteraction: false,
+        silent: false,
+        renotify: true,
+        timestamp: Date.now(),
+        data: {
+          dateOfArrival: Date.now(),
+          url: '/staff',
+          chatId: chatData ? chatData.id : null,
+          urgent: isFirstTimeRequest
+        },
+        actions: [
+          { action: 'open', title: '開く' },
+          { action: 'close', title: '閉じる' }
+        ]
+      }
+
+      // プッシュデータがある場合は上書き
+      if (event.data) {
+        try {
+          const payload = event.data.json()
+          console.log('📨 プッシュペイロード:', payload)
+          
+          title = payload.title || title
+          options.body = payload.body || options.body
+          options.data.url = payload.url || options.data.url
+          
+          if (payload.sender_name && payload.message) {
+            options.body = `${payload.sender_name}: ${payload.message}`
+          }
+        } catch (e) {
+          console.log('📋 プッシュデータ解析エラー:', e)
+        }
+      }
+
+      console.log('📱 プッシュ通知表示:', { title, options })
+
+      return self.registration.showNotification(title, options)
+    }).catch(error => {
+      console.error('❌ チャットデータ取得エラー:', error)
+      
+      // エラー時は基本通知を表示
+      return self.registration.showNotification('💬 新着メッセージ', {
+        body: 'スタッフチャットに新しいメッセージがあります',
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        tag: `push-error-${Date.now()}`,
+        data: { url: '/staff' }
+      })
+    })
   )
 })
+
+// 最新のチャットメッセージを取得する関数
+async function getLatestChatMessage() {
+  try {
+    console.log('📡 最新チャットメッセージ取得中...')
+    
+    // IndexedDBまたはローカルストレージから最新メッセージを取得
+    // 実際の実装では Supabase API を呼び出す
+    const response = await fetch('https://syabkrxefyqyfypsdezx.supabase.co/rest/v1/staff_chats?select=*&order=created_at.desc&limit=1', {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5YWJrcnhlZnlxeWZ5cHNkZXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzEyOTMsImV4cCI6MjA2NjAwNzI5M30.BVxJqBWHM42anvdL4mcUbtMdLI6RO0qXrCk_mwo_2Bk',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5YWJrcnhlZnlxeWZ5cHNkZXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzEyOTMsImV4cCI6MjA2NjAwNzI5M30.BVxJqBWHM42anvdL4mcUbtMdLI6RO0qXrCk_mwo_2Bk'
+      }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      const latestMessage = data[0]
+      console.log('📨 最新メッセージ取得成功:', latestMessage)
+      return latestMessage
+    } else {
+      console.error('❌ API レスポンスエラー:', response.status)
+      return null
+    }
+  } catch (error) {
+    console.error('❌ 最新メッセージ取得エラー:', error)
+    return null
+  }
+}
 
 // メッセージ受信（アプリからの通信・通知要請）
 self.addEventListener('message', event => {
