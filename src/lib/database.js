@@ -364,26 +364,44 @@ export const deleteVisitRecord = async (recordId) => {
 
     console.log('🔄 削除により影響を受けるリクエスト:', consumedRequests)
 
-    // 3. 関連リクエストがある場合は消化状態をリセット
+    // 3. 関連リクエストがある場合は消化状態をリセット（ただし有効期限は維持）
     if (consumedRequests && consumedRequests.length > 0) {
       for (const request of consumedRequests) {
         console.log(`🔄 リクエスト ID:${request.id} の消化状態をリセット中...`)
         
-        const { error: resetError } = await supabase
+        // 現在のリクエスト情報を取得して有効期限をチェック
+        const { data: requestData, error: fetchError } = await supabase
           .from('store_status_requests')
-          .update({
-            is_consumed: false,
-            staff_log_id: null,
-            consumed_at: null
-          })
+          .select('expires_at, has_time_limit')
           .eq('id', request.id)
-
-        if (resetError) {
-          console.error('リクエスト消化状態リセットエラー:', resetError)
-          throw resetError
+          .single()
+        
+        if (fetchError) {
+          console.error('リクエスト情報取得エラー:', fetchError)
+          continue
         }
         
-        console.log(`✅ リクエスト ID:${request.id} の消化状態をリセット完了`)
+        // 時間内の場合は完全に削除（送信前の状態に戻す）
+        const now = new Date()
+        const expiresAt = new Date(requestData.expires_at)
+        
+        if (requestData.has_time_limit && expiresAt > now) {
+          // 時間内：リクエストを完全に削除して送信前の状態に戻す
+          console.log(`🔄 リクエスト ID:${request.id} は時間内のため、完全に削除して送信前状態に戻します`)
+          
+          const { error: deleteError } = await supabase
+            .from('store_status_requests')
+            .delete()
+            .eq('id', request.id)
+            
+          if (deleteError) {
+            console.error('リクエスト削除エラー:', deleteError)
+            throw deleteError
+          }
+        } else {
+          // 時間切れ：何もしない（回数消化済み扱いを維持）
+          console.log(`⏰ リクエスト ID:${request.id} は既に期限切れのため、消化済み状態を維持します`)
+        }
       }
     }
 
@@ -1104,6 +1122,19 @@ export const sendStoreStatusRequest = async (requestData) => {
   try {
     console.log('🔥 database.js sendStoreStatusRequest 開始:', requestData)
     
+    // 重複送信チェック：既にアクティブなリクエストがあるかチェック
+    if (requestData.has_time_limit) {
+      const activeRequestResult = await getActiveRequest(requestData.store_id, requestData.status_type)
+      if (activeRequestResult.success && activeRequestResult.data) {
+        console.log('⚠️ 既にアクティブなリクエストが存在します:', activeRequestResult.data)
+        return { 
+          success: false, 
+          error: '発信中のリクエストがあります。時間経過後に再度お試しください。',
+          activeRequest: activeRequestResult.data
+        }
+      }
+    }
+    
     const insertData = {
       store_id: requestData.store_id,
       status_type: requestData.status_type,
@@ -1139,19 +1170,19 @@ export const sendStoreStatusRequest = async (requestData) => {
   }
 }
 
-// 店舗の月間リクエスト数を取得（回数制限があり、実際に消化されたもののみ）
+// 店舗の月間リクエスト数を取得（消化済みのもの + 期限内の未消化のもの）
 export const getMonthlyRequestCount = async (storeId, statusType = null) => {
   try {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
+    // 全リクエストを取得
     let query = supabase
       .from('store_status_requests')
-      .select('id')
+      .select('id, is_consumed, expires_at, has_time_limit')
       .eq('store_id', storeId)
       .eq('has_count_limit', true)
-      .eq('is_consumed', true) // 実際に消化されたもののみをカウント
       .gte('requested_at', startOfMonth)
       .lte('requested_at', endOfMonth)
 
@@ -1163,8 +1194,24 @@ export const getMonthlyRequestCount = async (storeId, statusType = null) => {
 
     if (error) throw error
 
-    console.log(`📊 店舗 ${storeId} の月間消化済みリクエスト数:`, data?.length || 0)
-    return { success: true, count: data?.length || 0 }
+    // カウント対象を判定
+    const countedRequests = data.filter(request => {
+      // 消化済みは常にカウント
+      if (request.is_consumed) {
+        return true
+      }
+      
+      // 未消化の場合は期限内のもののみカウント（発信中扱い）
+      if (request.has_time_limit && request.expires_at) {
+        const expiresAt = new Date(request.expires_at)
+        return expiresAt > now
+      }
+      
+      return false // 時間制限がない未消化は基本的にないが、念のため除外
+    })
+
+    console.log(`📊 店舗 ${storeId} の月間使用回数:`, countedRequests.length)
+    return { success: true, count: countedRequests.length }
   } catch (error) {
     console.error('月間リクエスト数取得エラー:', error)
     return { success: false, error: error.message, count: 0 }
