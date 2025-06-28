@@ -148,12 +148,31 @@ const CustomerDashboard = () => {
   
   // 請求情報を計算
   const monthlyIntroductions = visitRecords.length
-  const baseAmount = invoiceSettings?.base_fee || 30000
-  const guaranteedCount = invoiceSettings?.guaranteed_count || 8
-  const bonusAmount = Math.max(0, monthlyIntroductions - guaranteedCount) * (invoiceSettings?.price_per_introduction || 3000)
-  const totalAmount = baseAmount + bonusAmount
-  const taxAmount = invoiceSettings?.with_tax ? totalAmount * 0.1 : 0
-  const finalAmount = Math.floor(totalAmount + taxAmount)
+  const baseAmount = store?.base_fee || 0
+  const guaranteedCount = store?.guarantee_count || 0
+  const chargePerPerson = store?.charge_per_person || 0
+  const underGuaranteePenalty = store?.under_guarantee_penalty || 0
+  const excludeTax = store?.exclude_tax || false
+  
+  // 保証本数を超えた分の追加料金
+  const bonusAmount = Math.max(0, monthlyIntroductions - guaranteedCount) * chargePerPerson
+  
+  // 保証本数に満たない場合のペナルティ
+  const penaltyAmount = monthlyIntroductions < guaranteedCount ? underGuaranteePenalty : 0
+  
+  // 小計計算
+  const subtotal = baseAmount + bonusAmount - penaltyAmount
+  
+  // 消費税計算
+  const taxAmount = excludeTax ? 0 : Math.floor(subtotal * 0.1)
+  
+  // 最終請求額
+  const finalAmount = subtotal + taxAmount
+
+  // 現在の日付を取得
+  const currentDate = new Date()
+  const currentMonth = currentDate.getMonth() + 1
+  const currentYear = currentDate.getFullYear()
 
   // 「今初回ほしいです」専用ハンドラー（回数制限・時間制限付き）
   const handleFirstTimeRequest = async () => {
@@ -208,8 +227,6 @@ const CustomerDashboard = () => {
       setLoading(false)
     }
   }
-
-
 
   if (dataLoading) {
     return (
@@ -405,9 +422,242 @@ const CustomerDashboard = () => {
             )}
           </div>
 
+          {/* 今月の請求書 */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                💳 {currentYear}年{currentMonth}月請求書
+              </h3>
+              <button
+                onClick={() => {
+                  const invoiceElement = document.getElementById('invoice-preview')
+                  if (invoiceElement) {
+                    // スクリーンショット用にスタイリングを調整
+                    invoiceElement.style.transform = 'scale(1)'
+                    invoiceElement.style.maxWidth = 'none'
+                    
+                    // 印刷ダイアログを開く
+                    const printWindow = window.open('', '_blank')
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>請求書 - ${store.name}</title>
+                          <style>
+                            body { 
+                              font-family: 'Helvetica', 'Arial', sans-serif; 
+                              margin: 20px; 
+                              background: white;
+                            }
+                            .invoice-container {
+                              max-width: 800px;
+                              margin: 0 auto;
+                              background: white;
+                              padding: 20px;
+                              box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          ${invoiceElement.outerHTML}
+                        </body>
+                      </html>
+                    `)
+                    printWindow.document.close()
+                    printWindow.print()
+                  }
+                }}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+              >
+                📸 印刷/保存
+              </button>
+            </div>
+            
+            {/* 請求書プレビュー */}
+            <div id="invoice-preview" className="border border-gray-300 rounded-lg bg-white">
+              {/* 請求書ヘッダー */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-300">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">請求書</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {currentYear}年{currentMonth}月分
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600">発行日: {currentDate.toLocaleDateString('ja-JP')}</p>
+                    <p className="text-sm text-gray-600">
+                      請求先: {store.billing_address || '未設定'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
+              {/* 請求内容 */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                    HRS 様
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    下記の通りご請求申し上げます
+                  </p>
+                </div>
 
+                {/* ご請求金額 */}
+                <div className="text-center mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <h4 className="text-lg font-medium text-gray-700 mb-2">ご請求金額</h4>
+                  <div className="text-4xl font-bold text-red-600">
+                    ¥{finalAmount.toLocaleString()}
+                  </div>
+                </div>
 
+                {/* 請求明細 */}
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-r border-gray-300">
+                          項目
+                        </th>
+                        <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 border-r border-gray-300">
+                          数量
+                        </th>
+                        <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 border-r border-gray-300">
+                          単価
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                          金額
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white">
+                      {/* 基本料金 */}
+                      <tr className="border-b border-gray-200">
+                        <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
+                          {currentMonth}月 基本料金
+                        </td>
+                        <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                          1
+                        </td>
+                        <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                          ¥{baseAmount.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900">
+                          ¥{baseAmount.toLocaleString()}
+                        </td>
+                      </tr>
+
+                      {/* 追加案内料金 */}
+                      {bonusAmount > 0 && (
+                        <tr className="border-b border-gray-200">
+                          <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
+                            {currentMonth}月 追加案内料
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                            {Math.max(0, monthlyIntroductions - guaranteedCount)}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                            ¥{chargePerPerson.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900">
+                            ¥{bonusAmount.toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* 保証割れペナルティ */}
+                      {penaltyAmount > 0 && (
+                        <tr className="border-b border-gray-200">
+                          <td className="px-4 py-3 text-sm text-red-600 border-r border-gray-300">
+                            {currentMonth}月 保証割れ料金
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                            {guaranteedCount - monthlyIntroductions}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-300">
+                            ¥{underGuaranteePenalty.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-red-600">
+                            -¥{penaltyAmount.toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
+
+                      {/* 小計 */}
+                      <tr className="border-b border-gray-300 bg-gray-50">
+                        <td colSpan="3" className="px-4 py-3 text-right text-sm font-medium text-gray-700 border-r border-gray-300">
+                          小計
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
+                          ¥{subtotal.toLocaleString()}
+                        </td>
+                      </tr>
+
+                      {/* 消費税 */}
+                      <tr className="border-b border-gray-300">
+                        <td colSpan="3" className="px-4 py-3 text-right text-sm text-gray-700 border-r border-gray-300">
+                          消費税
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900">
+                          ¥{taxAmount.toLocaleString()}
+                        </td>
+                      </tr>
+
+                      {/* 合計 */}
+                      <tr className="bg-red-50">
+                        <td colSpan="3" className="px-4 py-4 text-right text-lg font-bold text-gray-800 border-r border-gray-300">
+                          合計
+                        </td>
+                        <td className="px-4 py-4 text-right text-lg font-bold text-red-600">
+                          ¥{finalAmount.toLocaleString()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 備考 */}
+                <div className="mt-6 space-y-2">
+                  <p className="text-xs text-gray-600">
+                    ※ご不明な点がございましたら下記まで速やかにお申し付けください。
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    ※お支払期限は下記まで頂戴いたします。よろしく申し上げます。
+                  </p>
+                  <div className="mt-4 p-3 bg-gray-50 rounded border">
+                    <p className="text-xs text-gray-700">
+                      <strong>振込先:</strong><br/>
+                      北洋銀行札幌中央支店<br/>
+                      普通口座 {/* 口座番号は実際の値に置き換え */}<br/>
+                      口座名：(振り込み先名称)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 請求詳細サマリー */}
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="text-blue-700 font-medium">今月の案内実績</div>
+                <div className="text-2xl font-bold text-blue-600">{monthlyIntroductions}本</div>
+                <div className="text-xs text-blue-600">
+                  保証本数: {guaranteedCount}本
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg ${finalAmount >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className={`font-medium ${finalAmount >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  請求金額
+                </div>
+                <div className={`text-2xl font-bold ${finalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ¥{finalAmount.toLocaleString()}
+                </div>
+                <div className={`text-xs ${finalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {excludeTax ? '税込み' : '税別'}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

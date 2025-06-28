@@ -16,7 +16,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     is_transfer: false,
     hoshos_url: '',
     store_phone: '',
-    first_request_limit: ''
+    first_request_limit: '',
+    billing_address: ''
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -45,7 +46,9 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         is_transfer: store.is_transfer,
         hoshos_url: store.hoshos_url,
         store_phone: store.store_phone,
-        first_request_limit: store.first_request_limit
+        first_request_limit: store.first_request_limit,
+        billing_address: store.billing_address || '',
+        billing_address: store.billing_address || ''
       };
       console.log('📝 New form data:', newFormData);
       setFormData(newFormData);
@@ -292,6 +295,17 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     placeholder="0 = 利用不可"
                   />
                   <p className="text-xs text-gray-500 mt-1">0を設定すると利用不可になります</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">請求先宛名</label>
+                  <input
+                    type="text"
+                    value={formData.billing_address}
+                    onChange={(e) => setFormData({...formData, billing_address: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="例：株式会社○○ 経理部 △△様"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">請求書に記載される宛名を設定してください</p>
                 </div>
               </div>
             </div>

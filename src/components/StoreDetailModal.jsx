@@ -127,6 +127,12 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
                   {store.first_request_limit === 0 ? '利用不可' : `${store.first_request_limit}回/月`}
                 </p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">請求先宛名</label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {store.billing_address || '未設定'}
+                </p>
+              </div>
             </div>
           </div>
 
