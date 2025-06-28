@@ -358,10 +358,63 @@ const CustomerDashboard = () => {
               📊 今月の案内実績
             </h3>
             
-            <div className="text-center p-6 bg-blue-50 rounded-lg">
-              <div className="text-4xl font-bold text-blue-600">{totalVisitors}</div>
-              <div className="text-lg text-gray-600">総案内人数</div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {visitRecords.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  今月の案内実績はありません
+                </div>
+              ) : (
+                visitRecords.map((record) => (
+                  <div key={record.id} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-block w-3 h-3 rounded-full ${
+                          record.store_was_recommended ? 'bg-blue-500' : 'bg-gray-400'
+                        }`}></span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {record.store_was_recommended ? '店舗推奨' : '店舗非推奨'}
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {(() => {
+                          const date = new Date(record.guided_at || record.created_at)
+                          // 日本時間に変換（UTC + 9時間）
+                          const jpTime = new Date(date.getTime() + (9 * 60 * 60 * 1000))
+                          return jpTime.toLocaleDateString('ja-JP', {
+                            month: 'numeric',
+                            day: 'numeric'
+                          }) + ' ' + jpTime.toLocaleTimeString('ja-JP', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        })()}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {record.guest_count}名
+                      </div>
+                      {record.notes && (
+                        <div className="text-xs text-gray-600 max-w-48 truncate">
+                          {record.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
+            
+            {/* 合計表示 */}
+            {visitRecords.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{totalVisitors}</div>
+                  <div className="text-sm text-gray-600">総案内人数</div>
+                </div>
+              </div>
+            )}
           </div>
 
 
