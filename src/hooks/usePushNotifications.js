@@ -223,7 +223,6 @@ export const usePushNotifications = (currentUser = null) => {
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
       console.log('%c💀 REAL PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
       console.error('🚨 FORCE ERROR LOG - usePushNotifications.js called!')
-      alert('🔔 REAL usePushNotifications.js function called!')
       
       // Service Worker状況を再確認
       const serviceWorkerSupported = 'serviceWorker' in navigator && 'PushManager' in window
