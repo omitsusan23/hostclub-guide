@@ -281,7 +281,7 @@ export const usePushNotifications = (currentUser = null) => {
         icon: '/icon-192x192.png',
         badge: '/icon-72x72.png',
         vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
-        tag: `chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // 完全にユニークなtagで重複防止
+        tag: `chat-${chatMessage.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // メッセージIDも含めて完全にユニーク
         requireInteraction: false, // iOSでの通知蓄積を防ぐ
         silent: false,
         renotify: true, // 同じtagでも再通知を強制
@@ -305,6 +305,12 @@ export const usePushNotifications = (currentUser = null) => {
       try {
         // 方法1: 直接通知表示（フォアグラウンド用）
         console.log('🔔 直接通知表示実行中...')
+        console.log('📱 通知内容詳細:', {
+          title: notificationTitle,
+          body: notificationOptions.body,
+          tag: notificationOptions.tag,
+          timestamp: new Date().toLocaleTimeString()
+        })
         await currentRegistration.showNotification(notificationTitle, notificationOptions)
         console.log('✅ 直接通知表示成功')
       } catch (directError) {
