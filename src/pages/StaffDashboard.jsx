@@ -62,13 +62,20 @@ const StaffDashboard = () => {
     sendChatNotificationType: typeof pushNotifications?.sendChatNotification
   })
   
-  // sendChatNotificationを直接取得（デバッグログ付き）
+  // sendChatNotificationを確実に最新の関数として取得
   const sendChatNotification = useCallback((message) => {
     console.log('🚨🚨🚨 DIRECT sendChatNotification called!')
     console.log('%c💀 DIRECT PUSH NOTIFICATION', 'background: red; color: white; font-size: 20px;')
     
     if (pushNotifications && pushNotifications.sendChatNotification) {
       console.log('✅ pushNotifications.sendChatNotification found - calling...')
+      console.log('🔍 関数の詳細:', {
+        source: pushNotifications.sendChatNotification._source,
+        timestamp: pushNotifications.sendChatNotification._timestamp,
+        isInitialized: pushNotifications.isInitialized,
+        isSupported: pushNotifications.isSupported,
+        permission: pushNotifications.permission
+      })
       return pushNotifications.sendChatNotification(message)
     } else {
       console.log('❌ pushNotifications.sendChatNotification not found:', pushNotifications)

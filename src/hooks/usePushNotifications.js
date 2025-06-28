@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 const VAPID_PUBLIC_KEY = 'BEhb7-IaewDKk4eAq8kCgcBTofxLgP62S7tosMJ185MGpNZn9uJ-O922tcY2SDyXuggV7cS3VDjHFvrcT15q0js'
 
@@ -220,12 +220,6 @@ export const usePushNotifications = (currentUser = null) => {
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
     try {
-      // 初期化チェック
-      if (!isInitialized) {
-        console.log('⚠️ usePushNotifications.js: まだ初期化されていません')
-        return
-      }
-      
       // 確実に見えるログを出力
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
       console.log('%c💀 REAL PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
