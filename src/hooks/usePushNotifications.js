@@ -281,13 +281,18 @@ export const usePushNotifications = (currentUser = null) => {
         icon: '/icon-192x192.png',
         badge: '/icon-72x72.png',
         vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
-        tag: `staff-chat-${chatMessage.id}`, // メッセージIDを含めて一意にする
-        requireInteraction: isFirstTimeRequest,
+        tag: `chat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // 完全にユニークなtagで重複防止
+        requireInteraction: false, // iOSでの通知蓄積を防ぐ
+        silent: false,
+        renotify: true, // 同じtagでも再通知を強制
+        timestamp: Date.now(), // タイムスタンプを明示
         data: { 
           url: '/staff',
           chatId: chatMessage.id,
           type: 'chat',
-          urgent: isFirstTimeRequest
+          urgent: isFirstTimeRequest,
+          sender: chatMessage.sender_name,
+          message: chatMessage.message
         },
         actions: [
           { action: 'open', title: '開く' },
