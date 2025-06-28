@@ -67,6 +67,61 @@ function startHeartbeat() {
   }, 30000) // 30秒間隔
 }
 
+// プッシュ通知受信時（バックグラウンド用）
+self.addEventListener('push', event => {
+  console.log('📨 Push notification received:', event)
+  
+  let title = '💬 新着メッセージ'
+  let options = {
+    body: 'スタッフチャットに新しいメッセージがあります',
+    icon: '/icon-192x192.png',
+    badge: '/icon-72x72.png',
+    vibrate: [100, 50, 100],
+    tag: `push-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    requireInteraction: false,
+    silent: false,
+    renotify: true,
+    timestamp: Date.now(),
+    data: {
+      dateOfArrival: Date.now(),
+      url: '/staff'
+    },
+    actions: [
+      { action: 'open', title: '開く' },
+      { action: 'close', title: '閉じる' }
+    ]
+  }
+
+  // プッシュデータがある場合は内容を使用
+  if (event.data) {
+    try {
+      const payload = event.data.json()
+      console.log('📨 プッシュペイロード:', payload)
+      
+      title = payload.title || title
+      options.body = payload.body || options.body
+      options.data.url = payload.url || options.data.url
+      
+      if (payload.sender_name && payload.message) {
+        options.body = `${payload.sender_name}: ${payload.message}`
+      }
+      
+      if (payload.urgent) {
+        title = '🔥 緊急要請'
+        options.vibrate = [200, 100, 200, 100, 200]
+      }
+    } catch (e) {
+      console.log('📋 プッシュデータ解析エラー:', e)
+    }
+  }
+
+  console.log('📱 プッシュ通知表示:', { title, options })
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  )
+})
+
 // メッセージ受信（アプリからの通信・通知要請）
 self.addEventListener('message', event => {
   console.log('💬 Message received in SW:', event.data)

@@ -301,28 +301,35 @@ export const usePushNotifications = (currentUser = null) => {
       }
 
       console.log('📝 通知オプション:', { notificationTitle, notificationOptions })
-      console.log('🔔 Service Workerに通知要請送信中...')
-
-      // Service Workerに通知送信を要請（iOS PWA対応）
-      if (currentRegistration && currentRegistration.active) {
-        currentRegistration.active.postMessage({
-          type: 'SEND_NOTIFICATION',
-          payload: {
-            title: notificationTitle,
-            body: notificationOptions.body,
-            icon: notificationOptions.icon,
-            badge: notificationOptions.badge,
-            vibrate: notificationOptions.vibrate,
-            tag: notificationOptions.tag,
-            data: notificationOptions.data,
-            actions: notificationOptions.actions
-          }
-        })
-        console.log('📨 Service Workerに通知要請送信完了')
-      } else {
-        // フォールバック: 直接通知表示
-        console.log('⚠️ Service Worker未対応 - 直接通知表示')
+      
+      try {
+        // 方法1: 直接通知表示（フォアグラウンド用）
+        console.log('🔔 直接通知表示実行中...')
         await currentRegistration.showNotification(notificationTitle, notificationOptions)
+        console.log('✅ 直接通知表示成功')
+      } catch (directError) {
+        console.log('⚠️ 直接通知表示失敗:', directError)
+        
+        // 方法2: Service Workerに通知要請（フォールバック）
+        if (currentRegistration && currentRegistration.active) {
+          console.log('🔔 Service Workerに通知要請送信中...')
+          currentRegistration.active.postMessage({
+            type: 'SEND_NOTIFICATION',
+            payload: {
+              title: notificationTitle,
+              body: notificationOptions.body,
+              icon: notificationOptions.icon,
+              badge: notificationOptions.badge,
+              vibrate: notificationOptions.vibrate,
+              tag: notificationOptions.tag,
+              data: notificationOptions.data,
+              actions: notificationOptions.actions
+            }
+          })
+          console.log('📨 Service Workerに通知要請送信完了')
+        } else {
+          console.error('❌ 両方の通知方法が失敗しました')
+        }
       }
       
       console.log('✅ チャット通知を送信しました:', {
