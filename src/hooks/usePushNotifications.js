@@ -359,6 +359,12 @@ export const usePushNotifications = (currentUser = null) => {
 
   // 初期化完了前は安全なデフォルト値を返す
   if (!isInitialized) {
+    const defaultFunc = () => {
+      console.log('🚫 usePushNotifications.js: 初期化前のデフォルト関数が実行されました')
+    }
+    defaultFunc._source = 'usePushNotifications.js'
+    defaultFunc._timestamp = Date.now()
+    
     return {
       isSupported: false,
       permission: 'default',
@@ -368,7 +374,7 @@ export const usePushNotifications = (currentUser = null) => {
       subscribeToPush: () => Promise.resolve(null),
       unsubscribeFromPush: () => Promise.resolve(true),
       sendTestNotification: () => {},
-      sendChatNotification: () => {},
+      sendChatNotification: defaultFunc,
       showNotification: () => {}
     }
   }
@@ -390,14 +396,10 @@ export const usePushNotifications = (currentUser = null) => {
     subscribeToPush: subscribeToPush || (() => Promise.resolve(null)),
     unsubscribeFromPush: unsubscribeFromPush || (() => Promise.resolve(true)),
     sendTestNotification: sendTestNotification || (() => {}),
-    sendChatNotification: (() => {
-      const func = sendChatNotification || (() => {
-        console.log('🚫 usePushNotifications.js: デフォルト空関数が実行されました')
-      })
-      func._source = 'usePushNotifications.js'
-      func._timestamp = Date.now()
-      return func
-    })(),
+    sendChatNotification: Object.assign(sendChatNotification, { 
+      _source: 'usePushNotifications.js',
+      _timestamp: Date.now()
+    }),
     showNotification: showNotification || (() => {})
   }
 }
