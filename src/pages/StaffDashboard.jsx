@@ -183,13 +183,15 @@ const StaffDashboard = () => {
           incrementUnreadCount()
         }
         
-        // プッシュ通知を送信（自分以外のメッセージの場合）
-        if (payload.new.sender_id !== user?.id) {
-          console.log('🔔 Staff プッシュ通知送信条件クリア:', {
+        // プッシュ通知を送信（自分以外のメッセージで、かつ「今初回ほしい」が含まれる場合のみ）
+        const isFirstTimeRequest = payload.new.message?.includes('今初回ほしいです')
+        if (payload.new.sender_id !== user?.id && isFirstTimeRequest) {
+          console.log('🔥 Staff 緊急要請通知送信条件クリア:', {
             senderID: payload.new.sender_id,
             currentUserID: user?.id,
             message: payload.new.message,
-            senderName: payload.new.sender_name
+            senderName: payload.new.sender_name,
+            isFirstTimeRequest: true
           })
           
           try {
