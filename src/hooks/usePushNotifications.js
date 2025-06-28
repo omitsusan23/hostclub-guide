@@ -220,6 +220,12 @@ export const usePushNotifications = (currentUser = null) => {
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
     try {
+      // 初期化チェック
+      if (!isInitialized) {
+        console.log('⚠️ usePushNotifications.js: まだ初期化されていません')
+        return
+      }
+      
       // 確実に見えるログを出力
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
       console.log('%c💀 REAL PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
@@ -323,7 +329,7 @@ export const usePushNotifications = (currentUser = null) => {
         stack: mainError.stack
       })
     }
-  }, [subscription, permission, currentUser])
+  }, [subscription, permission, currentUser, isInitialized])
 
   // ネイティブ通知を表示
   const showNotification = useCallback(async (options) => {
@@ -357,33 +363,14 @@ export const usePushNotifications = (currentUser = null) => {
 
 
 
-  // 初期化完了前は安全なデフォルト値を返す
-  if (!isInitialized) {
-    const defaultFunc = () => {
-      console.log('🚫 usePushNotifications.js: 初期化前のデフォルト関数が実行されました')
-    }
-    defaultFunc._source = 'usePushNotifications.js'
-    defaultFunc._timestamp = Date.now()
-    
-    return {
-      isSupported: false,
-      permission: 'default',
-      subscription: null,
-      isLoading: false,
-      requestPermission: () => Promise.resolve(false),
-      subscribeToPush: () => Promise.resolve(null),
-      unsubscribeFromPush: () => Promise.resolve(true),
-      sendTestNotification: () => {},
-      sendChatNotification: defaultFunc,
-      showNotification: () => {}
-    }
-  }
+  // 初期化完了前は安全なデフォルト値を返す（削除して確実に初期化完了後の関数を使用）
 
   console.log('🔧 usePushNotifications.js: return オブジェクト作成', {
     isSupported,
     permission,
     hasSubscription: !!subscription,
     isLoading,
+    isInitialized,
     sendChatNotificationType: typeof sendChatNotification
   })
 
@@ -392,6 +379,7 @@ export const usePushNotifications = (currentUser = null) => {
     permission: permission || 'default',
     subscription: subscription || null,
     isLoading: isLoading || false,
+    isInitialized: isInitialized,
     requestPermission: requestPermission || (() => Promise.resolve(false)),
     subscribeToPush: subscribeToPush || (() => Promise.resolve(null)),
     unsubscribeFromPush: unsubscribeFromPush || (() => Promise.resolve(true)),

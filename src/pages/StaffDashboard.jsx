@@ -207,7 +207,10 @@ const StaffDashboard = () => {
                 functionName: sendChatNotification.name,
                 hasAlertInCode: sendChatNotification.toString().includes('alert'),
                 hasPushNotificationLog: sendChatNotification.toString().includes('usePushNotifications.js'),
-                functionStart: sendChatNotification.toString().substring(0, 100)
+                hasInitializedCheck: sendChatNotification.toString().includes('isInitialized'),
+                functionStart: sendChatNotification.toString().substring(0, 100),
+                pushNotificationsInitialized: pushNotifications?.isInitialized,
+                pushNotificationsKeys: Object.keys(pushNotifications || {})
               })
               
               // 関数に識別子を追加してテスト
