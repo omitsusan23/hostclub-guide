@@ -443,9 +443,11 @@ const StaffDashboard = () => {
     }
   }, [location.pathname])
 
-  // Service Worker Heartbeat受信
+  // Service Worker メッセージ受信（Heartbeat + デバッグ）
   useEffect(() => {
     const handleMessage = (event) => {
+      console.log('📨 Staff Service Workerメッセージ受信:', event.data)
+      
       if (event.data?.type === 'HEARTBEAT') {
         console.log('💓 Staff Heartbeat受信:', event.data.timestamp)
         
@@ -467,6 +469,9 @@ const StaffDashboard = () => {
             reconnectChatSubscription()
           }
         }
+      } else if (event.data?.type === 'SW_PUSH_DEBUG') {
+        console.log('🚨 SERVICE WORKER PUSHデバッグメッセージ:', event.data.message)
+        alert(`🚨 SW DEBUG: ${event.data.message}`)
       }
     }
 

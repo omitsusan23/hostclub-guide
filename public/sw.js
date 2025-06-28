@@ -69,7 +69,24 @@ function startHeartbeat() {
 
 // プッシュ通知受信時（バックグラウンド用）
 self.addEventListener('push', event => {
+  console.log('🚨🚨🚨 SERVICE WORKER PUSH EVENT TRIGGERED!')
   console.log('📨 Push notification received:', event)
+  console.log('🔍 Push event details:', {
+    hasData: !!event.data,
+    eventType: typeof event,
+    timestamp: Date.now()
+  })
+  
+  // アラートでも確認（デバッグ用）
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'SW_PUSH_DEBUG',
+        message: 'Service Worker Push イベントが発火しました！',
+        timestamp: Date.now()
+      })
+    })
+  })
   
   // 最新のチャットメッセージを取得して通知に使用
   event.waitUntil(
