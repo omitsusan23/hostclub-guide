@@ -219,19 +219,25 @@ export const usePushNotifications = (currentUser = null) => {
 
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
-    // 複数の確認ログを出力
-    console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
-    console.log('%c💀 PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
-    console.log('🔔 sendChatNotification 開始:', {
-      chatMessage,
-      subscription: !!subscription,
-      permission,
-      currentUser: currentUser?.id,
-      hasServiceWorker: 'serviceWorker' in navigator
-    })
-    
-    // アラートでも確認
-    // alert('Push notification function called!')
+    try {
+      // 複数の確認ログを出力
+      console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
+      console.log('%c💀 PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
+      console.log('🔔 sendChatNotification 開始:', {
+        chatMessage,
+        subscription: !!subscription,
+        permission,
+        currentUser: currentUser?.id,
+        hasServiceWorker: 'serviceWorker' in navigator
+      })
+      
+      console.log('🔍 関数内部デバッグ - パラメータ詳細:', {
+        chatMessageType: typeof chatMessage,
+        chatMessageKeys: chatMessage ? Object.keys(chatMessage) : null,
+        subscriptionExists: !!subscription,
+        permissionValue: permission,
+        currentUserExists: !!currentUser
+      })
     
     if (!subscription || permission !== 'granted' || !currentUser) {
       console.log('🔕 Push通知が無効です:', {
@@ -304,6 +310,14 @@ export const usePushNotifications = (currentUser = null) => {
         name: error.name,
         message: error.message,
         stack: error.stack
+      })
+    }
+    } catch (mainError) {
+      console.error('🚨 usePushNotifications.js: sendChatNotification 関数内でキャッチされたエラー:', mainError)
+      console.error('🚨 エラー詳細:', {
+        name: mainError.name,
+        message: mainError.message,
+        stack: mainError.stack
       })
     }
   }, [subscription, permission, currentUser])
