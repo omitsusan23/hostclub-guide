@@ -62,8 +62,8 @@ const StaffDashboard = () => {
     sendChatNotificationType: typeof pushNotifications?.sendChatNotification
   })
   
-  // sendChatNotificationを確実に最新の関数として取得
-  const sendChatNotification = useCallback((message) => {
+  // sendChatNotificationを確実に最新の関数として取得（useCallback削除版）
+  const sendChatNotification = (message) => {
     console.log('🚨🚨🚨 DIRECT sendChatNotification called!')
     console.log('%c💀 DIRECT PUSH NOTIFICATION', 'background: red; color: white; font-size: 20px;')
     
@@ -81,7 +81,7 @@ const StaffDashboard = () => {
       console.log('❌ pushNotifications.sendChatNotification not found:', pushNotifications)
       console.log('🚫🚫🚫 FALLBACK FUNCTION CALLED')
     }
-  }, [pushNotifications])
+  }
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
