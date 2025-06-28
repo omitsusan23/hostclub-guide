@@ -199,12 +199,23 @@ const StaffDashboard = () => {
               console.log('✅ Staff sendChatNotification は関数です - 実行中...')
               console.log('🚨 CALLING FUNCTION WITH PAYLOAD:', payload.new)
               
+              // 関数の詳細情報を確認
+              console.log('🔍 関数の詳細情報:', {
+                source: sendChatNotification._source,
+                timestamp: sendChatNotification._timestamp,
+                functionLength: sendChatNotification.length,
+                functionName: sendChatNotification.name,
+                hasAlertInCode: sendChatNotification.toString().includes('alert'),
+                hasPushNotificationLog: sendChatNotification.toString().includes('usePushNotifications.js'),
+                functionStart: sendChatNotification.toString().substring(0, 100)
+              })
+              
               // 関数に識別子を追加してテスト
-              if (sendChatNotification.toString().includes('usePushNotifications')) {
+              if (sendChatNotification._source === 'usePushNotifications.js') {
                 console.log('✅ 正しいusePushNotifications関数を呼び出し中')
               } else {
-                console.log('⚠️ デフォルト関数を呼び出し中')
-                console.log('📝 関数のソース:', sendChatNotification.toString())
+                console.log('⚠️ 不明な関数を呼び出し中')
+                console.log('📝 関数のソース:', sendChatNotification.toString().substring(0, 200))
               }
               
               sendChatNotification(payload.new)

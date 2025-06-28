@@ -220,9 +220,12 @@ export const usePushNotifications = (currentUser = null) => {
   // 新着チャットメッセージの通知を送信（詳細ログ版）
   const sendChatNotification = useCallback(async (chatMessage) => {
     try {
-      // 複数の確認ログを出力
+      // 確実に見えるログを出力
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
-      console.log('%c💀 PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
+      console.log('%c💀 REAL PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
+      console.error('🚨 FORCE ERROR LOG - usePushNotifications.js called!')  // errorログも追加
+      alert('🔔 REAL usePushNotifications.js function called!')  // アラートで確認
+      
       console.log('🔔 sendChatNotification 開始:', {
         chatMessage,
         subscription: !!subscription,
@@ -387,9 +390,14 @@ export const usePushNotifications = (currentUser = null) => {
     subscribeToPush: subscribeToPush || (() => Promise.resolve(null)),
     unsubscribeFromPush: unsubscribeFromPush || (() => Promise.resolve(true)),
     sendTestNotification: sendTestNotification || (() => {}),
-    sendChatNotification: sendChatNotification || (() => {
-      console.log('🚫 usePushNotifications.js: デフォルト空関数が実行されました')
-    }),
+    sendChatNotification: (() => {
+      const func = sendChatNotification || (() => {
+        console.log('🚫 usePushNotifications.js: デフォルト空関数が実行されました')
+      })
+      func._source = 'usePushNotifications.js'
+      func._timestamp = Date.now()
+      return func
+    })(),
     showNotification: showNotification || (() => {})
   }
 }
