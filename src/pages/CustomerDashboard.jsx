@@ -291,15 +291,14 @@ const CustomerDashboard = () => {
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-red-800">🔥 今初回ほしいです</h4>
                 <div className="text-right">
-                  <div className="text-sm text-gray-600">
-                    {store.first_request_limit === 0 ? '利用不可' : 
-                     `残り: ${Math.max(0, store.first_request_limit - monthlyRequestCount)}回`}
+                  <div className="text-sm text-gray-500">
+                    🚧 近日解禁
                   </div>
                 </div>
               </div>
               
-              {/* アクティブなリクエスト表示 */}
-              {activeRequest && (
+              {/* アクティブなリクエスト表示 - 近日解禁により非表示 */}
+              {false && activeRequest && (
                 <div className={`mb-3 p-3 border rounded-md ${
                   activeRequest.is_consumed 
                     ? 'bg-green-100 border-green-200' 
@@ -335,15 +334,15 @@ const CustomerDashboard = () => {
                 </div>
               )}
               
+              <div className="text-xs text-gray-600 mb-3 text-center">
+                この機能は現在準備中です。近日中に利用可能になります。
+              </div>
+              
               <button
-                onClick={() => handleFirstTimeRequest()}
-                disabled={loading || store.first_request_limit === 0 || monthlyRequestCount >= store.first_request_limit}
-                className="w-full py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={true}
+                className="w-full py-3 bg-gray-400 text-white rounded-md cursor-not-allowed"
               >
-                {loading ? '発信中...' : 
-                 store.first_request_limit === 0 ? '利用不可' :
-                 monthlyRequestCount >= store.first_request_limit ? 
-                 '今月の上限に達しました' : 'スタッフチャットに発信'}
+                🚧 近日解禁
               </button>
             </div>
 
