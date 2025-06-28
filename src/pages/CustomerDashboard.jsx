@@ -315,11 +315,15 @@ const CustomerDashboard = () => {
                       activeRequest.is_consumed ? 'text-green-600' : 'text-orange-600'
                     }`}>
                       {activeRequest.is_consumed 
-                        ? new Date(activeRequest.consumed_at).toLocaleTimeString('ja-JP', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: 'Asia/Tokyo'
-                          })
+                        ? (() => {
+                            const date = new Date(activeRequest.consumed_at)
+                            // 日本時間に変換（UTC + 9時間）
+                            const jpTime = new Date(date.getTime() + (9 * 60 * 60 * 1000))
+                            return jpTime.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          })()
                         : `残り: ${remainingTime || '計算中...'}`}
                     </span>
                   </div>

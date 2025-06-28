@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import VisitForm from '../components/VisitForm'
@@ -62,10 +62,19 @@ const StaffDashboard = () => {
     sendChatNotificationType: typeof pushNotifications?.sendChatNotification
   })
   
-  const sendChatNotification = pushNotifications?.sendChatNotification || (() => {
-    console.log('🚫🚫🚫 STAFF DEFAULT FUNCTION CALLED - プッシュ通知が無効化されています')
-    console.log('%c🔥 DEFAULT FUNCTION', 'background: orange; color: white; font-size: 16px;')
-  })
+  // sendChatNotificationを直接取得（デバッグログ付き）
+  const sendChatNotification = useCallback((message) => {
+    console.log('🚨🚨🚨 DIRECT sendChatNotification called!')
+    console.log('%c💀 DIRECT PUSH NOTIFICATION', 'background: red; color: white; font-size: 20px;')
+    
+    if (pushNotifications && pushNotifications.sendChatNotification) {
+      console.log('✅ pushNotifications.sendChatNotification found - calling...')
+      return pushNotifications.sendChatNotification(message)
+    } else {
+      console.log('❌ pushNotifications.sendChatNotification not found:', pushNotifications)
+      console.log('🚫🚫🚫 FALLBACK FUNCTION CALLED')
+    }
+  }, [pushNotifications])
 
   // 業務日ベースで今日の日付を取得する関数（25時切り替わり）
   const getTodayDateString = () => {
@@ -807,11 +816,15 @@ const StaffDashboard = () => {
                           )}
                         </div>
                         <span className="text-xs text-gray-400">
-                          {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: 'Asia/Tokyo'
-                          })}
+                          {(() => {
+                            const date = new Date(chat.created_at || chat.sent_at)
+                            // 日本時間に変換（UTC + 9時間）
+                            const jpTime = new Date(date.getTime() + (9 * 60 * 60 * 1000))
+                            return jpTime.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          })()}
                         </span>
                       </div>
                       <p className="text-xs leading-relaxed whitespace-pre-wrap">{chat.message}</p>

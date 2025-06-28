@@ -1192,11 +1192,15 @@ const AdminDashboard = () => {
                       )}
                     </div>
                     <span className="text-xs text-gray-400">
-                                                {new Date(chat.created_at || chat.sent_at).toLocaleTimeString('ja-JP', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            timeZone: 'Asia/Tokyo'
-                          })}
+                                                {(() => {
+                            const date = new Date(chat.created_at || chat.sent_at)
+                            // 日本時間に変換（UTC + 9時間）
+                            const jpTime = new Date(date.getTime() + (9 * 60 * 60 * 1000))
+                            return jpTime.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          })()}
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed whitespace-pre-wrap">{chat.message}</p>
