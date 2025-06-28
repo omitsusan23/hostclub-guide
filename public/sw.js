@@ -1,9 +1,7 @@
 // Service Worker for Push Notifications
-const CACHE_NAME = 'hostclub-guide-v1'
+const CACHE_NAME = 'hostclub-guide-v' + Date.now() // 開発中は毎回新しいキャッシュ
 const urlsToCache = [
   '/',
-  '/static/css/main.css',
-  '/static/js/main.js',
   '/manifest.json'
 ]
 
@@ -175,16 +173,12 @@ self.addEventListener('message', event => {
   }
 })
 
-// フェッチイベント（オフライン対応）
+// フェッチイベント（開発環境向け - ネットワーク優先）
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // キャッシュにあればそれを返す
-        if (response) {
-          return response
-        }
-        return fetch(event.request)
-      })
+    fetch(event.request).catch(() => {
+      // ネットワークエラー時のみキャッシュを使用
+      return caches.match(event.request)
+    })
   )
 }) 
