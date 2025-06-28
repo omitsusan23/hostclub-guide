@@ -301,9 +301,29 @@ export const usePushNotifications = (currentUser = null) => {
       }
 
       console.log('📝 通知オプション:', { notificationTitle, notificationOptions })
-      console.log('🔔 showNotification実行中...')
+      console.log('🔔 Service Workerに通知要請送信中...')
 
-      await currentRegistration.showNotification(notificationTitle, notificationOptions)
+      // Service Workerに通知送信を要請（iOS PWA対応）
+      if (currentRegistration && currentRegistration.active) {
+        currentRegistration.active.postMessage({
+          type: 'SEND_NOTIFICATION',
+          payload: {
+            title: notificationTitle,
+            body: notificationOptions.body,
+            icon: notificationOptions.icon,
+            badge: notificationOptions.badge,
+            vibrate: notificationOptions.vibrate,
+            tag: notificationOptions.tag,
+            data: notificationOptions.data,
+            actions: notificationOptions.actions
+          }
+        })
+        console.log('📨 Service Workerに通知要請送信完了')
+      } else {
+        // フォールバック: 直接通知表示
+        console.log('⚠️ Service Worker未対応 - 直接通知表示')
+        await currentRegistration.showNotification(notificationTitle, notificationOptions)
+      }
       
       console.log('✅ チャット通知を送信しました:', {
         title: notificationTitle,

@@ -67,52 +67,53 @@ function startHeartbeat() {
   }, 30000) // 30秒間隔
 }
 
-// プッシュ通知受信時
-self.addEventListener('push', event => {
-  console.log('📨 Push notification received:', event)
+// メッセージ受信（アプリからの通信・通知要請）
+self.addEventListener('message', event => {
+  console.log('💬 Message received in SW:', event.data)
   
-  const options = {
-    body: 'スタッフチャットに新しいメッセージがあります',
-    icon: '/icon-192x192.png',
-    badge: '/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1,
-      url: '/staff' // 通知タップ時の遷移先
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'チャットを確認',
-        icon: '/icon-192x192.png'
-      },
-      {
-        action: 'close',
-        title: '閉じる'
-      }
-    ]
-  }
-
-  if (event.data) {
-    try {
-      const payload = event.data.json()
-      options.title = payload.title || 'ホストクラブ案内所'
-      options.body = payload.body || options.body
-      options.data.url = payload.url || options.data.url
-      
-      if (payload.unreadCount) {
-        options.body = `新しいメッセージがあります (${payload.unreadCount}件)`
-        options.badge = `/badge-${Math.min(payload.unreadCount, 9)}.png` // 数字バッジ
-      }
-    } catch (e) {
-      console.log('📋 Using default notification options')
+  // 通知送信要請の処理
+  if (event.data && event.data.type === 'SEND_NOTIFICATION') {
+    console.log('🔔 Service Worker: 通知送信要請受信:', event.data.payload)
+    
+    const { title, body, icon, badge, vibrate, tag, data, actions } = event.data.payload
+    
+    const notificationOptions = {
+      body: body,
+      icon: icon || '/icon-192x192.png',
+      badge: badge || '/icon-72x72.png',
+      vibrate: vibrate || [100, 50, 100],
+      tag: tag,
+      data: data || {},
+      actions: actions || [
+        { action: 'open', title: '開く' },
+        { action: 'close', title: '閉じる' }
+      ],
+      requireInteraction: false,
+      silent: false,
+      renotify: true,
+      timestamp: Date.now()
     }
+    
+    console.log('📱 Service Worker: 通知表示実行:', { title, options: notificationOptions })
+    
+    self.registration.showNotification(title, notificationOptions)
+      .then(() => {
+        console.log('✅ Service Worker: 通知表示成功')
+      })
+      .catch((error) => {
+        console.error('❌ Service Worker: 通知表示エラー:', error)
+      })
+    
+    return
   }
-
-  event.waitUntil(
-    self.registration.showNotification('ホストクラブ案内所', options)
-  )
+  
+  // 既存機能の処理
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  } else if (event.data && event.data.type === 'RESTART_HEARTBEAT') {
+    console.log('🔄 Heartbeat 再開始要求')
+    startHeartbeat()
+  }
 })
 
 // 通知クリック時
@@ -161,17 +162,7 @@ self.addEventListener('notificationclick', event => {
   )
 })
 
-// メッセージ受信（メインアプリからの通信）
-self.addEventListener('message', event => {
-  console.log('💬 Message received in SW:', event.data)
-  
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  } else if (event.data && event.data.type === 'RESTART_HEARTBEAT') {
-    console.log('🔄 Heartbeat 再開始要求')
-    startHeartbeat()
-  }
-})
+
 
 // フェッチイベント（開発環境向け - ネットワーク優先）
 self.addEventListener('fetch', event => {
