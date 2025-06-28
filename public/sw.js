@@ -12,6 +12,9 @@ let heartbeatInterval = null
 let pollingInterval = null
 let lastCheckedMessageId = null
 
+// Wake Lock用の変数（Service Worker生存維持）
+let wakeLockInterval = null
+
 // Service Worker インストール時
 self.addEventListener('install', event => {
   console.log('🔧 Service Worker installing...')
@@ -37,14 +40,20 @@ self.addEventListener('activate', event => {
           }
         })
       )
+    }).then(() => {
+      // Heartbeat開始
+      startHeartbeat()
+      
+      // バックグラウンドポーリング開始
+      startBackgroundPolling()
+      
+      // Wake Lock開始（Service Worker生存維持）
+      startWakeLock()
+      
+      // Service Workerのコントロールを即座に取得
+      return self.clients.claim()
     })
   )
-  
-  // Heartbeat開始
-  startHeartbeat()
-  
-  // バックグラウンドポーリング開始
-  startBackgroundPolling()
 })
 
 // Heartbeat機能 - バックグラウンドでの接続保持
@@ -83,8 +92,19 @@ function startBackgroundPolling() {
     clearInterval(pollingInterval)
   }
   
+  // 即座に最初のチェックを実行
+  checkForNewMessages()
+  
   // 30秒間隔で新着メッセージをチェック
   pollingInterval = setInterval(async () => {
+    // Service Workerの生存確認
+    console.log('⏰ ポーリングタイマー発火 - Service Worker生存中')
+    checkForNewMessages()
+  }, 30000) // 30秒間隔
+}
+
+// 新着メッセージチェック処理を別関数に分離
+async function checkForNewMessages() {
     try {
       console.log('🔍 新着メッセージチェック中...')
       
@@ -148,7 +168,28 @@ function startBackgroundPolling() {
     } catch (error) {
       console.error('❌ バックグラウンドポーリングエラー:', error)
     }
-  }, 30000) // 30秒間隔
+}
+
+// Wake Lock機能 - Service Workerを生かし続ける
+function startWakeLock() {
+  console.log('🔒 Wake Lock 開始')
+  
+  // 既存のintervalがあれば停止
+  if (wakeLockInterval) {
+    clearInterval(wakeLockInterval)
+  }
+  
+  // 5秒間隔でダミーのfetchを実行（Service Workerを活性化）
+  wakeLockInterval = setInterval(() => {
+    // Service Workerを生かし続けるためのダミーアクティビティ
+    self.registration.update().catch(() => {})
+    
+    // 現在時刻をIndexedDBに保存（アクティビティとして）
+    const timestamp = Date.now()
+    caches.open('wake-lock-cache').then(cache => {
+      cache.put('last-active', new Response(timestamp.toString()))
+    }).catch(() => {})
+  }, 5000) // 5秒間隔
 }
 
 // プッシュ通知受信時（バックグラウンド用）
@@ -321,6 +362,20 @@ self.addEventListener('message', event => {
   } else if (event.data && event.data.type === 'RESTART_POLLING') {
     console.log('🔄 バックグラウンドポーリング再開始要求')
     startBackgroundPolling()
+  } else if (event.data && event.data.type === 'REGISTER_PERIODIC_SYNC') {
+    // Periodic Background Syncの登録
+    self.registration.ready.then(async registration => {
+      try {
+        if ('periodicSync' in registration) {
+          await registration.periodicSync.register('check-messages', {
+            minInterval: 30 * 1000 // 30秒
+          })
+          console.log('✅ Periodic sync registered')
+        }
+      } catch (error) {
+        console.log('❌ Periodic sync registration failed:', error)
+      }
+    })
   }
 })
 
@@ -380,4 +435,15 @@ self.addEventListener('fetch', event => {
       return caches.match(event.request)
     })
   )
-}) 
+})
+
+// Periodic Background Sync（もしブラウザがサポートしている場合）
+self.addEventListener('periodicsync', event => {
+  console.log('🔄 Periodic sync triggered:', event.tag)
+  
+  if (event.tag === 'check-messages') {
+    event.waitUntil(checkForNewMessages())
+  }
+})
+
+ 
