@@ -217,46 +217,45 @@ export const usePushNotifications = (currentUser = null) => {
     }
   }, [subscription])
 
-  // 新着チャットメッセージの通知を送信（useCallback削除版 - 常に最新状態を参照）
+  // 新着チャットメッセージの通知を送信（状態直接参照版 - クロージャ問題回避）
   const sendChatNotification = async (chatMessage) => {
     try {
-      // 確実に見えるログを出力
       console.log('🚨🚨🚨 usePushNotifications.js: sendChatNotification 確実に呼び出された!!')
       console.log('%c💀 REAL PUSH NOTIFICATION CALLED', 'background: red; color: white; font-size: 20px;')
-      console.error('🚨 FORCE ERROR LOG - usePushNotifications.js called!')  // errorログも追加
-      alert('🔔 REAL usePushNotifications.js function called!')  // アラートで確認
+      console.error('🚨 FORCE ERROR LOG - usePushNotifications.js called!')
+      alert('🔔 REAL usePushNotifications.js function called!')
       
-      console.log('🔔 sendChatNotification 開始:', {
+      // Service Worker状況を再確認
+      const serviceWorkerSupported = 'serviceWorker' in navigator && 'PushManager' in window
+      const currentPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default'
+      
+      // Service Worker登録を再取得
+      let currentRegistration = null
+      let currentSubscription = null
+      
+      if (serviceWorkerSupported) {
+        try {
+          currentRegistration = await navigator.serviceWorker.ready
+          currentSubscription = await currentRegistration.pushManager.getSubscription()
+        } catch (error) {
+          console.error('Service Worker状態取得エラー:', error)
+        }
+      }
+      
+      console.log('🔔 sendChatNotification 開始（リアルタイム状態）:', {
         chatMessage,
-        subscription: !!subscription,
-        permission,
+        serviceWorkerSupported,
+        currentPermission,
+        hasCurrentSubscription: !!currentSubscription,
         currentUser: currentUser?.id,
-        hasServiceWorker: 'serviceWorker' in navigator,
-        isInitialized,
-        isSupported
-      })
-      
-      console.log('🔍 最新状態チェック:', {
-        subscriptionType: typeof subscription,
-        subscriptionEndpoint: subscription?.endpoint?.substring(0, 50) + '...',
-        permissionReal: permission,
-        isInitializedReal: isInitialized,
-        isSupportedReal: isSupported,
-        currentUserReal: currentUser?.id
-      })
-      
-      console.log('🔍 関数内部デバッグ - パラメータ詳細:', {
-        chatMessageType: typeof chatMessage,
-        chatMessageKeys: chatMessage ? Object.keys(chatMessage) : null,
-        subscriptionExists: !!subscription,
-        permissionValue: permission,
-        currentUserExists: !!currentUser
+        hasRegistration: !!currentRegistration
       })
     
-    if (!subscription || permission !== 'granted' || !currentUser) {
-      console.log('🔕 Push通知が無効です:', {
-        hasSubscription: !!subscription,
-        permission,
+    // リアルタイム状態でチェック
+    if (!currentSubscription || currentPermission !== 'granted' || !currentUser) {
+      console.log('🔕 Push通知が無効です（リアルタイム状態）:', {
+        hasCurrentSubscription: !!currentSubscription,
+        currentPermission,
         hasCurrentUser: !!currentUser
       })
       return
@@ -276,16 +275,6 @@ export const usePushNotifications = (currentUser = null) => {
     try {
       const isFirstTimeRequest = chatMessage.message?.includes('今初回ほしいです')
       console.log('🔍 緊急要請判定:', { isFirstTimeRequest, message: chatMessage.message })
-      
-      // Service Worker の存在確認
-      if (!('serviceWorker' in navigator)) {
-        console.error('❌ Service Worker not supported')
-        return
-      }
-
-      console.log('📡 Service Worker ready取得中...')
-      const registration = await navigator.serviceWorker.ready
-      console.log('✅ Service Worker ready取得完了:', registration)
 
       const notificationTitle = isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ'
       const notificationOptions = {
@@ -310,7 +299,7 @@ export const usePushNotifications = (currentUser = null) => {
       console.log('📝 通知オプション:', { notificationTitle, notificationOptions })
       console.log('🔔 showNotification実行中...')
 
-      await registration.showNotification(notificationTitle, notificationOptions)
+      await currentRegistration.showNotification(notificationTitle, notificationOptions)
       
       console.log('✅ チャット通知を送信しました:', {
         title: notificationTitle,
