@@ -8,6 +8,10 @@ const urlsToCache = [
 // Heartbeat用の変数
 let heartbeatInterval = null
 
+// バックグラウンドポーリング用の変数
+let pollingInterval = null
+let lastCheckedMessageId = null
+
 // Service Worker インストール時
 self.addEventListener('install', event => {
   console.log('🔧 Service Worker installing...')
@@ -38,6 +42,9 @@ self.addEventListener('activate', event => {
   
   // Heartbeat開始
   startHeartbeat()
+  
+  // バックグラウンドポーリング開始
+  startBackgroundPolling()
 })
 
 // Heartbeat機能 - バックグラウンドでの接続保持
@@ -64,6 +71,83 @@ function startHeartbeat() {
     }).catch(error => {
       console.error('💓 Heartbeat エラー:', error)
     })
+  }, 30000) // 30秒間隔
+}
+
+// バックグラウンドポーリング機能 - 新着メッセージチェック
+function startBackgroundPolling() {
+  console.log('🔍 バックグラウンドポーリング開始')
+  
+  // 既存のintervalがあれば停止
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+  }
+  
+  // 30秒間隔で新着メッセージをチェック
+  pollingInterval = setInterval(async () => {
+    try {
+      console.log('🔍 新着メッセージチェック中...')
+      
+      // 最新のメッセージを取得
+      const response = await fetch('https://syabkrxefyqyfypsdezx.supabase.co/rest/v1/staff_chats?select=*&order=created_at.desc&limit=1', {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5YWJrcnhlZnlxeWZ5cHNkZXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzEyOTMsImV4cCI6MjA2NjAwNzI5M30.BVxJqBWHM42anvdL4mcUbtMdLI6RO0qXrCk_mwo_2Bk',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5YWJrcnhlZnlxeWZ5cHNkZXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzEyOTMsImV4cCI6MjA2NjAwNzI5M30.BVxJqBWHM42anvdL4mcUbtMdLI6RO0qXrCk_mwo_2Bk'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const latestMessage = data[0]
+        
+        // 新着メッセージがあり、前回チェックしたものと違う場合
+        if (latestMessage && latestMessage.id !== lastCheckedMessageId) {
+          console.log('🆕 新着メッセージ検知:', latestMessage)
+          
+          // 最後にチェックしたメッセージIDを更新
+          lastCheckedMessageId = latestMessage.id
+          
+          // 初回要請かどうかチェック
+          const isFirstTimeRequest = latestMessage.message && latestMessage.message.includes('今初回ほしいです')
+          
+          // 通知を表示
+          const title = isFirstTimeRequest ? '🔥 緊急要請' : '💬 新着メッセージ'
+          const body = `${latestMessage.sender_name}: ${latestMessage.message}`
+          
+          const notificationOptions = {
+            body: body,
+            icon: '/icon-192x192.png',
+            badge: '/icon-72x72.png',
+            vibrate: isFirstTimeRequest ? [200, 100, 200, 100, 200] : [100, 50, 100],
+            tag: `background-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            requireInteraction: false,
+            silent: false,
+            renotify: true,
+            timestamp: Date.now(),
+            data: {
+              dateOfArrival: Date.now(),
+              url: '/staff',
+              chatId: latestMessage.id,
+              urgent: isFirstTimeRequest
+            },
+            actions: [
+              { action: 'open', title: '開く' },
+              { action: 'close', title: '閉じる' }
+            ]
+          }
+          
+          console.log('📱 バックグラウンド通知表示:', { title, options: notificationOptions })
+          await self.registration.showNotification(title, notificationOptions)
+          console.log('✅ バックグラウンド通知表示成功')
+        } else {
+          console.log('📄 新着メッセージなし')
+        }
+      } else {
+        console.error('❌ API レスポンスエラー:', response.status)
+      }
+    } catch (error) {
+      console.error('❌ バックグラウンドポーリングエラー:', error)
+    }
   }, 30000) // 30秒間隔
 }
 
@@ -234,6 +318,9 @@ self.addEventListener('message', event => {
   } else if (event.data && event.data.type === 'RESTART_HEARTBEAT') {
     console.log('🔄 Heartbeat 再開始要求')
     startHeartbeat()
+  } else if (event.data && event.data.type === 'RESTART_POLLING') {
+    console.log('🔄 バックグラウンドポーリング再開始要求')
+    startBackgroundPolling()
   }
 })
 
