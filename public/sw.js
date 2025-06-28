@@ -1,5 +1,6 @@
-// Service Worker for Push Notifications
+// Service Worker for Push Notifications - Background Polling Version
 const CACHE_NAME = 'hostclub-guide-v' + Date.now() // 開発中は毎回新しいキャッシュ
+console.log('🚀 Service Worker ファイル読み込み - バックグラウンドポーリング版')
 const urlsToCache = [
   '/',
   '/manifest.json'
