@@ -231,7 +231,18 @@ export const usePushNotifications = (currentUser = null) => {
         subscription: !!subscription,
         permission,
         currentUser: currentUser?.id,
-        hasServiceWorker: 'serviceWorker' in navigator
+        hasServiceWorker: 'serviceWorker' in navigator,
+        isInitialized,
+        isSupported
+      })
+      
+      console.log('🔍 最新状態チェック:', {
+        subscriptionType: typeof subscription,
+        subscriptionEndpoint: subscription?.endpoint?.substring(0, 50) + '...',
+        permissionReal: permission,
+        isInitializedReal: isInitialized,
+        isSupportedReal: isSupported,
+        currentUserReal: currentUser?.id
       })
       
       console.log('🔍 関数内部デバッグ - パラメータ詳細:', {
@@ -323,7 +334,7 @@ export const usePushNotifications = (currentUser = null) => {
         stack: mainError.stack
       })
     }
-  }, [subscription, permission, currentUser, isInitialized])
+  }, []) // 依存配列を空にして、常に最新の状態を参照
 
   // ネイティブ通知を表示
   const showNotification = useCallback(async (options) => {
