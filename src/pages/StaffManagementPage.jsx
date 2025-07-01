@@ -13,7 +13,7 @@ const StaffManagementPage = () => {
   const [newStaff, setNewStaff] = useState({
     staff_id: '',
     display_name: '',
-    password: 'ryota123',
+    password: '',
     notes: ''
   })
   const [loading, setLoading] = useState(false)
@@ -68,6 +68,12 @@ const StaffManagementPage = () => {
       return
     }
 
+    if (!newStaff.password || newStaff.password.trim() === '') {
+      setMessage('パスワードは必須です')
+      setMessageType('error')
+      return
+    }
+
     setLoading(true)
     setMessage('')
     
@@ -88,7 +94,7 @@ const StaffManagementPage = () => {
         setNewStaff({
           staff_id: '',
           display_name: '',
-          password: 'ryota123',
+          password: '',
           notes: ''
         })
         
@@ -324,17 +330,18 @@ const StaffManagementPage = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                パスワード
+                パスワード <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={newStaff.password}
                 onChange={(e) => setNewStaff({...newStaff, password: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="ryota123"
+                placeholder="例: password123"
+                required
               />
               <p className="text-xs text-gray-500 mt-1">
-                スタッフがログインに使用するパスワードです
+                スタッフがログインに使用するパスワードです（必須）
               </p>
             </div>
             
@@ -357,7 +364,7 @@ const StaffManagementPage = () => {
               <div className="text-sm text-gray-600 space-y-1">
                 <div>📧 メール: {newStaff.staff_id ? `${newStaff.staff_id}@hostclub.local` : '（スタッフIDを入力してください）'}</div>
                 <div>👤 表示名: {newStaff.display_name || '（表示名を入力してください）'}</div>
-                <div>🔑 パスワード: {newStaff.password}</div>
+                <div>🔑 パスワード: {newStaff.password || '（パスワードを入力してください）'}</div>
                 <div>🌐 アクセスURL: https://staff.susukino-hostclub-guide.online</div>
               </div>
             </div>

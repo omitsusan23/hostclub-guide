@@ -5,15 +5,21 @@ import { supabase } from '../lib/supabase'
  */
 export const addStaffToDatabase = async (staffData) => {
   try {
+    // 空文字列をnullに変換する関数
+    const sanitizeValue = (value) => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
+
     const { data, error } = await supabase
       .from('staffs')
       .insert([{
-        staff_id: staffData.staff_id,
-        display_name: staffData.display_name,
-        email: staffData.email,
-        user_id: staffData.user_id,
-        notes: staffData.notes || '',
-        is_active: true
+        staff_id: sanitizeValue(staffData.staff_id),
+        display_name: sanitizeValue(staffData.display_name),
+        email: sanitizeValue(staffData.email),
+        user_id: sanitizeValue(staffData.user_id),
+        notes: sanitizeValue(staffData.notes) || '',
+        is_active: Boolean(staffData.is_active !== undefined ? staffData.is_active : true)
       }])
       .select()
 
@@ -104,14 +110,15 @@ export const addNewStaff = async (formData) => {
     }
 
     // パスワードの処理
-    const password = formData.password && formData.password.trim() !== '' 
-      ? formData.password.trim() 
-      : 'ryota123';
+    if (!formData.password || formData.password.trim() === '') {
+      return { success: false, error: 'パスワードは必須です' }
+    }
+    
+    const password = formData.password.trim();
     
     console.log('🔐 Password processing:', { 
       originalPassword: formData.password, 
-      finalPassword: password,
-      passwordChanged: password !== 'ryota123'
+      finalPassword: password
     });
 
     // 1. 認証ユーザーを作成
@@ -313,13 +320,19 @@ export const updateStaff = async (staffId, formData) => {
 
     console.log('📋 Current staff data:', currentStaff);
 
+    // 空文字列をnullに変換する関数
+    const sanitizeValue = (value) => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
+
     // データベース更新のためのデータを準備
     const updateData = {
-      staff_id: formData.staff_id,
-      display_name: formData.display_name,
-      email: `${formData.staff_id}@hostclub.local`,
-      notes: formData.notes || '',
-      is_active: formData.is_active !== undefined ? formData.is_active : true
+      staff_id: sanitizeValue(formData.staff_id),
+      display_name: sanitizeValue(formData.display_name),
+      email: formData.staff_id ? `${formData.staff_id}@hostclub.local` : null,
+      notes: sanitizeValue(formData.notes) || '',
+      is_active: Boolean(formData.is_active !== undefined ? formData.is_active : true)
     };
 
     console.log('📝 Update data prepared:', updateData);
