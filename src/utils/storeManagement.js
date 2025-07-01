@@ -48,7 +48,6 @@ export const addStoreToDatabase = async (storeData) => {
         store_phone: sanitizeValue(storeData.store_phone),
         first_request_limit: sanitizeNumber(storeData.first_request_limit),
         billing_address: sanitizeValue(storeData.billing_address),
-        visit_restriction: sanitizeValue(storeData.visit_restriction) || '20歳以上',
         visit_restriction: sanitizeValue(storeData.visit_restriction) || '20歳以上'
       }])
       .select()
@@ -265,7 +264,8 @@ export const updateStore = async (storeId, formData) => {
       hoshos_url: sanitizeValue(formData.hoshos_url),
       store_phone: sanitizeValue(formData.store_phone),
       first_request_limit: sanitizeNumber(formData.first_request_limit),
-      billing_address: sanitizeValue(formData.billing_address)
+      billing_address: sanitizeValue(formData.billing_address),
+      visit_restriction: sanitizeValue(formData.visit_restriction) || '20歳以上'
     };
 
     console.log('📝 Update data prepared:', updateData);
