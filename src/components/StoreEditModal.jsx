@@ -18,8 +18,7 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     hoshos_url: '',
     store_phone: '',
     first_request_limit: '',
-    billing_address: '',
-    visit_restriction: ''
+    billing_address: ''
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -186,6 +185,17 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     <option value="顔＝保険証＋キャッシュ">顔＝保険証＋キャッシュ</option>
                     <option value="顔＝保険証＋クレジット">顔＝保険証＋クレジット</option>
                     <option value="顔必須">顔必須</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">来店制限</label>
+                  <select
+                    value={formData.visit_restriction}
+                    onChange={(e) => setFormData({...formData, visit_restriction: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="20歳以上">20歳以上</option>
+                    <option value="18歳以上">18歳以上</option>
                   </select>
                 </div>
                 <div>

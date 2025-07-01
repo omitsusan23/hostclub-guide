@@ -406,6 +406,10 @@ const TodayOpenStoresPage = () => {
                     <div className="text-gray-900">{selectedStore.id_required || '未設定'}</div>
                   </div>
                   <div>
+                    <span className="font-medium text-gray-600">来店制限:</span>
+                    <div className="text-gray-900">{selectedStore.visit_restriction || '20歳以上'}</div>
+                  </div>
+                  <div>
                     <span className="font-medium text-gray-600">ホスホス:</span>
                     <div className="text-gray-900">
                       {selectedStore.hoshos_url ? (
