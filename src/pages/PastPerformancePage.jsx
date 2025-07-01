@@ -218,14 +218,14 @@ const PastPerformancePage = () => {
     const now = new Date()
     
     if (direction === 'prev') {
-      // 現在の月より前には行けない
-      if (newDate.getFullYear() < now.getFullYear() || 
-          (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() <= now.getMonth())) {
+      // 過去6ヶ月までは遡ることができる
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+      if (newDate <= sixMonthsAgo) {
         return
       }
       newDate.setMonth(newDate.getMonth() - 1)
     } else if (direction === 'next') {
-      // 来月には行けない
+      // 来月には行けない（現在月まで）
       if (newDate.getFullYear() > now.getFullYear() || 
           (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() >= now.getMonth())) {
         return
@@ -235,6 +235,9 @@ const PastPerformancePage = () => {
     
     setCurrentDate(newDate)
     setSelectedDate(null) // 選択日をリセット
+    
+    // 新しい月のデータを取得
+    fetchMonthlyData(newDate.getFullYear(), newDate.getMonth())
   }
 
   // 日付選択
@@ -363,14 +366,14 @@ const PastPerformancePage = () => {
     const now = new Date()
     
     if (direction === 'prev') {
-      // 現在の月より前には行けない
-      if (newDate.getFullYear() < now.getFullYear() || 
-          (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() <= now.getMonth())) {
+      // 過去6ヶ月までは遡ることができる
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+      if (newDate <= sixMonthsAgo) {
         return
       }
       newDate.setMonth(newDate.getMonth() - 1)
     } else if (direction === 'next') {
-      // 来月には行けない
+      // 来月には行けない（現在月まで）
       if (newDate.getFullYear() > now.getFullYear() || 
           (newDate.getFullYear() === now.getFullYear() && newDate.getMonth() >= now.getMonth())) {
         return
@@ -380,6 +383,11 @@ const PastPerformancePage = () => {
     
     setStoreCurrentDate(newDate)
     setStoreSelectedDate(null) // 選択日をリセット
+    
+    // 新しい月の店舗データを取得
+    if (selectedStore && effectiveRole) {
+      fetchStoreMonthlyData(selectedStore.store_id, newDate.getFullYear(), newDate.getMonth())
+    }
   }
 
   // 店舗選択
@@ -464,8 +472,12 @@ const PastPerformancePage = () => {
 
   const calendar = generateCalendarData()
   const now = new Date()
-  const canGoPrev = !(currentDate.getFullYear() < now.getFullYear() || 
-                     (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() <= now.getMonth()))
+  
+  // 過去6ヶ月までは遡ることができる
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+  const canGoPrev = currentDate > sixMonthsAgo
+  
+  // 来月には行けない（現在月まで）
   const canGoNext = !(currentDate.getFullYear() > now.getFullYear() || 
                      (currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() >= now.getMonth()))
 
@@ -685,11 +697,9 @@ const PastPerformancePage = () => {
                 <div className="flex justify-between items-center mb-6">
                   <button
                     onClick={() => changeStoreMonth('prev')}
-                    disabled={storeCurrentDate.getFullYear() < new Date().getFullYear() || 
-                             (storeCurrentDate.getFullYear() === new Date().getFullYear() && storeCurrentDate.getMonth() <= new Date().getMonth())}
+                    disabled={storeCurrentDate <= new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1)}
                     className={`p-2 rounded-lg transition-colors ${
-                      !(storeCurrentDate.getFullYear() < new Date().getFullYear() || 
-                       (storeCurrentDate.getFullYear() === new Date().getFullYear() && storeCurrentDate.getMonth() <= new Date().getMonth()))
+                      storeCurrentDate > new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1)
                         ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' 
                         : 'text-gray-300 cursor-not-allowed'
                     }`}
