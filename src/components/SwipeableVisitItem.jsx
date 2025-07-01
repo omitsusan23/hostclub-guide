@@ -81,8 +81,9 @@ const SwipeableVisitItem = ({ record, store, onDelete, isRecommended = false }) 
 
   // 削除ボタンクリック
   const handleDeleteClick = () => {
+    console.log('🗑️ SwipeableVisitItem 削除ボタンクリック:', { record, store });
     setIsDeleting(true);
-    onDelete(record, store?.name || record.store_id);
+    onDelete(record.id, store?.name || record.store_id);
   };
 
   // リセット（外部から呼び出し用）

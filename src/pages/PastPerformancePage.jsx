@@ -249,13 +249,15 @@ const PastPerformancePage = () => {
   }
 
   // 削除確認
-  const handleDeleteRequest = (recordId) => {
+  const handleDeleteRequest = (recordId, storeName) => {
+    console.log('🗑️ 削除確認モーダル表示:', { recordId, storeName, userRole })
     const record = selectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
+    console.log('📋 削除対象記録:', { record, store })
     setDeleteModal({
       isOpen: true,
       recordId,
-      storeName: store?.name || '不明な店舗',
+      storeName: storeName || store?.name || '不明な店舗',
       isStoreView: false
     })
   }
@@ -430,8 +432,10 @@ const PastPerformancePage = () => {
 
   // 店舗カレンダーの削除確認
   const handleStoreDeleteRequest = (recordId) => {
+    console.log('🗑️ 店舗カレンダー削除確認モーダル表示:', { recordId, userRole })
     const record = storeSelectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
+    console.log('📋 店舗カレンダー削除対象記録:', { record, store })
     setDeleteModal({
       isOpen: true,
       recordId,
@@ -442,10 +446,13 @@ const PastPerformancePage = () => {
 
   // 店舗カレンダーの削除実行
   const handleStoreConfirmDelete = async () => {
+    console.log('🗑️ 店舗カレンダー削除実行開始:', { recordId: deleteModal.recordId, userRole })
     try {
       const result = await deleteVisitRecord(deleteModal.recordId)
+      console.log('🗑️ 店舗カレンダー削除結果:', result)
       
       if (result.success) {
+        console.log('✅ 店舗カレンダー削除成功 - ローカル状態更新中...')
         // 選択中の記録リストから削除
         setStoreSelectedRecords(prev => prev.filter(r => r.id !== deleteModal.recordId))
         
@@ -460,13 +467,16 @@ const PastPerformancePage = () => {
         
         if (result.restoredRequests > 0) {
           alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
+        } else {
+          alert('✅ 案内記録を削除しました')
         }
       } else {
+        console.error('❌ 店舗カレンダー削除失敗:', result.error)
         alert('❌ 削除に失敗しました: ' + result.error)
       }
     } catch (error) {
-      console.error('削除エラー:', error)
-      alert('削除に失敗しました')
+      console.error('❌ 店舗カレンダー削除例外:', error)
+      alert('❌ 削除に失敗しました: ' + error.message)
     }
   }
 

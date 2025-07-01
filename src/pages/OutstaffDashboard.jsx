@@ -141,7 +141,8 @@ const OutstaffDashboard = () => {
 
 
   // 削除確認モーダルを開く
-  const handleDeleteRequest = (record, storeName) => {
+  const handleDeleteRequest = (recordId, storeName) => {
+    const record = todayRecords.find(r => r.id === recordId)
     setDeleteModal({
       isOpen: true,
       record: record,
