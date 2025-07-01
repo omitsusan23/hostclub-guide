@@ -14,7 +14,7 @@ const PastPerformancePage = () => {
   const [stores, setStores] = useState([])
   const [monthlyData, setMonthlyData] = useState({})
   const [loading, setLoading] = useState(true)
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, recordId: null, storeName: '' })
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, recordId: null, storeName: '', isStoreView: false })
   
   // 店舗別案内実績用の状態
   const [selectedStore, setSelectedStore] = useState(null)
@@ -245,16 +245,15 @@ const PastPerformancePage = () => {
     setSelectedDate(date)
   }
 
-  // 削除確認（adminの場合は無効）
+  // 削除確認
   const handleDeleteRequest = (recordId) => {
-    if (userRole === 'admin') return // adminは削除不可
-    
     const record = selectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
     setDeleteModal({
       isOpen: true,
       recordId,
-      storeName: store?.name || '不明な店舗'
+      storeName: store?.name || '不明な店舗',
+      isStoreView: false
     })
   }
 
@@ -274,7 +273,7 @@ const PastPerformancePage = () => {
           [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
         }))
         
-        setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+        setDeleteModal({ isOpen: false, recordId: null, storeName: '', isStoreView: false })
         
         if (result.restoredRequests > 0) {
           alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
@@ -289,7 +288,7 @@ const PastPerformancePage = () => {
   }
 
   const handleCancelDelete = () => {
-    setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+    setDeleteModal({ isOpen: false, recordId: null, storeName: '', isStoreView: false })
   }
 
   // 店舗別案内実績用の関数群
@@ -421,16 +420,15 @@ const PastPerformancePage = () => {
     return stores.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
   }
 
-  // 店舗カレンダーの削除確認（adminの場合は無効）
+  // 店舗カレンダーの削除確認
   const handleStoreDeleteRequest = (recordId) => {
-    if (userRole === 'admin') return // adminは削除不可
-    
     const record = storeSelectedRecords.find(r => r.id === recordId)
     const store = stores.find(s => s.store_id === record?.store_id)
     setDeleteModal({
       isOpen: true,
       recordId,
-      storeName: store?.name || '不明な店舗'
+      storeName: store?.name || '不明な店舗',
+      isStoreView: true
     })
   }
 
@@ -450,7 +448,7 @@ const PastPerformancePage = () => {
           [selectedDateStr]: prev[selectedDateStr]?.filter(r => r.id !== deleteModal.recordId) || []
         }))
         
-        setDeleteModal({ isOpen: false, recordId: null, storeName: '' })
+        setDeleteModal({ isOpen: false, recordId: null, storeName: '', isStoreView: false })
         
         if (result.restoredRequests > 0) {
           alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
@@ -946,7 +944,7 @@ const PastPerformancePage = () => {
         {/* 削除確認モーダル */}
         <DeleteConfirmModal
           isOpen={deleteModal.isOpen}
-          onConfirm={deleteModal.recordId ? handleStoreConfirmDelete : handleConfirmDelete}
+          onConfirm={deleteModal.isStoreView ? handleStoreConfirmDelete : handleConfirmDelete}
           onCancel={handleCancelDelete}
           itemName={deleteModal.storeName}
         />

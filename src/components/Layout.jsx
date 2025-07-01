@@ -135,8 +135,8 @@ const Layout = ({ children }) => {
               {/* {user && showChatNotifications && (
                 <PushNotificationSettings compact={true} />
               )} */}
-              
-              {/* ログアウトボタン */}
+
+            {/* ログアウトボタン */}
               {user && (
                 <button
                   onClick={handleLogout}

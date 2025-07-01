@@ -152,8 +152,8 @@ export const AppProvider = ({ children }) => {
       
       if (currentSession) {
         console.log('📤 ログアウト実行中...')
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
         console.log('✅ ログアウト成功')
       } else {
         console.log('ℹ️ セッションが存在しないため、ローカル状態のみクリア')

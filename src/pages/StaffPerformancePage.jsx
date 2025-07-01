@@ -126,11 +126,8 @@ const StaffPerformancePage = () => {
 
 
 
-  // 削除確認モーダルを開く（adminの場合は無効）
+  // 削除確認モーダルを開く
   const handleDeleteRequest = (record, storeName) => {
-    const userRole = getUserRole()
-    if (userRole === 'admin') return // adminは削除不可
-    
     setDeleteModal({
       isOpen: true,
       record: record,
@@ -144,16 +141,16 @@ const StaffPerformancePage = () => {
       const result = await deleteVisitRecord(deleteModal.record.id)
       
       if (result.success) {
-        // ローカル状態から削除
-        setTodayRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
-        
-        // モーダルを閉じる
-        setDeleteModal({ isOpen: false, record: null, storeName: '' })
-        
+      // ローカル状態から削除
+      setTodayRecords(prev => prev.filter(record => record.id !== deleteModal.record.id))
+      
+      // モーダルを閉じる
+      setDeleteModal({ isOpen: false, record: null, storeName: '' })
+      
         if (result.restoredRequests > 0) {
           alert(`✅ 案内記録を削除しました。店舗の残り回数を ${result.restoredRequests} 回復元しました。`)
         } else {
-          alert('✅ 案内記録を削除しました')
+      alert('✅ 案内記録を削除しました')
         }
       } else {
         alert('❌ 削除に失敗しました: ' + result.error)
