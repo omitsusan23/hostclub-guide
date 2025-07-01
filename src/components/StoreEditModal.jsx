@@ -8,6 +8,7 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     close_time: '',
     base_fee: '',
     id_required: '',
+    visit_restriction: '',
     male_price: '',
     panel_fee: '',
     guarantee_count: '',
@@ -17,7 +18,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     hoshos_url: '',
     store_phone: '',
     first_request_limit: '',
-    billing_address: ''
+    billing_address: '',
+    visit_restriction: ''
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -38,6 +40,7 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         close_time: formatTime(store.close_time),
         base_fee: store.base_fee,
         id_required: store.id_required,
+        visit_restriction: store.visit_restriction || '20歳以上',
         male_price: store.male_price,
         panel_fee: store.panel_fee,
         guarantee_count: store.guarantee_count,

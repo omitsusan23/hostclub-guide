@@ -64,6 +64,10 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
                 <p className="mt-1 text-sm text-gray-900">{store.id_required || '未設定'}</p>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700">来店制限</label>
+                <p className="mt-1 text-sm text-gray-900">{store.visit_restriction || '20歳以上'}</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700">ホスホス</label>
                 <div className="mt-1">
                   {store.hoshos_url ? (
