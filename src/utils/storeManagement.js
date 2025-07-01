@@ -17,23 +17,37 @@ const createAdminClient = () => {
  */
 export const addStoreToDatabase = async (storeData) => {
   try {
+    // 空文字列をnullに変換する関数
+    const sanitizeValue = (value) => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
+
+    // 数値フィールドの処理
+    const sanitizeNumber = (value) => {
+      if (value === '' || value === undefined || value === null) return 0
+      return parseInt(value) || 0
+    }
+
     const { data, error } = await supabase
       .from('stores')
       .insert([{
         name: storeData.name,
         store_id: storeData.store_id,
-        open_time: storeData.open_time,
-        close_time: storeData.close_time,
-        base_fee: storeData.base_fee,
-        id_required: storeData.id_required,
-        male_price: storeData.male_price,
-        panel_fee: storeData.panel_fee,
-        guarantee_count: storeData.guarantee_count,
-        under_guarantee_penalty: storeData.under_guarantee_penalty,
-        charge_per_person: storeData.charge_per_person,
-        is_transfer: storeData.is_transfer,
-        hoshos_url: storeData.hoshos_url,
-        store_phone: storeData.store_phone
+        open_time: sanitizeValue(storeData.open_time),
+        close_time: sanitizeValue(storeData.close_time),
+        base_fee: sanitizeNumber(storeData.base_fee),
+        id_required: sanitizeValue(storeData.id_required) || '顔＝保険証＋キャッシュ',
+        male_price: sanitizeNumber(storeData.male_price),
+        panel_fee: sanitizeNumber(storeData.panel_fee),
+        guarantee_count: sanitizeNumber(storeData.guarantee_count),
+        under_guarantee_penalty: sanitizeNumber(storeData.under_guarantee_penalty),
+        charge_per_person: sanitizeNumber(storeData.charge_per_person),
+        is_transfer: Boolean(storeData.is_transfer),
+        hoshos_url: sanitizeValue(storeData.hoshos_url),
+        store_phone: sanitizeValue(storeData.store_phone),
+        first_request_limit: sanitizeNumber(storeData.first_request_limit),
+        billing_address: sanitizeValue(storeData.billing_address)
       }])
       .select()
 
@@ -220,23 +234,36 @@ export const updateStore = async (storeId, formData) => {
       return { success: false, error: 'この店舗IDは既に他の店舗で使用されています' }
     }
 
+    // 空文字列をnullに変換する関数
+    const sanitizeValue = (value) => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
+
+    // 数値フィールドの処理
+    const sanitizeNumber = (value) => {
+      if (value === '' || value === undefined || value === null) return 0
+      return parseInt(value) || 0
+    }
+
     // データベース更新のためのデータを準備
     const updateData = {
       name: formData.name,
       store_id: formData.store_id,
-      open_time: formData.open_time,
-      close_time: formData.close_time,
-      base_fee: formData.base_fee,
-      id_required: formData.id_required,
-      male_price: formData.male_price,
-      panel_fee: formData.panel_fee,
-      guarantee_count: formData.guarantee_count,
-      under_guarantee_penalty: formData.under_guarantee_penalty,
-      charge_per_person: formData.charge_per_person,
-      is_transfer: formData.is_transfer,
-      hoshos_url: formData.hoshos_url,
-      store_phone: formData.store_phone,
-      first_request_limit: formData.first_request_limit
+      open_time: sanitizeValue(formData.open_time),
+      close_time: sanitizeValue(formData.close_time),
+      base_fee: sanitizeNumber(formData.base_fee),
+      id_required: sanitizeValue(formData.id_required) || '顔＝保険証＋キャッシュ',
+      male_price: sanitizeNumber(formData.male_price),
+      panel_fee: sanitizeNumber(formData.panel_fee),
+      guarantee_count: sanitizeNumber(formData.guarantee_count),
+      under_guarantee_penalty: sanitizeNumber(formData.under_guarantee_penalty),
+      charge_per_person: sanitizeNumber(formData.charge_per_person),
+      is_transfer: Boolean(formData.is_transfer),
+      hoshos_url: sanitizeValue(formData.hoshos_url),
+      store_phone: sanitizeValue(formData.store_phone),
+      first_request_limit: sanitizeNumber(formData.first_request_limit),
+      billing_address: sanitizeValue(formData.billing_address)
     };
 
     console.log('📝 Update data prepared:', updateData);

@@ -47,7 +47,6 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         hoshos_url: store.hoshos_url,
         store_phone: store.store_phone,
         first_request_limit: store.first_request_limit,
-        billing_address: store.billing_address || '',
         billing_address: store.billing_address || ''
       };
       console.log('📝 New form data:', newFormData);
