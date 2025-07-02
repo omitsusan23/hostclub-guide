@@ -9,7 +9,44 @@ const PasswordChange = ({ onClose }) => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const { updatePassword } = useApp()
+  const { updatePassword, hasAdminPermissions, getUserRole } = useApp()
+
+  // 管理者権限チェック
+  if (!hasAdminPermissions()) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">🚫 アクセス拒否</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+            <div className="bg-red-50 text-red-600 p-4 rounded-md">
+              <div className="font-medium mb-2">パスワード変更権限がありません</div>
+              <div className="text-sm">
+                <p>• 現在のロール: {getUserRole()}</p>
+                <p>• パスワード変更は管理者のみ実行可能です</p>
+                <p>• 管理者にお問い合わせください</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={onClose}
+                className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()

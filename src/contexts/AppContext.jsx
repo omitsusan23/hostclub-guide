@@ -180,17 +180,34 @@ export const AppProvider = ({ children }) => {
     }
   }
 
-  // パスワード更新
+  // パスワード更新（管理者権限必須）
   const updatePassword = async (newPassword) => {
     try {
+      // 管理者権限チェック - 管理者以外はパスワード変更を禁止
+      if (!hasAdminPermissions()) {
+        console.error('❌ パスワード変更権限なし:', {
+          userRole: getUserRole(),
+          userStaff: userStaff,
+          hasAdminPermissions: hasAdminPermissions()
+        })
+        return { 
+          data: null, 
+          error: { message: 'パスワード変更権限がありません。管理者にお問い合わせください。' }
+        }
+      }
+
+      console.log('🔐 管理者権限確認済み - パスワード更新実行')
+      
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       })
       
       if (error) throw error
       
+      console.log('✅ パスワード更新成功')
       return { data, error: null }
     } catch (error) {
+      console.error('❌ パスワード更新エラー:', error)
       return { data: null, error }
     }
   }
