@@ -431,15 +431,14 @@ const PastPerformancePage = () => {
   }
 
   // 店舗カレンダーの削除確認
-  const handleStoreDeleteRequest = (recordId) => {
-    console.log('🗑️ 店舗カレンダー削除確認モーダル表示:', { recordId, userRole })
-    const record = storeSelectedRecords.find(r => r.id === recordId)
+  const handleStoreDeleteRequest = (record, storeName) => {
+    console.log('🗑️ 店舗カレンダー削除確認モーダル表示:', { record, userRole })
     const store = stores.find(s => s.store_id === record?.store_id)
     console.log('📋 店舗カレンダー削除対象記録:', { record, store })
     setDeleteModal({
       isOpen: true,
-      recordId,
-      storeName: store?.name || '不明な店舗',
+      recordId: record.id,
+      storeName: storeName || store?.name || '不明な店舗',
       isStoreView: true
     })
   }
