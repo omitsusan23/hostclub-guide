@@ -142,7 +142,7 @@ const OutstaffDashboard = () => {
 
   // 削除確認モーダルを開く
   const handleDeleteRequest = (recordId, storeName) => {
-    const record = todayRecords.find(r => r.id === recordId)
+    const record = visitRecords.find(r => r.id === recordId)
     setDeleteModal({
       isOpen: true,
       record: record,
@@ -275,6 +275,35 @@ const OutstaffDashboard = () => {
 
         {/* メインコンテンツ */}
         <div className="space-y-6">
+          {/* 本日の案内実績 */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              📋 本日の案内実績
+            </h3>
+            
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {visitRecords.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  本日の案内記録はまだありません
+                </p>
+              ) : (
+                visitRecords.map((record) => {
+                  const store = stores.find(s => s.store_id === record.store_id)
+                  
+                  return (
+                    <SwipeableVisitItem
+                      key={record.id}
+                      record={record}
+                      store={store}
+                      onDelete={handleDeleteRequest}
+                      isRecommended={record.store_was_recommended}
+                    />
+                  )
+                })
+              )}
+            </div>
+          </div>
+
           {/* 担当可能店舗一覧 */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
