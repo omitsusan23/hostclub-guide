@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '375px', // iPhone 16 Pro未満の小さなデバイス用
+      },
       colors: {
         primary: {
           50: '#eff6ff',

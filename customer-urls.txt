@@ -1,0 +1,62 @@
+# 全Customer URL一覧（コピペ用）
+
+## メインドメイン: susukino-hostclub-guide.online
+
+https://ace.susukino-hostclub-guide.online
+https://air.susukino-hostclub-guide.online
+https://alive.susukino-hostclub-guide.online
+https://almond.susukino-hostclub-guide.online
+https://aqua.susukino-hostclub-guide.online
+https://arkluxe.susukino-hostclub-guide.online
+https://atom.susukino-hostclub-guide.online
+https://belleclub.susukino-hostclub-guide.online
+https://berry.susukino-hostclub-guide.online
+https://butler.susukino-hostclub-guide.online
+https://cloudnine.susukino-hostclub-guide.online
+https://earth.susukino-hostclub-guide.online
+https://fk.susukino-hostclub-guide.online
+https://galaxy.susukino-hostclub-guide.online
+https://gallery.susukino-hostclub-guide.online
+https://gift.susukino-hostclub-guide.online
+https://gran.susukino-hostclub-guide.online
+https://hrs.susukino-hostclub-guide.online
+https://kings.susukino-hostclub-guide.online
+https://love.susukino-hostclub-guide.online
+https://lunaipro.susukino-hostclub-guide.online
+https://micheles.susukino-hostclub-guide.online
+https://mrsapporo.susukino-hostclub-guide.online
+https://newbirth.susukino-hostclub-guide.online
+https://no9sapporo.susukino-hostclub-guide.online
+https://party.susukino-hostclub-guide.online
+https://phantom.susukino-hostclub-guide.online
+https://rampage.susukino-hostclub-guide.online
+https://rberu.susukino-hostclub-guide.online
+https://rberusapporo.susukino-hostclub-guide.online
+https://remake.susukino-hostclub-guide.online
+https://sifir.susukino-hostclub-guide.online
+https://sirius.susukino-hostclub-guide.online
+https://star.susukino-hostclub-guide.online
+https://start.susukino-hostclub-guide.online
+https://storm.susukino-hostclub-guide.online
+https://topdandysapporo.susukino-hostclub-guide.online
+https://urvanity.susukino-hostclub-guide.online
+https://valencia.susukino-hostclub-guide.online
+https://venus.susukino-hostclub-guide.online
+https://white.susukino-hostclub-guide.online
+https://yoox.susukino-hostclub-guide.online
+https://zeal.susukino-hostclub-guide.online
+
+## 別ドメイン: hostclub-tableststus.com
+
+https://sapporo-rberu.hostclub-tableststus.com
+
+## 管理系URL（参考）
+
+https://admin.susukino-hostclub-guide.online
+https://staff.susukino-hostclub-guide.online
+https://outstaff.susukino-hostclub-guide.online
+
+## 総数
+- Customer URL: 44個
+- 管理系URL: 3個
+- 合計: 47個

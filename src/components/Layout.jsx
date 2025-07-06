@@ -55,23 +55,23 @@ const Layout = ({ children }) => {
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          <div className="flex items-center h-12 sm:h-16">
+        <div className="max-w-7xl mx-auto px-1 xs:px-2 sm:px-4 lg:px-8">
+          <div className="flex items-center h-10 xs:h-12 sm:h-16">
             {/* 戻るボタンエリア（常に固定幅を確保） */}
-            <div className="flex items-center w-8 sm:w-12">
+            <div className="flex items-center w-6 xs:w-8 sm:w-12">
               {!isTopPage() && user ? (
                 <button
                   onClick={handleBack}
-                  className="p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  className="p-0.5 xs:p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                   title="前のページに戻る"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
               ) : (
                 // トップページでもスペースを確保するための透明な要素
-                <div className="w-4 h-4 sm:w-5 sm:h-5"></div>
+                <div className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5"></div>
               )}
             </div>
 
@@ -80,21 +80,23 @@ const Layout = ({ children }) => {
               <h1 className="font-bold text-gray-900">
                 {/* デスクトップ表示 */}
                 <span className="hidden sm:inline text-xl">すすきの ホストクラブ案内所</span>
-                {/* モバイル表示（2段） */}
-                <div className="sm:hidden text-xs leading-tight">
-                  <div>すすきのホストクラブ</div>
-                  <div style={{marginLeft: '3em'}}>無料案内所</div>
+                {/* タブレット表示 */}
+                <span className="hidden xs:inline sm:hidden text-sm">すすきの ホストクラブ案内所</span>
+                {/* 小さいスマホ表示（2段・小さめ） */}
+                <div className="xs:hidden text-xs leading-tight">
+                  <div className="text-[10px]">すすきのホスト</div>
+                  <div className="text-[10px]" style={{marginLeft: '2.5em'}}>無料案内所</div>
                 </div>
               </h1>
               {user && (
                 <div className="flex items-center ml-1 sm:ml-4">
-                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  <span className="px-1 py-0.5 bg-blue-100 text-blue-800 text-[10px] xs:text-xs rounded-full">
                     {getUserRole() === 'admin' && '管理者'}
                     {getUserRole() === 'staff' && 'スタッフ'}
-                    {getUserRole() === 'outstaff' && 'アウトスタッフ'}
+                    {getUserRole() === 'outstaff' && 'アウト'}
                     {getUserRole() === 'customer' && '店舗'}
                   </span>
-                  <span className="ml-1 text-xs text-gray-700 truncate max-w-[60px]">
+                  <span className="ml-1 text-[10px] xs:text-xs text-gray-700 truncate max-w-[45px] xs:max-w-[60px]">
                     {getDisplayName()}
                   </span>
                 </div>
@@ -102,7 +104,7 @@ const Layout = ({ children }) => {
             </div>
 
             {/* 通知とログアウト */}
-            <div className="flex items-center ml-2 space-x-2">
+            <div className="flex items-center ml-1 xs:ml-2 space-x-1 xs:space-x-2">
               {/* スタッフチャット通知 */}
               {user && showChatNotifications && (
                 <button
@@ -116,15 +118,15 @@ const Layout = ({ children }) => {
                       navigate('/staff')
                     }
                   }}
-                  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  className="relative p-1 xs:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                   title="スタッフチャット"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.945 8.945 0 01-4.951-1.488c-1.035.124-2.091.193-3.161.193C3.635 18.705 2 17.07 2 15.121c0-.8.168-1.56.468-2.248L3 12a9 9 0 1118 0z" />
                   </svg>
                   {/* 未読数バッジ */}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] xs:text-xs rounded-full min-w-[16px] xs:min-w-[18px] h-[16px] xs:h-[18px] flex items-center justify-center px-1">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
@@ -140,7 +142,7 @@ const Layout = ({ children }) => {
               {user && (
                 <button
                   onClick={handleLogout}
-                  className="px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="px-1.5 py-0.5 xs:px-2 xs:py-1 sm:px-4 sm:py-2 text-[10px] xs:text-xs sm:text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                   ログアウト
                 </button>

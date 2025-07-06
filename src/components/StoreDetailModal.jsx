@@ -137,6 +137,18 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
                   {store.billing_address || '未設定'}
                 </p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">外案内</label>
+                <p className="mt-1 text-sm text-gray-900">
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    store.outstaff_accessible 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {store.outstaff_accessible ? 'あり' : 'なし'}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
 

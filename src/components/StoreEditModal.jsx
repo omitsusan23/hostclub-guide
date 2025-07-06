@@ -18,7 +18,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
     hoshos_url: '',
     store_phone: '',
     first_request_limit: '',
-    billing_address: ''
+    billing_address: '',
+    outstaff_accessible: false
   });
 
   // store propsが変更されたらフォームデータを更新
@@ -49,7 +50,8 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
         hoshos_url: store.hoshos_url,
         store_phone: store.store_phone,
         first_request_limit: store.first_request_limit,
-        billing_address: store.billing_address || ''
+        billing_address: store.billing_address || '',
+        outstaff_accessible: store.outstaff_accessible || false
       };
       console.log('📝 New form data:', newFormData);
       setFormData(newFormData);
@@ -318,6 +320,18 @@ const StoreEditModal = ({ isOpen, store, onSave, onClose, loading }) => {
                     placeholder="例：株式会社○○ 経理部 △△様"
                   />
                   <p className="text-xs text-gray-500 mt-1">請求書に記載される宛名を設定してください</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">外案内</label>
+                  <select
+                    value={formData.outstaff_accessible}
+                    onChange={(e) => setFormData({...formData, outstaff_accessible: e.target.value === 'true'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={false}>なし</option>
+                    <option value={true}>あり</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">アウトスタッフが案内可能かどうかを設定</p>
                 </div>
               </div>
             </div>
