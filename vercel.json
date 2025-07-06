@@ -1,9 +1,7 @@
 {
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/mcp", "destination": "/api/mcp.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
