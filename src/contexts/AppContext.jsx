@@ -137,32 +137,23 @@ export const AppProvider = ({ children }) => {
   // ログイン
   const signIn = async (email, password) => {
     try {
-      // 現在のドメインとサブドメインを取得
+      // 現在のドメインとサブドメインを取得して情報表示
       const hostname = window.location.hostname
-      const currentDomain = hostname
       
-      // リダイレクト URL を動的に設定
-      let redirectTo = null
-      
-      // 本番環境でサブドメインがある場合
+      // 本番環境でサブドメインがある場合の情報表示
       if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
         const subdomain = hostname.split('.')[0]
         
-        // rberu などの店舗サブドメインの場合はそのドメインにリダイレクト
+        // rberu などの店舗サブドメインの場合は情報をログ出力
         if (subdomain !== 'admin' && subdomain !== 'staff' && subdomain !== 'outstaff') {
-          redirectTo = `https://${hostname}/dashboard`
-          console.log('🏪 店舗サブドメイン認証:', { subdomain, redirectTo })
+          console.log('🏪 店舗サブドメイン認証:', { subdomain, hostname })
         }
       }
       
+      // 認証オプション（リダイレクトURLは signInWithPassword では使用しない）
       const authOptions = {
         email,
         password,
-      }
-      
-      // リダイレクト URL が必要な場合は追加
-      if (redirectTo) {
-        console.log('🔄 カスタムリダイレクト設定:', redirectTo)
       }
       
       const { data, error } = await supabase.auth.signInWithPassword(authOptions)
