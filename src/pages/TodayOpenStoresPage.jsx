@@ -191,26 +191,10 @@ const TodayOpenStoresPage = () => {
     <Layout>
       <div className="max-w-7xl mx-auto p-2 sm:p-4">
         {/* ヘッダー */}
-        <div className="mb-3 sm:mb-4 flex justify-between items-center">
+        <div className="mb-3 sm:mb-4">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             本日の営業店舗 {headerDateString}
           </h1>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                更新中...
-              </>
-            ) : (
-              <>
-                🔄 更新
-              </>
-            )}
-          </button>
         </div>
 
         {/* ローディング状態 */}
