@@ -63,7 +63,7 @@ async function updateRberuPassword() {
       const { data, error } = await supabase.auth.admin.updateUserById(
         user.id,
         {
-          password: 'hostclub123'
+          password: 'Rberu@2024!Strong'
         }
       );
 
@@ -72,7 +72,7 @@ async function updateRberuPassword() {
       } else {
         console.log(`✅ パスワードを更新しました`);
         console.log(`   Email: ${user.email}`);
-        console.log(`   新しいPassword: hostclub123`);
+        console.log(`   新しいPassword: Rberu@2024!Strong`);
       }
     }
 
