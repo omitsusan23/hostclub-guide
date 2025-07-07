@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './contexts/AppContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,7 +18,7 @@ import OutstaffStoreSettingsPage from './pages/OutstaffStoreSettingsPage'
 
 // ロールに基づいてダッシュボードにリダイレクトするコンポーネント
 const DashboardRedirect = () => {
-  const { getUserRole, loading } = useApp()
+  const { getUserRole, loading, getStoreIdFromSubdomain } = useApp()
   
   if (loading) {
     return (
@@ -29,6 +29,13 @@ const DashboardRedirect = () => {
   }
   
   const role = getUserRole()
+  const storeId = getStoreIdFromSubdomain()
+  
+  // サブドメインから店舗IDが取得できる場合は customer ロールを優先
+  if (storeId && (role === 'customer' || !role)) {
+    console.log('🏪 店舗サブドメインリダイレクト:', { storeId, role })
+    return <Navigate to="/customer" replace />
+  }
   
   switch (role) {
     case 'admin':
@@ -40,8 +47,43 @@ const DashboardRedirect = () => {
     case 'customer':
       return <Navigate to="/customer" replace />
     default:
+      // デフォルトではログイン画面に戻す
+      console.log('⚠️ 不明なロール、ログイン画面にリダイレクト:', { role, storeId })
       return <Navigate to="/login" replace />
   }
+}
+
+// 認証コールバック処理コンポーネント
+const AuthCallback = () => {
+  const { user, loading, getStoreIdFromSubdomain } = useApp()
+  
+  useEffect(() => {
+    if (!loading && user) {
+      const storeId = getStoreIdFromSubdomain()
+      
+      // サブドメインがある場合は適切なダッシュボードにリダイレクト
+      if (storeId) {
+        console.log('🔄 認証コールバック - 店舗ダッシュボードにリダイレクト:', storeId)
+        window.location.href = '/customer'
+      } else {
+        console.log('🔄 認証コールバック - 一般ダッシュボードにリダイレクト')
+        window.location.href = '/dashboard'
+      }
+    }
+  }, [user, loading, getStoreIdFromSubdomain])
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">認証処理中...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  return <Navigate to="/login" replace />
 }
 
 const AppRoutes = () => {
@@ -50,6 +92,19 @@ const AppRoutes = () => {
       <Routes>
         {/* パブリックルート */}
         <Route path="/login" element={<Login />} />
+        
+        {/* 認証コールバック */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        
+        {/* ルートアクセス時の自動リダイレクト */}
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <DashboardRedirect />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* ダッシュボードリダイレクト */}
         <Route 
@@ -177,16 +232,6 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'outstaff']}>
               <TodayOpenStoresPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* ルートパスは認証状態に応じてリダイレクト */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <DashboardRedirect />
             </ProtectedRoute>
           } 
         />

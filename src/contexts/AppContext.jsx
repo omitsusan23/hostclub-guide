@@ -137,15 +137,47 @@ export const AppProvider = ({ children }) => {
   // ログイン
   const signIn = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 現在のドメインとサブドメインを取得
+      const hostname = window.location.hostname
+      const currentDomain = hostname
+      
+      // リダイレクト URL を動的に設定
+      let redirectTo = null
+      
+      // 本番環境でサブドメインがある場合
+      if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
+        const subdomain = hostname.split('.')[0]
+        
+        // rberu などの店舗サブドメインの場合はそのドメインにリダイレクト
+        if (subdomain !== 'admin' && subdomain !== 'staff' && subdomain !== 'outstaff') {
+          redirectTo = `https://${hostname}/dashboard`
+          console.log('🏪 店舗サブドメイン認証:', { subdomain, redirectTo })
+        }
+      }
+      
+      const authOptions = {
         email,
         password,
-      })
+      }
+      
+      // リダイレクト URL が必要な場合は追加
+      if (redirectTo) {
+        console.log('🔄 カスタムリダイレクト設定:', redirectTo)
+      }
+      
+      const { data, error } = await supabase.auth.signInWithPassword(authOptions)
       
       if (error) throw error
       
+      console.log('✅ ログイン成功:', {
+        userEmail: data.user?.email,
+        userMetadata: data.user?.user_metadata,
+        subdomain: window.location.hostname.split('.')[0]
+      })
+      
       return { data, error: null }
     } catch (error) {
+      console.error('❌ ログインエラー:', error)
       return { data: null, error }
     }
   }
@@ -220,18 +252,30 @@ export const AppProvider = ({ children }) => {
 
   // ユーザーのロールを取得
   const getUserRole = () => {
-    if (!user) return null
+    // サブドメインベースの判定を優先
+    const subdomainRole = getRoleFromSubdomain()
     
-    // user_metadataからroleを取得、なければapp_metadata、最後にサブドメインから判定
-    const role = user.user_metadata?.role || user.app_metadata?.role || getRoleFromSubdomain()
-    console.log('🎭 getUserRole:', {
-      email: user.email,
-      userMetadataRole: user.user_metadata?.role,
-      appMetadataRole: user.app_metadata?.role,
-      subdomainRole: getRoleFromSubdomain(),
-      finalRole: role
-    })
-    return role
+    // rberu のような店舗サブドメインの場合は customer として扱う
+    if (subdomainRole === 'customer' && getStoreIdFromSubdomain()) {
+      console.log('🏪 サブドメインベース認証:', { 
+        subdomain: getStoreIdFromSubdomain(), 
+        role: 'customer' 
+      })
+      return 'customer'
+    }
+    
+    // ユーザーメタデータからロールを取得
+    if (user?.user_metadata?.role) {
+      return user.user_metadata.role
+    }
+    
+    // app_metadataからロールを取得（フォールバック）
+    if (user?.app_metadata?.role) {
+      return user.app_metadata.role
+    }
+    
+    // サブドメインベースの判定をフォールバックとして使用
+    return subdomainRole
   }
 
   // ユーザーの店舗IDを取得
