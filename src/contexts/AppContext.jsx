@@ -216,16 +216,16 @@ export const AppProvider = ({ children }) => {
   const getUserRole = () => {
     if (!user) return null
     
-    // app_metadataからroleを取得、なければサブドメインから判定
-    return user.app_metadata?.role || getRoleFromSubdomain()
+    // user_metadataからroleを取得、なければapp_metadata、最後にサブドメインから判定
+    return user.user_metadata?.role || user.app_metadata?.role || getRoleFromSubdomain()
   }
 
   // ユーザーの店舗IDを取得
   const getUserStoreId = () => {
     if (!user) return null
     
-    // app_metadataからstore_idを取得、なければサブドメインから取得
-    return user.app_metadata?.store_id || getStoreIdFromSubdomain()
+    // user_metadataからstore_idを取得、なければapp_metadata、最後にサブドメインから取得
+    return user.user_metadata?.store_id || user.app_metadata?.store_id || getStoreIdFromSubdomain()
   }
 
   // アクセス権限チェック（customerロールの場合のみstore_idをチェック）
