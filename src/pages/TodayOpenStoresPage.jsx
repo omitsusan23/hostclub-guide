@@ -30,87 +30,118 @@ const TodayOpenStoresPage = () => {
     )
   }
 
-  // データ取得
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError('')
+  // データ取得関数を独立させる
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError('')
 
-        // 本日の営業店舗と店舗状況を並行取得（outstaffフィルタリング対応）
-        const promises = [
-          getTodayOpenStores(userRole),
-          getAllStoresLatestStatus()
-        ]
+      // 本日の営業店舗と店舗状況を並行取得（outstaffフィルタリング対応）
+      const promises = [
+        getTodayOpenStores(userRole),
+        getAllStoresLatestStatus()
+      ]
 
-        // outstaffの場合は推奨店舗データも取得
-        if (userRole === 'outstaff') {
-          promises.push(getOutstaffRecommendations())
-        }
+      // outstaffの場合は推奨店舗データも取得
+      if (userRole === 'outstaff') {
+        promises.push(getOutstaffRecommendations())
+      }
 
-        const results = await Promise.all(promises)
-        const [storesResult, statusesResult, recommendationsResult] = results
+      const results = await Promise.all(promises)
+      const [storesResult, statusesResult, recommendationsResult] = results
 
-        if (!storesResult.success) {
-          throw new Error(storesResult.error)
-        }
+      if (!storesResult.success) {
+        throw new Error(storesResult.error)
+      }
 
-        setTotalStoresWithMonthlyUpdate(storesResult.totalStoresWithMonthlyUpdate || 0)
-        setStoreStatuses(statusesResult)
+      setTotalStoresWithMonthlyUpdate(storesResult.totalStoresWithMonthlyUpdate || 0)
+      setStoreStatuses(statusesResult)
 
-        // outstaffの場合、推奨店舗のSetを作成
-        if (userRole === 'outstaff' && recommendationsResult?.success) {
-          const recommended = new Set(
-            recommendationsResult.data
-              .filter(rec => rec.is_recommended)
-              .map(rec => rec.store_id)
-          )
-          setRecommendedStores(recommended)
-          
-          // outstaffの場合は特別な並び順を適用
-          if (storesResult.success) {
-            const sortedStores = [...storesResult.data].sort((a, b) => {
-              const aIsRecommended = recommended.has(a.store_id)
-              const bIsRecommended = recommended.has(b.store_id)
-              
-              // 1. 推奨店舗を上に
-              if (aIsRecommended && !bIsRecommended) return -1
-              if (!aIsRecommended && bIsRecommended) return 1
-              
-              // 2. 同じ推奨状態の場合は、残り保証人数差が多い順（保証なしは末尾）
-              const aGuaranteeShortfall = Math.max(0, (a.guarantee_count || 0) - (a.monthlyIntroductions || 0))
-              const bGuaranteeShortfall = Math.max(0, (b.guarantee_count || 0) - (b.monthlyIntroductions || 0))
-              
-              // 保証数が0の店舗は末尾
-              if ((a.guarantee_count || 0) === 0 && (b.guarantee_count || 0) > 0) return 1
-              if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) === 0) return -1
-              
-              // 両方保証ありまたは両方保証なしの場合
-              if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) > 0) {
-                return bGuaranteeShortfall - aGuaranteeShortfall // 残り必要数が多い順
-              }
-              
-              // 両方保証なしの場合は名前順
-              return a.name.localeCompare(b.name, 'ja')
-            })
+      // outstaffの場合、推奨店舗のSetを作成
+      if (userRole === 'outstaff' && recommendationsResult?.success) {
+        const recommended = new Set(
+          recommendationsResult.data
+            .filter(rec => rec.is_recommended)
+            .map(rec => rec.store_id)
+        )
+        setRecommendedStores(recommended)
+        
+        // outstaffの場合は特別な並び順を適用
+        if (storesResult.success) {
+          const sortedStores = [...storesResult.data].sort((a, b) => {
+            const aIsRecommended = recommended.has(a.store_id)
+            const bIsRecommended = recommended.has(b.store_id)
             
-            setOpenStores(sortedStores)
-          }
-        } else {
-          // outstaff以外の場合は通常の並び順
-          if (storesResult.success) {
-            setOpenStores(storesResult.data)
-          }
+            // 1. 推奨店舗を上に
+            if (aIsRecommended && !bIsRecommended) return -1
+            if (!aIsRecommended && bIsRecommended) return 1
+            
+            // 2. 同じ推奨状態の場合は、残り保証人数差が多い順（保証なしは末尾）
+            const aGuaranteeShortfall = Math.max(0, (a.guarantee_count || 0) - (a.monthlyIntroductions || 0))
+            const bGuaranteeShortfall = Math.max(0, (b.guarantee_count || 0) - (b.monthlyIntroductions || 0))
+            
+            // 保証数が0の店舗は末尾
+            if ((a.guarantee_count || 0) === 0 && (b.guarantee_count || 0) > 0) return 1
+            if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) === 0) return -1
+            
+            // 両方保証ありまたは両方保証なしの場合
+            if ((a.guarantee_count || 0) > 0 && (b.guarantee_count || 0) > 0) {
+              return bGuaranteeShortfall - aGuaranteeShortfall // 残り必要数が多い順
+            }
+            
+            // 両方保証なしの場合は名前順
+            return a.name.localeCompare(b.name, 'ja')
+          })
+          
+          setOpenStores(sortedStores)
         }
-      } catch (err) {
-        console.error('データ取得エラー:', err)
-        setError('データの取得に失敗しました: ' + err.message)
-      } finally {
-        setLoading(false)
+      } else {
+        // outstaff以外の場合は通常の並び順
+        if (storesResult.success) {
+          setOpenStores(storesResult.data)
+        }
+      }
+    } catch (err) {
+      console.error('データ取得エラー:', err)
+      setError('データの取得に失敗しました: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 初回データ取得 + userRole変更時の再取得
+  useEffect(() => {
+    fetchData()
+  }, [userRole]) // userRoleを依存配列に追加
+
+  // ページが見えるようになったときにデータを更新
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('📋 TodayOpenStoresPage: ページが見えるようになったのでデータを更新')
+        fetchData()
       }
     }
 
-    fetchData()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  // ページフォーカス時にもデータを更新
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('📋 TodayOpenStoresPage: ページにフォーカスが戻ったのでデータを更新')
+      fetchData()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   // 店舗状況のスタイルを取得
@@ -160,10 +191,26 @@ const TodayOpenStoresPage = () => {
     <Layout>
       <div className="max-w-7xl mx-auto p-2 sm:p-4">
         {/* ヘッダー */}
-        <div className="mb-3 sm:mb-4">
+        <div className="mb-3 sm:mb-4 flex justify-between items-center">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             本日の営業店舗 {headerDateString}
           </h1>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                更新中...
+              </>
+            ) : (
+              <>
+                🔄 更新
+              </>
+            )}
+          </button>
         </div>
 
         {/* ローディング状態 */}
