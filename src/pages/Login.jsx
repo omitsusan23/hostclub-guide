@@ -19,13 +19,19 @@ const Login = () => {
     setError('')
     setLoading(true)
 
+    console.log('🔐 ログイン試行:', { email })
+
     try {
       const { error } = await signIn(email, password)
       
       if (error) {
-        setError('メールアドレスまたはパスワードが正しくありません')
+        console.error('❌ ログインエラー:', error)
+        setError(`ログインエラー: ${error.message || 'メールアドレスまたはパスワードが正しくありません'}`)
+      } else {
+        console.log('✅ ログイン成功')
       }
     } catch (err) {
+      console.error('❌ 予期しないエラー:', err)
       setError('ログイン中にエラーが発生しました')
     } finally {
       setLoading(false)

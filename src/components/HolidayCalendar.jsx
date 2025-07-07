@@ -41,7 +41,16 @@ const HolidayCalendar = () => {
   // ストア情報の取得（契約開始月確認用）
   const fetchStoreInfo = async () => {
     const storeId = getUserStoreId();
-    if (!storeId) return;
+    console.log('🔍 HolidayCalendar - Store ID取得:', {
+      storeId,
+      user: user?.email,
+      userMetadata: user?.user_metadata,
+      appMetadata: user?.app_metadata
+    });
+    if (!storeId) {
+      console.error('❌ Store IDが取得できません');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -95,7 +104,15 @@ const HolidayCalendar = () => {
   // 店休日データを取得（表示中の月のみ）
   const fetchHolidays = async (year, month) => {
     const storeId = getUserStoreId();
-    if (!storeId) return;
+    console.log('📅 HolidayCalendar - 店休日取得開始:', {
+      storeId,
+      year,
+      month
+    });
+    if (!storeId) {
+      console.error('❌ Store IDが取得できないため店休日を取得できません');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -111,13 +128,17 @@ const HolidayCalendar = () => {
         .gte('date', formatLocalDate(startDate))
         .lte('date', formatLocalDate(endDate));
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabaseエラー:', error);
+        throw error;
+      }
 
+      console.log('✅ 店休日取得成功:', data);
       const holidaySet = new Set(data.map(item => item.date));
       setHolidays(holidaySet);
       setPendingChanges(new Set(holidaySet)); // 初期値として設定
     } catch (error) {
-      console.error('店休日の取得に失敗しました:', error);
+      console.error('❌ 店休日の取得に失敗しました:', error);
       alert('店休日の取得に失敗しました');
     } finally {
       setLoading(false);

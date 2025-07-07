@@ -91,6 +91,12 @@ export const AppProvider = ({ children }) => {
     const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        console.log('🔐 セッション取得:', {
+          sessionExists: !!session,
+          userEmail: session?.user?.email,
+          userMetadata: session?.user?.user_metadata,
+          appMetadata: session?.user?.app_metadata
+        })
         setSession(session)
         setUser(session?.user ?? null)
         
@@ -217,7 +223,15 @@ export const AppProvider = ({ children }) => {
     if (!user) return null
     
     // user_metadataからroleを取得、なければapp_metadata、最後にサブドメインから判定
-    return user.user_metadata?.role || user.app_metadata?.role || getRoleFromSubdomain()
+    const role = user.user_metadata?.role || user.app_metadata?.role || getRoleFromSubdomain()
+    console.log('🎭 getUserRole:', {
+      email: user.email,
+      userMetadataRole: user.user_metadata?.role,
+      appMetadataRole: user.app_metadata?.role,
+      subdomainRole: getRoleFromSubdomain(),
+      finalRole: role
+    })
+    return role
   }
 
   // ユーザーの店舗IDを取得
@@ -225,7 +239,15 @@ export const AppProvider = ({ children }) => {
     if (!user) return null
     
     // user_metadataからstore_idを取得、なければapp_metadata、最後にサブドメインから取得
-    return user.user_metadata?.store_id || user.app_metadata?.store_id || getStoreIdFromSubdomain()
+    const storeId = user.user_metadata?.store_id || user.app_metadata?.store_id || getStoreIdFromSubdomain()
+    console.log('🏪 getUserStoreId:', {
+      email: user.email,
+      userMetadataStoreId: user.user_metadata?.store_id,
+      appMetadataStoreId: user.app_metadata?.store_id,
+      subdomainStoreId: getStoreIdFromSubdomain(),
+      finalStoreId: storeId
+    })
+    return storeId
   }
 
   // アクセス権限チェック（customerロールの場合のみstore_idをチェック）
