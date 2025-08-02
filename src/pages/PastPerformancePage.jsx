@@ -71,7 +71,7 @@ const PastPerformancePage = () => {
       
       setLoading(true)
       const startDate = new Date(year, month, 1)
-      const endDate = new Date(year, month + 1, 0)
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
       
       // 分離表示のためstaff_typeフィルタリングを適用
       const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'
@@ -306,7 +306,7 @@ const PastPerformancePage = () => {
       
       setStoreLoading(true)
       const startDate = new Date(year, month, 1)
-      const endDate = new Date(year, month + 1, 0)
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
       
       // 分離表示のためstaff_typeフィルタリングを適用
       const staffTypeFilter = effectiveRole === 'outstaff' ? 'outstaff' : 'staff'

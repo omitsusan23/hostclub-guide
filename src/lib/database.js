@@ -231,6 +231,25 @@ export const getTodayVisitRecords = async (storeId = null, staffTypeFilter = 'bo
   return await getVisitRecords(storeId, startOfDay, endOfDay, staffTypeFilter)
 }
 
+// 特定日付の案内記録を取得（業務日ベース - 25時切り替わり）
+export const getSpecificDateVisitRecords = async (targetDate, storeId = null, staffTypeFilter = 'both') => {
+  // targetDateは Date オブジェクトまたは 'YYYY-MM-DD' 形式の文字列
+  const date = typeof targetDate === 'string' ? new Date(targetDate) : targetDate
+  
+  // 1時から翌日1時までのデータを取得
+  const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1).toISOString()
+  const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 1).toISOString()
+  
+  console.log('📅 特定日付の案内記録取得:', {
+    targetDate: date.toLocaleDateString('ja-JP'),
+    startOfDay: startOfDay,
+    endOfDay: endOfDay,
+    staffTypeFilter: staffTypeFilter
+  })
+  
+  return await getVisitRecords(storeId, startOfDay, endOfDay, staffTypeFilter)
+}
+
 // 月間案内記録を取得
 export const getMonthlyVisitRecords = async (storeId = null, year = null, month = null, staffTypeFilter = 'both') => {
   const now = new Date()
