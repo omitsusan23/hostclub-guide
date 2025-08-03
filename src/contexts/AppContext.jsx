@@ -46,20 +46,9 @@ export const AppProvider = ({ children }) => {
       return null
     }
     
-    // 本番環境の場合はサブドメインを取得
-    const subdomain = hostname.split('.')[0]
-    
-    // 管理者・スタッフページの場合はnullを返す
-    if (subdomain === 'admin' || subdomain === 'staff' || subdomain === 'outstaff') {
-      return null
-    }
-    
-    // customer サブドメインの場合もnullを返す（URLパスから取得するため）
-    if (subdomain === 'customer') {
-      return null
-    }
-    
-    return subdomain
+    // 本番環境では店舗サブドメインは廃止済み
+    // URLパス方式（/store/xxx）のみ使用
+    return null
   }
 
   // サブドメインまたはURLパスからロールを判定する関数

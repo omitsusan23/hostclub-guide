@@ -40,29 +40,7 @@ const DashboardRedirect = () => {
     return null
   }
   
-  // 既存の店舗サブドメインからcustomerサブドメインへリダイレクト（本番環境のみ）
-  // admin, staff, outstaff, customer以外のサブドメインは店舗とみなす
-  if (!hostname.includes('localhost') && 
-      !hostname.includes('127.0.0.1') &&
-      subdomain && 
-      subdomain !== 'admin' && 
-      subdomain !== 'staff' && 
-      subdomain !== 'outstaff' && 
-      subdomain !== 'customer' &&
-      subdomain !== 'susukino-hostclub-guide' &&
-      subdomain !== 'www' &&
-      hostname.includes('susukino-hostclub-guide.online')) {
-    // 店舗サブドメインの場合、customerサブドメインへリダイレクト
-    console.log('🔄 店舗サブドメインをcustomerへリダイレクト:', subdomain)
-    window.location.href = `https://customer.susukino-hostclub-guide.online/store/${subdomain}`
-    return null
-  }
-  
-  // サブドメインから店舗IDが取得できる場合は customer ロールを優先
-  if (storeId && (role === 'customer' || !role)) {
-    console.log('🏪 店舗サブドメインリダイレクト:', { storeId, role })
-    return <Navigate to="/customer" replace />
-  }
+  // 店舗サブドメインは廃止済み（customerサブドメインのみ使用）
   
   switch (role) {
     case 'admin':

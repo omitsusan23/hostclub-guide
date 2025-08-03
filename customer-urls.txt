@@ -1,62 +1,71 @@
-# 全Customer URL一覧（コピペ用）
+# ホストクラブ案内所システム - 店舗アクセスURL一覧
+# 2025年8月3日更新
 
-## メインドメイン: susukino-hostclub-guide.online
+## 🔐 システム管理URL
+- 管理者用: https://admin.susukino-hostclub-guide.online
+- スタッフ用: https://staff.susukino-hostclub-guide.online
+- OUTスタッフ用: https://outstaff.susukino-hostclub-guide.online
 
-https://ace.susukino-hostclub-guide.online
-https://air.susukino-hostclub-guide.online
-https://alive.susukino-hostclub-guide.online
-https://almond.susukino-hostclub-guide.online
-https://aqua.susukino-hostclub-guide.online
-https://arkluxe.susukino-hostclub-guide.online
-https://atom.susukino-hostclub-guide.online
-https://belleclub.susukino-hostclub-guide.online
-https://berry.susukino-hostclub-guide.online
-https://butler.susukino-hostclub-guide.online
-https://cloudnine.susukino-hostclub-guide.online
-https://earth.susukino-hostclub-guide.online
-https://fk.susukino-hostclub-guide.online
-https://galaxy.susukino-hostclub-guide.online
-https://gallery.susukino-hostclub-guide.online
-https://gift.susukino-hostclub-guide.online
-https://gran.susukino-hostclub-guide.online
-https://hrs.susukino-hostclub-guide.online
-https://kings.susukino-hostclub-guide.online
-https://love.susukino-hostclub-guide.online
-https://lunaipro.susukino-hostclub-guide.online
-https://micheles.susukino-hostclub-guide.online
-https://mrsapporo.susukino-hostclub-guide.online
-https://newbirth.susukino-hostclub-guide.online
-https://no9sapporo.susukino-hostclub-guide.online
-https://party.susukino-hostclub-guide.online
-https://phantom.susukino-hostclub-guide.online
-https://rampage.susukino-hostclub-guide.online
-https://rberu.susukino-hostclub-guide.online
-https://rberusapporo.susukino-hostclub-guide.online
-https://remake.susukino-hostclub-guide.online
-https://sifir.susukino-hostclub-guide.online
-https://sirius.susukino-hostclub-guide.online
-https://star.susukino-hostclub-guide.online
-https://start.susukino-hostclub-guide.online
-https://storm.susukino-hostclub-guide.online
-https://topdandysapporo.susukino-hostclub-guide.online
-https://urvanity.susukino-hostclub-guide.online
-https://valencia.susukino-hostclub-guide.online
-https://venus.susukino-hostclub-guide.online
-https://white.susukino-hostclub-guide.online
-https://yoox.susukino-hostclub-guide.online
-https://zeal.susukino-hostclub-guide.online
+## 🏪 全店舗アクセスURL（47店舗）
+### 新URL形式: https://customer.susukino-hostclub-guide.online/store/[店舗ID]
 
-## 別ドメイン: hostclub-tableststus.com
+1. エース: https://customer.susukino-hostclub-guide.online/store/ace
+2. エアー: https://customer.susukino-hostclub-guide.online/store/air
+3. アライヴ: https://customer.susukino-hostclub-guide.online/store/alive
+4. アリスアイズプロジェクト: https://customer.susukino-hostclub-guide.online/store/alice
+5. アーモンド: https://customer.susukino-hostclub-guide.online/store/almond
+6. アクア札幌: https://customer.susukino-hostclub-guide.online/store/aqua
+7. アークリュクス: https://customer.susukino-hostclub-guide.online/store/arkluxe
+8. アトム: https://customer.susukino-hostclub-guide.online/store/atom
+9. ベルクラブ: https://customer.susukino-hostclub-guide.online/store/belleclub
+10. ベリー: https://customer.susukino-hostclub-guide.online/store/berry
+11. バトラー: https://customer.susukino-hostclub-guide.online/store/butler
+12. クラウドナイン: https://customer.susukino-hostclub-guide.online/store/cloudnine
+13. アース: https://customer.susukino-hostclub-guide.online/store/earth
+14. エリート: https://customer.susukino-hostclub-guide.online/store/elite
+15. FK: https://customer.susukino-hostclub-guide.online/store/fk
+16. ギャラクシー: https://customer.susukino-hostclub-guide.online/store/galaxy
+17. ギャラリー: https://customer.susukino-hostclub-guide.online/store/gallery
+18. ギフト: https://customer.susukino-hostclub-guide.online/store/gift
+19. グラン: https://customer.susukino-hostclub-guide.online/store/gran
+20. HRS: https://customer.susukino-hostclub-guide.online/store/hrs
+21. アイズワン: https://customer.susukino-hostclub-guide.online/store/izone
+22. キングス: https://customer.susukino-hostclub-guide.online/store/kings
+23. ラブ: https://customer.susukino-hostclub-guide.online/store/love
+24. ルナアイズプロジェクト: https://customer.susukino-hostclub-guide.online/store/lunaipro
+25. ミシェル: https://customer.susukino-hostclub-guide.online/store/micheles
+26. Mrサッポロ: https://customer.susukino-hostclub-guide.online/store/mrsapporo
+27. ニューバース: https://customer.susukino-hostclub-guide.online/store/newbirth
+28. ナンバーナイン: https://customer.susukino-hostclub-guide.online/store/no9sapporo
+29. パーティー: https://customer.susukino-hostclub-guide.online/store/party
+30. ファントム: https://customer.susukino-hostclub-guide.online/store/phantom
+31. レイズ: https://customer.susukino-hostclub-guide.online/store/raize
+32. ランページ: https://customer.susukino-hostclub-guide.online/store/rampage
+33. ルベル: https://customer.susukino-hostclub-guide.online/store/rberu
+34. リメイク: https://customer.susukino-hostclub-guide.online/store/remake
+35. セッテ: https://customer.susukino-hostclub-guide.online/store/sette
+36. シフル: https://customer.susukino-hostclub-guide.online/store/sifir
+37. シリウス: https://customer.susukino-hostclub-guide.online/store/sirius
+38. スター: https://customer.susukino-hostclub-guide.online/store/star
+39. スタート: https://customer.susukino-hostclub-guide.online/store/start
+40. ストーム: https://customer.susukino-hostclub-guide.online/store/storm
+41. トップダンディー: https://customer.susukino-hostclub-guide.online/store/topdandysapporo
+42. アーヴァニティー: https://customer.susukino-hostclub-guide.online/store/urvanity
+43. バレンシア: https://customer.susukino-hostclub-guide.online/store/valencia
+44. ヴィーナス: https://customer.susukino-hostclub-guide.online/store/venus
+45. ホワイト: https://customer.susukino-hostclub-guide.online/store/white
+46. ユークス: https://customer.susukino-hostclub-guide.online/store/yoox
+47. ジール: https://customer.susukino-hostclub-guide.online/store/zeal
 
-https://sapporo-rberu.hostclub-tableststus.com
+## 📝 ログイン情報について
+- 各店舗には専用のログインID/パスワードが個別に発行されます
+- 初回ログイン後、パスワード変更を推奨します
+- ログインIDは基本的に「店舗ID@hostclub.local」形式です
 
-## 管理系URL（参考）
+## ⚠️ 重要な変更点
+- 個別の店舗サブドメイン（例：rberu.susukino-hostclub-guide.online）は廃止されました
+- すべての店舗は customer.susukino-hostclub-guide.online/store/[店舗ID] 形式でアクセスします
+- この変更により、新規店舗の追加が簡単になり、管理コストが削減されます
 
-https://admin.susukino-hostclub-guide.online
-https://staff.susukino-hostclub-guide.online
-https://outstaff.susukino-hostclub-guide.online
-
-## 総数
-- Customer URL: 44個
-- 管理系URL: 3個
-- 合計: 47個
+## 💡 サポート
+システムに関するお問い合わせは管理者までご連絡ください。
