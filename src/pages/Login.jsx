@@ -11,11 +11,13 @@ const Login = () => {
 
   // 既にログイン済みの場合はダッシュボードにリダイレクト
   if (user && !authLoading) {
-    // URLパス方式で店舗IDがある場合は、そのまま留まる
+    // URLパス方式で店舗IDがある場合は、CustomerDashboardへ
     const storeId = getStoreIdFromSubdomain()
-    if (storeId && window.location.pathname.startsWith('/store/')) {
-      // /store/xxx の場合はそのまま留まる（リダイレクトしない）
-      return <Navigate to={window.location.pathname} replace />
+    if (storeId && window.location.pathname.includes('/store/')) {
+      // /store/xxx/login から /store/xxx へリダイレクト
+      const storePath = `/store/${storeId}`
+      console.log('🔄 ログイン後リダイレクト:', { from: window.location.pathname, to: storePath })
+      return <Navigate to={storePath} replace />
     }
     return <Navigate to="/dashboard" replace />
   }

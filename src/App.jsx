@@ -217,6 +217,12 @@ const AppRoutes = () => {
           } 
         />
         
+        {/* URLパス方式での店舗ログインページ */}
+        <Route 
+          path="/store/:storeId/login" 
+          element={<Login />} 
+        />
+        
         {/* URLパス方式での店舗アクセス (/store/xxx) */}
         <Route 
           path="/store/:storeId" 
