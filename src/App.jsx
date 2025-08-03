@@ -31,6 +31,13 @@ const DashboardRedirect = () => {
   const role = getUserRole()
   const storeId = getStoreIdFromSubdomain()
   
+  // URLパス方式での店舗アクセスの場合、そのままのパスを維持
+  if (window.location.pathname.startsWith('/store/')) {
+    console.log('🏪 URLパス方式の店舗アクセス:', { pathname: window.location.pathname, role })
+    // すでに /store/xxx にいる場合はそのまま
+    return null
+  }
+  
   // サブドメインから店舗IDが取得できる場合は customer ロールを優先
   if (storeId && (role === 'customer' || !role)) {
     console.log('🏪 店舗サブドメインリダイレクト:', { storeId, role })
@@ -45,6 +52,10 @@ const DashboardRedirect = () => {
     case 'outstaff':
       return <Navigate to="/outstaff" replace />
     case 'customer':
+      // URLパス方式で店舗IDがある場合
+      if (storeId) {
+        return <Navigate to={`/store/${storeId}`} replace />
+      }
       return <Navigate to="/customer" replace />
     default:
       // デフォルトではログイン画面に戻す

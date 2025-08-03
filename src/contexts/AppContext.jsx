@@ -35,7 +35,12 @@ export const AppProvider = ({ children }) => {
     if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('192.168.')) {
       // クエリパラメータから取得
       const urlParams = new URLSearchParams(window.location.search)
-      return urlParams.get('store_id') || 'demo-store'
+      const queryStoreId = urlParams.get('store_id')
+      if (queryStoreId) {
+        return queryStoreId
+      }
+      // URLパスから既に取得できている場合はnullを返す（demo-storeは返さない）
+      return null
     }
     
     // 本番環境の場合はサブドメインを取得
@@ -307,14 +312,33 @@ export const AppProvider = ({ children }) => {
     const userStoreId = getUserStoreId()
     const currentStoreId = getStoreIdFromSubdomain()
 
+    console.log('🔐 アクセス権限チェック:', {
+      role,
+      userStoreId,
+      currentStoreId,
+      pathname: window.location.pathname
+    })
+
     // 管理者とスタッフ（staff/outstaff）は常にアクセス可能
     if (role === 'admin' || role === 'staff' || role === 'outstaff') {
       return true
     }
 
-    // customerの場合はstore_idが一致する必要がある
+    // customerの場合
     if (role === 'customer') {
-      return userStoreId === currentStoreId
+      // URLパス方式の場合、currentStoreIdが取得できていることを確認
+      if (currentStoreId) {
+        const accessGranted = userStoreId === currentStoreId
+        console.log('🏪 店舗アクセス判定:', {
+          userStoreId,
+          currentStoreId,
+          accessGranted
+        })
+        return accessGranted
+      }
+      // store_idが取得できない場合もcustomerロールなら許可
+      // （ログイン直後など）
+      return true
     }
 
     return false

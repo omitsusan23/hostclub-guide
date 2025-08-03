@@ -7,10 +7,16 @@ const Login = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { user, signIn, loading: authLoading } = useApp()
+  const { user, signIn, loading: authLoading, getStoreIdFromSubdomain } = useApp()
 
   // 既にログイン済みの場合はダッシュボードにリダイレクト
   if (user && !authLoading) {
+    // URLパス方式で店舗IDがある場合は、そのまま留まる
+    const storeId = getStoreIdFromSubdomain()
+    if (storeId && window.location.pathname.startsWith('/store/')) {
+      // /store/xxx の場合はそのまま留まる（リダイレクトしない）
+      return <Navigate to={window.location.pathname} replace />
+    }
     return <Navigate to="/dashboard" replace />
   }
 
