@@ -30,11 +30,31 @@ const DashboardRedirect = () => {
   
   const role = getUserRole()
   const storeId = getStoreIdFromSubdomain()
+  const hostname = window.location.hostname
+  const subdomain = hostname.split('.')[0]
   
   // URLパス方式での店舗アクセスの場合、そのままのパスを維持
   if (window.location.pathname.startsWith('/store/')) {
     console.log('🏪 URLパス方式の店舗アクセス:', { pathname: window.location.pathname, role })
     // すでに /store/xxx にいる場合はそのまま
+    return null
+  }
+  
+  // 既存の店舗サブドメインからcustomerサブドメインへリダイレクト（本番環境のみ）
+  // admin, staff, outstaff, customer以外のサブドメインは店舗とみなす
+  if (!hostname.includes('localhost') && 
+      !hostname.includes('127.0.0.1') &&
+      subdomain && 
+      subdomain !== 'admin' && 
+      subdomain !== 'staff' && 
+      subdomain !== 'outstaff' && 
+      subdomain !== 'customer' &&
+      subdomain !== 'susukino-hostclub-guide' &&
+      subdomain !== 'www' &&
+      hostname.includes('susukino-hostclub-guide.online')) {
+    // 店舗サブドメインの場合、customerサブドメインへリダイレクト
+    console.log('🔄 店舗サブドメインをcustomerへリダイレクト:', subdomain)
+    window.location.href = `https://customer.susukino-hostclub-guide.online/store/${subdomain}`
     return null
   }
   
