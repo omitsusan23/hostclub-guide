@@ -23,10 +23,13 @@ export const AppProvider = ({ children }) => {
     const pathname = window.location.pathname
     
     // URLパス方式のチェック (/store/xxx の形式)
-    if (pathname.startsWith('/store/')) {
-      const storeId = pathname.split('/')[2]
-      if (storeId) {
-        console.log('🏪 URLパス方式でstore_id取得:', storeId)
+    // React Routerのパスも考慮
+    if (pathname.includes('/store/')) {
+      const pathParts = pathname.split('/')
+      const storeIndex = pathParts.indexOf('store')
+      if (storeIndex !== -1 && pathParts[storeIndex + 1]) {
+        const storeId = pathParts[storeIndex + 1]
+        console.log('🏪 URLパス方式でstore_id取得:', storeId, 'from path:', pathname)
         return storeId
       }
     }
@@ -87,8 +90,16 @@ export const AppProvider = ({ children }) => {
   }
 
   // ユーザーのスタッフ情報を取得
-  const fetchUserStaffInfo = async (userId) => {
+  const fetchUserStaffInfo = async (userId, userData) => {
     try {
+      // customerロールの場合はスタッフ情報を取得しない
+      const role = userData?.user_metadata?.role || userData?.app_metadata?.role
+      if (role === 'customer') {
+        console.log('📝 customerロールのためスタッフ情報取得をスキップ')
+        setUserStaff(null)
+        return
+      }
+      
       const { data, error } = await supabase
         .from('staffs')
         .select('display_name')
@@ -123,7 +134,7 @@ export const AppProvider = ({ children }) => {
         
         // スタッフ情報を非ブロッキングで取得
         if (session?.user) {
-          fetchUserStaffInfo(session.user.id).catch(console.warn)
+          fetchUserStaffInfo(session.user.id, session.user).catch(console.warn)
         }
         
         setLoading(false)
@@ -143,7 +154,7 @@ export const AppProvider = ({ children }) => {
         
         // スタッフ情報を非ブロッキングで取得
         if (session?.user) {
-          fetchUserStaffInfo(session.user.id).catch(console.warn)
+          fetchUserStaffInfo(session.user.id, session.user).catch(console.warn)
         } else {
           setUserStaff(null)
         }
