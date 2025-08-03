@@ -50,7 +50,12 @@ export const AppProvider = ({ children }) => {
     const subdomain = hostname.split('.')[0]
     
     // 管理者・スタッフページの場合はnullを返す
-    if (subdomain === 'admin' || subdomain === 'staff') {
+    if (subdomain === 'admin' || subdomain === 'staff' || subdomain === 'outstaff') {
+      return null
+    }
+    
+    // customer サブドメインの場合もnullを返す（URLパスから取得するため）
+    if (subdomain === 'customer') {
       return null
     }
     
@@ -83,8 +88,15 @@ export const AppProvider = ({ children }) => {
         return 'staff'
       case 'outstaff':
         return 'outstaff'
+      case 'customer':
+        // customer.susukino-hostclub-guide.online の場合
+        return 'customer'
       default:
-        // store1.example.com のような形式の場合はcustomer
+        // メインドメインの場合はadmin専用とする
+        if (hostname === 'susukino-hostclub-guide.online' || hostname === 'www.susukino-hostclub-guide.online') {
+          return 'admin'
+        }
+        // その他のサブドメイン（store1など）の場合はcustomer
         return 'customer'
     }
   }
