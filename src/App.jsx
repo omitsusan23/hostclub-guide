@@ -206,6 +206,36 @@ const AppRoutes = () => {
           } 
         />
         
+        {/* URLパス方式での店舗アクセス (/store/xxx) */}
+        <Route 
+          path="/store/:storeId" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* URLパス方式での店舗請求確認ページ */}
+        <Route 
+          path="/store/:storeId/billing" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerBillingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* URLパス方式での店舗休日設定ページ */}
+        <Route 
+          path="/store/:storeId/holidays" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <StoreHolidaysPage />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* 請求確認ページ */}
         <Route 
           path="/customer/billing" 

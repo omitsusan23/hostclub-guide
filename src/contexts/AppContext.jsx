@@ -17,9 +17,19 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [userStaff, setUserStaff] = useState(null)
 
-  // サブドメインからstore_idを取得する関数
+  // サブドメインまたはURLパスからstore_idを取得する関数
   const getStoreIdFromSubdomain = () => {
     const hostname = window.location.hostname
+    const pathname = window.location.pathname
+    
+    // URLパス方式のチェック (/store/xxx の形式)
+    if (pathname.startsWith('/store/')) {
+      const storeId = pathname.split('/')[2]
+      if (storeId) {
+        console.log('🏪 URLパス方式でstore_id取得:', storeId)
+        return storeId
+      }
+    }
     
     // 開発環境の場合
     if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('192.168.')) {
@@ -39,9 +49,15 @@ export const AppProvider = ({ children }) => {
     return subdomain
   }
 
-  // サブドメインからロールを判定する関数
+  // サブドメインまたはURLパスからロールを判定する関数
   const getRoleFromSubdomain = () => {
     const hostname = window.location.hostname
+    const pathname = window.location.pathname
+    
+    // URLパス方式のチェック (/store/xxx の形式は customer ロール)
+    if (pathname.startsWith('/store/')) {
+      return 'customer'
+    }
     
     // 開発環境の場合
     if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('192.168.')) {
