@@ -131,16 +131,22 @@ const CustomerBillingPage = () => {
     // 明細データ
     const items = [
         {
-            label: '基本料金',
+            label: '掲載料金',
             quantity: 1,
             unitPrice: baseFee,
             amount: baseFee
         },
         {
-            label: `案内料（保証${guaranteeCount}名を超えた分）`,
-            quantity: billableCount,
-            unitPrice: billableCount > 0 ? unitPrice : 0,
-            amount: additionalFee
+            label: '紹介料',
+            quantity: totalVisitors,
+            unitPrice: totalVisitors > 0 ? unitPrice : 0,
+            amount: totalVisitors * unitPrice
+        },
+        {
+            label: '保証割料金',
+            quantity: totalVisitors < guaranteeCount ? (guaranteeCount - totalVisitors) : 0,
+            unitPrice: totalVisitors < guaranteeCount ? -unitPrice : 0,
+            amount: totalVisitors < guaranteeCount ? -(guaranteeCount - totalVisitors) * unitPrice : 0
         }
     ]
 
