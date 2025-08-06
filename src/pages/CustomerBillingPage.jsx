@@ -25,9 +25,17 @@ const CustomerBillingPage = () => {
                 const storeData = allStores.find(s => s.store_id === storeId)
                 setStore(storeData)
 
-                // 今月の案内記録取得
-                const records = await getVisitRecords(storeId)
-                setVisitRecords(records)
+                // 前月の案内記録取得（紹介料計算用）
+                const now = new Date()
+                const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+                const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+                
+                const allRecords = await getVisitRecords(storeId)
+                const prevMonthRecords = allRecords.filter(record => {
+                    const recordDate = new Date(record.guided_at || record.created_at)
+                    return recordDate >= prevMonth && recordDate <= prevMonthEnd
+                })
+                setVisitRecords(prevMonthRecords)
 
             } catch (error) {
                 console.error('データ取得エラー:', error)
@@ -39,16 +47,21 @@ const CustomerBillingPage = () => {
         fetchData()
     }, [storeId])
 
-    // 今月の1日を取得
-    const getFirstDayOfMonth = () => {
-        const now = new Date()
-        return new Date(now.getFullYear(), now.getMonth(), 1)
+    // 月名を取得
+    const getMonthName = (date) => {
+        return `${date.getMonth() + 1}月`
     }
 
-    // 今月の最終日を取得
-    const getLastDayOfMonth = () => {
+    // 掲載料金の月（翌々月）
+    const getNextMonth = () => {
         const now = new Date()
-        return new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        return new Date(now.getFullYear(), now.getMonth() + 2, 1)
+    }
+
+    // 紹介料の月（前月）
+    const getPrevMonth = () => {
+        const now = new Date()
+        return new Date(now.getFullYear(), now.getMonth() - 1, 1)
     }
 
     // 請求書の日付を取得（翌月4日）
@@ -112,30 +125,47 @@ const CustomerBillingPage = () => {
     }
 
     // 請求計算
+    const baseFee = store.base_price || 30000 // 掲載料金（基本料金）
+    const unitPrice = store.unit_price || 5000 // 紹介料の単価
+    const guaranteeCount = store.guarantee_count || 8 // 保証人数
+    
+    // 前月の紹介人数
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
-    const unitPrice = store.unit_price || 5000
-    const amount = totalVisitors * unitPrice
-    const tax = Math.floor(amount * 0.1)
-    const total = amount + tax
+    
+    // 保証割料金の計算（保証人数を超えた分のみ）
+    const billableCount = Math.max(0, totalVisitors - guaranteeCount)
+    const introductionFee = billableCount * unitPrice
+    
+    // 保証割料金（保証人数に満たない場合の割引）
+    const guaranteeDiscount = totalVisitors < guaranteeCount ? 
+        (guaranteeCount - totalVisitors) * (unitPrice * 0.5) : 0 // 保証割は単価の50%で計算
 
-    // 明細行を作成（最大10行）
-    const items = []
-    items.push({
-        name: '指名売上',
-        quantity: totalVisitors,
-        unitPrice: unitPrice,
-        amount: amount
-    })
+    // 明細データ
+    const items = [
+        {
+            label: `${getMonthName(getNextMonth())}掲載料金`,
+            quantity: 1,
+            unitPrice: baseFee,
+            amount: baseFee
+        },
+        {
+            label: `${getMonthName(getPrevMonth())}紹介料`,
+            quantity: billableCount,
+            unitPrice: billableCount > 0 ? unitPrice : 0,
+            amount: introductionFee
+        },
+        {
+            label: `${getMonthName(getPrevMonth())}保証割料金`,
+            quantity: guaranteeDiscount > 0 ? 1 : 0,
+            unitPrice: guaranteeDiscount,
+            amount: guaranteeDiscount
+        }
+    ]
 
-    // 残りの行を空で埋める
-    for (let i = items.length; i < 10; i++) {
-        items.push({
-            name: '',
-            quantity: '',
-            unitPrice: '',
-            amount: ''
-        })
-    }
+    // 小計・税・合計
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0)
+    const tax = Math.floor(subtotal * 0.1)
+    const total = subtotal + tax
 
     return (
         <Layout>
@@ -183,7 +213,7 @@ const CustomerBillingPage = () => {
                     {formatDate(getInvoiceDate())}
                 </div>
 
-                <h1 className="text-center text-3xl font-bold mb-8">請 求 書</h1>
+                <h1 className="text-center text-3xl font-bold mb-8 tracking-widest">請 求 書</h1>
 
                 <div className="mb-8">
                     <p className="text-lg font-semibold">{store.name} 様</p>
@@ -191,51 +221,42 @@ const CustomerBillingPage = () => {
 
                 <p className="mb-8">下記の通りご請求申し上げます</p>
 
-                <div className="mb-8">
-                    <h2 className="bg-gray-800 text-white text-center py-2 font-bold">■■ ご請求金額 ■■</h2>
+                <div className="mb-6">
+                    <h2 className="bg-gray-800 text-white text-center py-2 px-4 font-bold">
+                        ■■ ご請求金額 ■■
+                    </h2>
                 </div>
 
-                {/* 明細テーブル */}
-                <div className="mb-8 font-mono text-sm">
-                    <table className="w-full border-collapse border border-gray-400">
-                        <thead>
-                            <tr className="bg-gray-100">
-                                <th className="border border-gray-400 p-2 text-left" style={{ width: '40%' }}>項目</th>
-                                <th className="border border-gray-400 p-2 text-right" style={{ width: '20%' }}>数量</th>
-                                <th className="border border-gray-400 p-2 text-right" style={{ width: '20%' }}>単価</th>
-                                <th className="border border-gray-400 p-2 text-right" style={{ width: '20%' }}>金額</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((item, index) => (
-                                <tr key={index}>
-                                    <td className="border border-gray-400 p-2">{item.name}</td>
-                                    <td className="border border-gray-400 p-2 text-right">
-                                        {item.quantity && formatNumber(item.quantity)}
-                                    </td>
-                                    <td className="border border-gray-400 p-2 text-right">
-                                        {item.unitPrice && formatNumber(item.unitPrice)}
-                                    </td>
-                                    <td className="border border-gray-400 p-2 text-right">
-                                        {item.amount && formatNumber(item.amount)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                {/* 明細テーブル - テキストベースの罫線風 */}
+                <div className="mb-8 font-mono text-sm bg-gray-50 p-4 rounded">
+                    <pre className="whitespace-pre overflow-x-auto">
+{⁠`┌──────────────────────────┬──────┬──────┬────────┐
+│ 項目                         │ 数量   │ 単価   │ 金額     │
+├──────────────────────────┼──────┼──────┼────────┤`⁠}
+{items.map((item, index) => {
+    const label = item.label.padEnd(28, '　')
+    const quantity = item.quantity > 0 ? item.quantity.toString().padStart(6, ' ') : '      '
+    const unitPrice = item.unitPrice > 0 ? formatNumber(item.unitPrice).padStart(6, ' ') : '      '
+    const amount = item.amount > 0 ? formatNumber(item.amount).padStart(8, ' ') + '円' : '         '
+    return `
+│ ${label} │ ${quantity} │ ${unitPrice} │ ${amount} │`
+}).join('')}
+{⁠`
+└──────────────────────────┴──────┴──────┴────────┘`⁠}
+                    </pre>
                 </div>
 
                 {/* 合計金額 */}
                 <div className="mb-8 text-lg">
                     <div className="flex justify-between mb-2">
                         <span>■ 小計：</span>
-                        <span>{formatNumber(amount)} 円</span>
+                        <span>{formatNumber(subtotal)} 円</span>
                     </div>
                     <div className="flex justify-between mb-2">
                         <span>■ 消費税：</span>
                         <span>{formatNumber(tax)} 円</span>
                     </div>
-                    <div className="flex justify-between font-bold">
+                    <div className="flex justify-between font-bold text-xl">
                         <span>■ 合計：</span>
                         <span>{formatNumber(total)} 円</span>
                     </div>
@@ -247,7 +268,10 @@ const CustomerBillingPage = () => {
                     <p className="mb-4">いつもお世話になっております。</p>
                     <p className="mb-4">お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
                     <p className="mb-2">・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
-                    <p className="mb-2">・ご入金期日（支払期限）：{formatDate(getDueDate()).replace(/年|月/g, '/')}</p>
+                    <p className="mb-4">・ご入金期日：{getMonthName(getDueDate())}25日</p>
+                    <p className="font-bold text-red-600">
+                        なお、**当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。**
+                    </p>
                 </div>
 
                 <hr className="mb-8" />
@@ -257,7 +281,7 @@ const CustomerBillingPage = () => {
                     <h3 className="font-bold mb-4">■振込先口座：</h3>
                     <div className="ml-4 space-y-1">
                         <p>　銀行名：北洋銀行</p>
-                        <p>　支店名：札幌駅南口支店（030）</p>
+                        <p>　支店名：札幌南支店（030）</p>
                         <p>　種別：普通</p>
                         <p>　口座番号：7210596</p>
                         <p>　口座名義：（カ）リプレイ センザキ マサミツ</p>
