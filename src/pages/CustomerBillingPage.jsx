@@ -25,17 +25,9 @@ const CustomerBillingPage = () => {
                 const storeData = allStores.find(s => s.store_id === storeId)
                 setStore(storeData)
 
-                // 前月の案内記録取得（紹介料計算用）
-                const now = new Date()
-                const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-                const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-                
-                const allRecords = await getVisitRecords(storeId)
-                const prevMonthRecords = allRecords.filter(record => {
-                    const recordDate = new Date(record.guided_at || record.created_at)
-                    return recordDate >= prevMonth && recordDate <= prevMonthEnd
-                })
-                setVisitRecords(prevMonthRecords)
+                // 今月の案内記録取得
+                const records = await getVisitRecords(storeId)
+                setVisitRecords(records)
 
             } catch (error) {
                 console.error('データ取得エラー:', error)
@@ -125,40 +117,30 @@ const CustomerBillingPage = () => {
     }
 
     // 請求計算
-    const baseFee = store.base_price || 30000 // 掲載料金（基本料金）
-    const unitPrice = store.unit_price || 5000 // 紹介料の単価
+    const baseFee = store.base_price || 30000 // 基本料金
+    const unitPrice = store.unit_price || 3000 // 案内料の単価
     const guaranteeCount = store.guarantee_count || 8 // 保証人数
     
-    // 前月の紹介人数
+    // 今月の案内人数（請求書なので今月のデータを使用）
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
     
-    // 保証割料金の計算（保証人数を超えた分のみ）
+    // 保証人数を超えた分の計算
     const billableCount = Math.max(0, totalVisitors - guaranteeCount)
-    const introductionFee = billableCount * unitPrice
-    
-    // 保証割料金（保証人数に満たない場合の割引）
-    const guaranteeDiscount = totalVisitors < guaranteeCount ? 
-        (guaranteeCount - totalVisitors) * (unitPrice * 0.5) : 0 // 保証割は単価の50%で計算
+    const additionalFee = billableCount * unitPrice
 
     // 明細データ
     const items = [
         {
-            label: `${getMonthName(getNextMonth())}掲載料金`,
+            label: '基本料金',
             quantity: 1,
             unitPrice: baseFee,
             amount: baseFee
         },
         {
-            label: `${getMonthName(getPrevMonth())}紹介料`,
+            label: `案内料（保証${guaranteeCount}名を超えた分）`,
             quantity: billableCount,
             unitPrice: billableCount > 0 ? unitPrice : 0,
-            amount: introductionFee
-        },
-        {
-            label: `${getMonthName(getPrevMonth())}保証割料金`,
-            quantity: guaranteeDiscount > 0 ? 1 : 0,
-            unitPrice: guaranteeDiscount,
-            amount: guaranteeDiscount
+            amount: additionalFee
         }
     ]
 
