@@ -230,9 +230,9 @@ const CustomerBillingPage = () => {
                 {/* 明細テーブル - テキストベースの罫線風 */}
                 <div className="mb-8 font-mono text-sm bg-gray-50 p-4 rounded">
                     <pre className="whitespace-pre overflow-x-auto">
-{⁠`┌──────────────────────────┬──────┬──────┬────────┐
+{`┌──────────────────────────┬──────┬──────┬────────┐
 │ 項目                         │ 数量   │ 単価   │ 金額     │
-├──────────────────────────┼──────┼──────┼────────┤`⁠}
+├──────────────────────────┼──────┼──────┼────────┤`}
 {items.map((item, index) => {
     const label = item.label.padEnd(28, '　')
     const quantity = item.quantity > 0 ? item.quantity.toString().padStart(6, ' ') : '      '
@@ -241,8 +241,8 @@ const CustomerBillingPage = () => {
     return `
 │ ${label} │ ${quantity} │ ${unitPrice} │ ${amount} │`
 }).join('')}
-{⁠`
-└──────────────────────────┴──────┴──────┴────────┘`⁠}
+{`
+└──────────────────────────┴──────┴──────┴────────┘`}
                     </pre>
                 </div>
 
