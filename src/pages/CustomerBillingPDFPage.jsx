@@ -81,6 +81,7 @@ const CustomerBillingPDFPage = () => {
     // PDFダウンロード
     const downloadPDF = async () => {
         setGeneratingPDF(true)
+        console.log('PDF生成開始', { isMobile, store: store?.name })
         
         try {
             let targetElement = null
@@ -90,23 +91,20 @@ const CustomerBillingPDFPage = () => {
                 // モバイル用にHTMLを直接生成
                 tempContainer = document.createElement('div')
                 tempContainer.id = 'pdf-temp-container'
-                tempContainer.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: -9999px;
-                    width: 794px;
-                    min-height: 1123px;
-                    background: white !important;
-                    padding: 40px;
-                    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
-                    font-size: 14px;
-                    line-height: 1.5;
-                    color: #333 !important;
-                    z-index: -1;
-                    print-color-adjust: exact;
-                    -webkit-print-color-adjust: exact;
-                    forced-color-adjust: none;
-                `
+                // スタイルを分割して設定
+                tempContainer.style.position = 'absolute'
+                tempContainer.style.top = '0'
+                tempContainer.style.left = '0'
+                tempContainer.style.width = '794px'
+                tempContainer.style.minHeight = '1123px'
+                tempContainer.style.backgroundColor = '#ffffff'
+                tempContainer.style.padding = '40px'
+                tempContainer.style.fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif'
+                tempContainer.style.fontSize = '14px'
+                tempContainer.style.lineHeight = '1.5'
+                tempContainer.style.color = '#000000'
+                tempContainer.style.visibility = 'visible'
+                tempContainer.style.opacity = '1'
                 
                 // HTMLコンテンツを直接設定
                 tempContainer.innerHTML = `
