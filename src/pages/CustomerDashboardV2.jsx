@@ -245,49 +245,15 @@ const CustomerDashboardV2 = () => {
       </div>
 
       {/* ステータスカード（モバイルファースト） */}
-      <div className="px-4 sm:px-6 lg:px-0 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="px-4 sm:px-6 lg:px-0 flex justify-center mb-6 sm:mb-8">
         {/* 今月の案内人数 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-2xl">👥</span>
-            <span className="text-[10px] sm:text-xs text-gray-500">今月</span>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 w-full max-w-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-3xl sm:text-4xl">👥</span>
+            <span className="text-xs sm:text-sm text-gray-500">今月</span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-gray-900">{totalVisitors}</div>
-          <div className="text-[10px] sm:text-xs text-gray-600">案内人数</div>
-        </div>
-
-        {/* 保証人数 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-2xl">🎯</span>
-            <span className="text-[10px] sm:text-xs text-gray-500">保証</span>
-          </div>
-          <div className="text-xl sm:text-2xl font-bold text-gray-900">{invoiceSettings?.guaranteed_count || 8}</div>
-          <div className="text-[10px] sm:text-xs text-gray-600">保証人数</div>
-        </div>
-
-        {/* 達成率 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-2xl">📊</span>
-            <span className="text-[10px] sm:text-xs text-gray-500">達成率</span>
-          </div>
-          <div className="text-xl sm:text-2xl font-bold text-gray-900">
-            {Math.round((totalVisitors / (invoiceSettings?.guaranteed_count || 8)) * 100)}%
-          </div>
-          <div className="text-[10px] sm:text-xs text-gray-600">目標達成</div>
-        </div>
-
-        {/* 基本料金 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-2xl">💰</span>
-            <span className="text-[10px] sm:text-xs text-gray-500">月額</span>
-          </div>
-          <div className="text-xl sm:text-2xl font-bold text-gray-900">
-            {((invoiceSettings?.base_fee || 30000) / 1000).toFixed(0)}K
-          </div>
-          <div className="text-[10px] sm:text-xs text-gray-600">基本料金</div>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-900">{totalVisitors}</div>
+          <div className="text-sm sm:text-base text-gray-600">案内人数</div>
         </div>
       </div>
 
