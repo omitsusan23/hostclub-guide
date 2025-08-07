@@ -43,8 +43,11 @@ const CustomerDashboard = () => {
         const storeData = allStores.find(s => s.store_id === storeId)
         setStore(storeData)
 
-        // 案内記録取得（この店舗の分のみ）
-        const records = await getVisitRecords(storeId)
+        // 当月の案内記録取得（この店舗の分のみ）
+        const now = new Date()
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+        const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+        const records = await getVisitRecords(storeId, currentMonthStart, currentMonthEnd)
         setVisitRecords(records)
 
         // 請求設定は店舗データから取得
@@ -392,6 +395,19 @@ const CustomerDashboard = () => {
                 </div>
               </div>
             )}
+            
+            {/* 前月の記録へのリンク */}
+            <div className="mt-4">
+              <Link
+                to={window.location.pathname.includes('/store/') ? `/store/${storeId}/previous-month` : '/customer/previous-month'}
+                className="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                前月の記録を見る
+              </Link>
+            </div>
           </div>
 
           {/* 請求確認 */}

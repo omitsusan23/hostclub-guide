@@ -8,6 +8,7 @@ import StaffDashboard from './pages/StaffDashboard'
 import OutstaffDashboard from './pages/OutstaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import CustomerBillingPage from './pages/CustomerBillingPage'
+import CustomerPreviousMonthPage from './pages/CustomerPreviousMonthPage'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
 import StaffPerformancePage from './pages/StaffPerformancePage'
@@ -267,6 +268,26 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <StoreHolidaysPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 前月の記録ページ */}
+        <Route 
+          path="/customer/previous-month" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerPreviousMonthPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* URLパス方式での前月記録ページ */}
+        <Route 
+          path="/store/:storeId/previous-month" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerPreviousMonthPage />
             </ProtectedRoute>
           } 
         />

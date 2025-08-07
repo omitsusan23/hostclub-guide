@@ -1,6 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getMonthlyVisitRecords } from '../lib/database';
 
 const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
+  const [monthlyRecords, setMonthlyRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // 月別の紹介履歴を取得
+  useEffect(() => {
+    if (isOpen && store) {
+      fetchMonthlyRecords();
+    }
+  }, [isOpen, store]);
+
+  const fetchMonthlyRecords = async () => {
+    if (!store) return;
+    
+    setLoading(true);
+    try {
+      const currentDate = new Date();
+      const records = [];
+      
+      // 過去6ヶ月分のデータを取得（現在月から）
+      for (let i = 0; i < 6; i++) {
+        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth() + 1;
+        
+        // staff_typeを'both'にして合算データを取得
+        const monthData = await getMonthlyVisitRecords(store.store_id, year, month, 'both');
+        const totalCount = monthData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
+        
+        if (totalCount > 0) {
+          records.push({
+            year,
+            month,
+            count: totalCount
+          });
+        }
+      }
+      
+      setMonthlyRecords(records);
+    } catch (error) {
+      console.error('月別記録の取得エラー:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen || !store) return null;
 
   // 時間から秒を削除する関数
@@ -152,23 +198,27 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* 作成・更新日時 */}
+          {/* 紹介履歴 */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">📅 履歴情報</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">作成日時</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {store.created_at ? new Date(store.created_at).toLocaleString('ja-JP') : '不明'}
-                </p>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">📊 紹介履歴</h3>
+            {loading ? (
+              <p className="text-sm text-gray-500">読み込み中...</p>
+            ) : monthlyRecords.length > 0 ? (
+              <div className="space-y-2">
+                {monthlyRecords.map((record, index) => (
+                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200">
+                    <span className="text-sm font-medium text-gray-700">
+                      {record.month}月
+                    </span>
+                    <span className="text-sm text-gray-900 font-semibold">
+                      {record.count}本
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">最終更新</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {store.updated_at ? new Date(store.updated_at).toLocaleString('ja-JP') : '不明'}
-                </p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-gray-500">紹介履歴がありません</p>
+            )}
           </div>
         </div>
 
