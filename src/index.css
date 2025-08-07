@@ -19,9 +19,9 @@
     background: white !important;
   }
   
-  /* ページの余白を調整（より小さく） */
+  /* ページの余白を調整（適切な余白に） */
   @page {
-    margin: 0.5cm;
+    margin: 2cm 1.5cm;
     size: A4;
   }
   

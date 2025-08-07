@@ -197,59 +197,59 @@ const CustomerBillingPage = () => {
             </div>
 
             {/* 請求書本体 */}
-            <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto print:shadow-none print:rounded-none print:max-w-none print:p-4 print:avoid-break">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto print:shadow-none print:rounded-none print:max-w-none print:p-8 print:avoid-break">
                 <div className="text-right mb-4 text-gray-700">
                     {formatDate(getInvoiceDate())}
                 </div>
 
-                <h1 className="text-center text-3xl font-bold mb-8 tracking-widest print:text-2xl print:mb-4">請 求 書</h1>
+                <h1 className="text-center text-3xl font-bold mb-8 tracking-widest print:text-4xl print:mb-12">請 求 書</h1>
 
-                <div className="mb-8 print:mb-4">
-                    <p className="text-lg font-semibold print:text-base">{store.name} 様</p>
+                <div className="mb-8 print:mb-10">
+                    <p className="text-lg font-semibold print:text-xl">{store.name} 様</p>
                 </div>
 
-                <p className="mb-8 print:mb-4 print:text-sm">下記の通りご請求申し上げます</p>
+                <p className="mb-8 print:mb-10 print:text-base">下記の通りご請求申し上げます</p>
 
-                <div className="mb-6 print:mb-3">
-                    <h2 className="bg-gray-800 text-white text-center py-2 px-4 font-bold print:py-1 print:text-sm">
+                <div className="mb-6 print:mb-8">
+                    <h2 className="bg-gray-800 text-white text-center py-2 px-4 font-bold print:py-3 print:text-base">
                         ■■ ご請求金額 ■■
                     </h2>
                 </div>
 
                 {/* 明細テーブル */}
-                <div className="mb-8 font-mono text-sm print:mb-4 print:text-xs">
+                <div className="mb-8 font-mono text-sm print:mb-12 print:text-sm">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="border-b-2 border-gray-300">
-                                <th className="text-left py-2 print:py-1">項目</th>
-                                <th className="text-center py-2 print:py-1">数量</th>
-                                <th className="text-right py-2 print:py-1">単価</th>
-                                <th className="text-right py-2 print:py-1">金額</th>
+                                <th className="text-left py-2 print:py-4">項目</th>
+                                <th className="text-center py-2 print:py-4">数量</th>
+                                <th className="text-right py-2 print:py-4">単価</th>
+                                <th className="text-right py-2 print:py-4">金額</th>
                             </tr>
                         </thead>
                         <tbody>
                             {/* 掲載料金 */}
                             <tr className="border-b border-gray-200">
-                                <td className="py-3 print:py-1">掲載料金</td>
-                                <td className="text-center py-3 print:py-1">1</td>
-                                <td className="text-right py-3 print:py-1">¥{baseFee.toLocaleString()}</td>
-                                <td className="text-right py-3 print:py-1">¥{baseFee.toLocaleString()}</td>
+                                <td className="py-3 print:py-5">掲載料金</td>
+                                <td className="text-center py-3 print:py-5">1</td>
+                                <td className="text-right py-3 print:py-5">¥{baseFee.toLocaleString()}</td>
+                                <td className="text-right py-3 print:py-5">¥{baseFee.toLocaleString()}</td>
                             </tr>
                             
                             {/* 紹介料 */}
                             <tr className="border-b border-gray-200">
-                                <td className="py-3 print:py-1">紹介料</td>
-                                <td className="text-center py-3 print:py-1">{totalVisitors}名</td>
-                                <td className="text-right py-3 print:py-1">¥{unitPrice.toLocaleString()}</td>
-                                <td className="text-right py-3 print:py-1">¥{(totalVisitors * unitPrice).toLocaleString()}</td>
+                                <td className="py-3 print:py-5">紹介料</td>
+                                <td className="text-center py-3 print:py-5">{totalVisitors}名</td>
+                                <td className="text-right py-3 print:py-5">¥{unitPrice.toLocaleString()}</td>
+                                <td className="text-right py-3 print:py-5">¥{(totalVisitors * unitPrice).toLocaleString()}</td>
                             </tr>
 
                             {/* 保証割料金 */}
                             <tr className="border-b border-gray-200">
-                                <td className="py-3 print:py-1">保証割料金</td>
-                                <td className="text-center py-3 print:py-1"></td>
-                                <td className="text-right py-3 print:py-1"></td>
-                                <td className={`text-right py-3 print:py-1 ${totalVisitors < guaranteeCount ? 'text-red-600' : ''}`}>
+                                <td className="py-3 print:py-5">保証割料金</td>
+                                <td className="text-center py-3 print:py-5"></td>
+                                <td className="text-right py-3 print:py-5"></td>
+                                <td className={`text-right py-3 print:py-5 ${totalVisitors < guaranteeCount ? 'text-red-600' : ''}`}>
                                     {totalVisitors < guaranteeCount 
                                         ? `-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}`
                                         : '¥0'
@@ -259,20 +259,20 @@ const CustomerBillingPage = () => {
 
                             {/* 小計 */}
                             <tr className="border-b border-gray-200">
-                                <td colSpan="3" className="text-right py-3 font-medium print:py-1">小計</td>
-                                <td className="text-right py-3 font-medium print:py-1">¥{subtotal.toLocaleString()}</td>
+                                <td colSpan="3" className="text-right py-3 font-medium print:py-5">小計</td>
+                                <td className="text-right py-3 font-medium print:py-5">¥{subtotal.toLocaleString()}</td>
                             </tr>
 
                             {/* 消費税 */}
                             <tr className="border-b border-gray-200">
-                                <td colSpan="3" className="text-right py-3 print:py-1">消費税（10%）</td>
-                                <td className="text-right py-3 print:py-1">¥{tax.toLocaleString()}</td>
+                                <td colSpan="3" className="text-right py-3 print:py-5">消費税（10%）</td>
+                                <td className="text-right py-3 print:py-5">¥{tax.toLocaleString()}</td>
                             </tr>
 
                             {/* 合計 */}
                             <tr className="border-b-2 border-gray-300">
-                                <td colSpan="3" className="text-right py-3 font-bold text-lg print:py-1 print:text-base">合計</td>
-                                <td className="text-right py-3 font-bold text-lg print:py-1 print:text-base">¥{total.toLocaleString()}</td>
+                                <td colSpan="3" className="text-right py-3 font-bold text-lg print:py-5 print:text-xl">合計</td>
+                                <td className="text-right py-3 font-bold text-lg print:py-5 print:text-xl">¥{total.toLocaleString()}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -280,24 +280,24 @@ const CustomerBillingPage = () => {
 
 
 
-                <hr className="mb-8 print:mb-3" />
+                <hr className="mb-8 print:mb-12" />
 
-                <div className="mb-8 print:mb-3 print:text-xs">
-                    <p className="mb-4 print:mb-2">いつもお世話になっております。</p>
-                    <p className="mb-4 print:mb-2">お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
-                    <p className="mb-2 print:mb-1">・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
-                    <p className="mb-4 print:mb-2">・ご入金期日：{getMonthName(getDueDate())}25日</p>
-                    <p className="font-bold text-red-600 print:text-sm">
+                <div className="mb-8 print:mb-12">
+                    <p className="mb-4 print:mb-5">いつもお世話になっております。</p>
+                    <p className="mb-4 print:mb-5">お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
+                    <p className="mb-2 print:mb-4">・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
+                    <p className="mb-4 print:mb-5">・ご入金期日：{getMonthName(getDueDate())}25日</p>
+                    <p className="font-bold text-red-600">
                         なお、**当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。**
                     </p>
                 </div>
 
-                <hr className="mb-8 print:mb-3" />
+                <hr className="mb-8 print:mb-12" />
 
                 {/* 振込先情報 */}
-                <div className="bg-gray-50 p-6 rounded print:p-3 print:text-xs">
-                    <h3 className="font-bold mb-4 print:mb-2">■振込先口座：</h3>
-                    <div className="ml-4 space-y-1 print:space-y-0">
+                <div className="bg-gray-50 p-6 rounded print:p-8">
+                    <h3 className="font-bold mb-4 print:mb-6">■振込先口座：</h3>
+                    <div className="ml-4 space-y-1 print:space-y-3">
                         <p>　銀行名：北洋銀行</p>
                         <p>　支店名：札幌南支店（030）</p>
                         <p>　種別：普通</p>
