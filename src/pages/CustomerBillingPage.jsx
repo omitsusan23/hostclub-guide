@@ -92,19 +92,6 @@ const CustomerBillingPage = () => {
         return dueDate
     }
 
-    // 日付フォーマット
-    const formatDate = (date) => {
-        const year = date.getFullYear()
-        const month = date.getMonth() + 1
-        const day = date.getDate()
-        return `${year}年${month}月${day}日`
-    }
-
-    // 数値を3桁区切りにフォーマット
-    const formatNumber = (num) => {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-    }
-
     if (loading) {
         return (
             <Layout>
