@@ -17,26 +17,28 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
     
     setLoading(true);
     try {
-      const currentDate = new Date();
       const records = [];
       
-      // 現在月と前月のデータを取得（8月と7月）
-      for (let i = 0; i < 2; i++) {
-        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        const year = targetDate.getFullYear();
-        const month = targetDate.getMonth() + 1;
-        
-        // staff_typeを'both'にして合算データを取得
-        const monthData = await getMonthlyVisitRecords(store.store_id, year, month, 'both');
-        const totalCount = monthData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
-        
-        // データがない月も0として表示
-        records.push({
-          year,
-          month,
-          count: totalCount
-        });
-      }
+      // 7月（先月）のデータを取得
+      const julyData = await getMonthlyVisitRecords(store.store_id, 2025, 7, 'both');
+      const julyCount = julyData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
+      
+      // 8月（今月）のデータを取得
+      const augustData = await getMonthlyVisitRecords(store.store_id, 2025, 8, 'both');
+      const augustCount = augustData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
+      
+      // 7月、8月の順番で追加（古い月から新しい月へ）
+      records.push({
+        year: 2025,
+        month: 7,
+        count: julyCount
+      });
+      
+      records.push({
+        year: 2025,
+        month: 8,
+        count: augustCount
+      });
       
       setMonthlyRecords(records);
     } catch (error) {
