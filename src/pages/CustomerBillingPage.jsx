@@ -56,6 +56,28 @@ const CustomerBillingPage = () => {
         return new Date(now.getFullYear(), now.getMonth() - 1, 1)
     }
 
+    // 日付フォーマット（令和表記）
+    const formatDateToWareki = (date) => {
+        const year = date.getFullYear()
+        const reiwaYear = year - 2018
+        const month = date.getMonth() + 1
+        const day = date.getDate()
+        return `令和${reiwaYear}年${month}月${day}日`
+    }
+
+    // 日付フォーマット（通常表記）
+    const formatDate = (date) => {
+        const year = date.getFullYear()
+        const month = date.getMonth() + 1
+        const day = date.getDate()
+        return `${year}年${month}月${day}日`
+    }
+
+    // 数値を3桁区切りにフォーマット
+    const formatNumber = (num) => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    }
+
     // 請求書の日付を取得（翌月4日）
     const getInvoiceDate = () => {
         const now = new Date()
@@ -70,16 +92,7 @@ const CustomerBillingPage = () => {
         return dueDate
     }
 
-    // 日付フォーマット（令和表記）
-    const formatDateToWareki = (date) => {
-        const year = date.getFullYear()
-        const reiwaYear = year - 2018
-        const month = date.getMonth() + 1
-        const day = date.getDate()
-        return `令和${reiwaYear}年${month}月${day}日`
-    }
-
-    // 日付フォーマット（通常表記）
+    // 日付フォーマット
     const formatDate = (date) => {
         const year = date.getFullYear()
         const month = date.getMonth() + 1
@@ -215,7 +228,99 @@ const CustomerBillingPage = () => {
                     </h2>
                 </div>
 
+                {/* 明細テーブル */}
+                <div className="mb-8 font-mono text-sm">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="border-b-2 border-gray-300">
+                                <th className="text-left py-2">項目</th>
+                                <th className="text-center py-2">数量</th>
+                                <th className="text-right py-2">単価</th>
+                                <th className="text-right py-2">金額</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {/* 掲載料金 */}
+                            <tr className="border-b border-gray-200">
+                                <td className="py-3">掲載料金</td>
+                                <td className="text-center py-3">1</td>
+                                <td className="text-right py-3">¥{baseFee.toLocaleString()}</td>
+                                <td className="text-right py-3">¥{baseFee.toLocaleString()}</td>
+                            </tr>
+                            
+                            {/* 紹介料 */}
+                            <tr className="border-b border-gray-200">
+                                <td className="py-3">紹介料</td>
+                                <td className="text-center py-3">{totalVisitors}名</td>
+                                <td className="text-right py-3">¥{unitPrice.toLocaleString()}</td>
+                                <td className="text-right py-3">¥{(totalVisitors * unitPrice).toLocaleString()}</td>
+                            </tr>
 
+                            {/* 保証割料金 */}
+                            {totalVisitors < guaranteeCount && (
+                                <tr className="border-b border-gray-200">
+                                    <td className="py-3">保証割料金</td>
+                                    <td className="text-center py-3">{guaranteeCount - totalVisitors}名</td>
+                                    <td className="text-right py-3">-¥{unitPrice.toLocaleString()}</td>
+                                    <td className="text-right py-3 text-red-600">-¥{((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</td>
+                                </tr>
+                            )}
+
+                            {/* 小計 */}
+                            <tr className="border-b border-gray-200">
+                                <td colSpan="3" className="text-right py-3 font-medium">小計</td>
+                                <td className="text-right py-3 font-medium">¥{subtotal.toLocaleString()}</td>
+                            </tr>
+
+                            {/* 消費税 */}
+                            <tr className="border-b border-gray-200">
+                                <td colSpan="3" className="text-right py-3">消費税（10%）</td>
+                                <td className="text-right py-3">¥{tax.toLocaleString()}</td>
+                            </tr>
+
+                            {/* 合計 */}
+                            <tr className="border-b-2 border-gray-300">
+                                <td colSpan="3" className="text-right py-3 font-bold text-lg">合計</td>
+                                <td className="text-right py-3 font-bold text-lg">¥{total.toLocaleString()}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* 明細テーブル - テキストベースの罫線風 */}
+                <div className="mb-8 font-mono text-sm bg-gray-50 p-4 rounded">
+                    <pre className="whitespace-pre overflow-x-auto">
+{`┌──────────────────────────┬──────┬──────┬────────┐
+│ 項目                         │ 数量   │ 単価   │ 金額     │
+├──────────────────────────┼──────┼──────┼────────┤`}
+{items.map((item, index) => {
+    const label = item.label.padEnd(28, '　')
+    const quantity = item.quantity > 0 ? item.quantity.toString().padStart(6, ' ') : '      '
+    const unitPrice = item.unitPrice > 0 ? formatNumber(item.unitPrice).padStart(6, ' ') : item.unitPrice < 0 ? '-' + formatNumber(Math.abs(item.unitPrice)).padStart(5, ' ') : '      '
+    const amount = item.amount > 0 ? formatNumber(item.amount).padStart(8, ' ') + '円' : item.amount < 0 ? '-' + formatNumber(Math.abs(item.amount)).padStart(7, ' ') + '円' : '         '
+    return `
+│ ${label} │ ${quantity} │ ${unitPrice} │ ${amount} │`
+}).join('')}
+{`
+└──────────────────────────┴──────┴──────┴────────┘`}
+                    </pre>
+                </div>
+
+                {/* 合計金額 */}
+                <div className="mb-8 text-lg">
+                    <div className="flex justify-between mb-2">
+                        <span>■ 小計：</span>
+                        <span>{formatNumber(subtotal)} 円</span>
+                    </div>
+                    <div className="flex justify-between mb-2">
+                        <span>■ 消費税：</span>
+                        <span>{formatNumber(tax)} 円</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-xl">
+                        <span>■ 合計：</span>
+                        <span>{formatNumber(total)} 円</span>
+                    </div>
+                </div>
 
                 <hr className="mb-8" />
 
