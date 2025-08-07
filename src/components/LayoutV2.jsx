@@ -11,6 +11,10 @@ const LayoutV2 = ({ children }) => {
   // トップページかどうかを判定
   const isTopPage = () => {
     const topPaths = ['/', '/dashboard', '/admin', '/staff', '/outstaff', '/customer']
+    // URLパス方式の店舗ダッシュボードもトップページとして扱う
+    if (location.pathname.match(/^\/store\/[^\/]+$/)) {
+      return true
+    }
     return topPaths.includes(location.pathname)
   }
   
@@ -36,23 +40,34 @@ const LayoutV2 = ({ children }) => {
   }
 
   const handleBack = () => {
-    // 常にロールに応じたダッシュボードへ戻る
+    // URLパス方式でのアクセスをチェック
+    const currentPath = location.pathname
+    const storeMatch = currentPath.match(/^\/store\/([^\/]+)/)
+    
+    if (storeMatch) {
+      // URLパス方式の場合は /store/:storeId に戻る
+      const storeId = storeMatch[1]
+      navigate(`/store/${storeId}`, { replace: true })
+      return
+    }
+    
+    // 通常のロールベースのダッシュボードへ戻る
     const role = getUserRole()
     switch (role) {
       case 'admin':
-        navigate('/admin')
+        navigate('/admin', { replace: true })
         break
       case 'staff':
-        navigate('/staff')
+        navigate('/staff', { replace: true })
         break
       case 'outstaff':
-        navigate('/outstaff')
+        navigate('/outstaff', { replace: true })
         break
       case 'customer':
-        navigate('/customer')
+        navigate('/customer', { replace: true })
         break
       default:
-        navigate('/')
+        navigate('/', { replace: true })
     }
   }
 
