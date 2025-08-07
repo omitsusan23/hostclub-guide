@@ -96,13 +96,16 @@ const CustomerBillingPDFPage = () => {
                     left: -9999px;
                     width: 794px;
                     min-height: 1123px;
-                    background: white;
+                    background: white !important;
                     padding: 40px;
                     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
                     font-size: 14px;
                     line-height: 1.5;
-                    color: #333;
+                    color: #333 !important;
                     z-index: -1;
+                    print-color-adjust: exact;
+                    -webkit-print-color-adjust: exact;
+                    forced-color-adjust: none;
                 `
                 
                 // HTMLコンテンツを直接設定
@@ -248,17 +251,21 @@ const CustomerBillingPDFPage = () => {
                 filename: `請求書_${store?.name}_${new Date().toISOString().split('T')[0]}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
-                    scale: 2,
+                    scale: isMobile ? 1.5 : 2,
                     useCORS: true,
                     letterRendering: true,
                     logging: false,
                     windowWidth: 794,
-                    windowHeight: 1123
+                    windowHeight: 1123,
+                    backgroundColor: '#ffffff',
+                    allowTaint: false,
+                    foreignObjectRendering: false
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
-                    orientation: 'portrait' 
+                    orientation: 'portrait',
+                    compress: true
                 }
             }
 
@@ -295,13 +302,16 @@ const CustomerBillingPDFPage = () => {
                     left: -9999px;
                     width: 794px;
                     min-height: 1123px;
-                    background: white;
+                    background: white !important;
                     padding: 40px;
                     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
                     font-size: 14px;
                     line-height: 1.5;
-                    color: #333;
+                    color: #333 !important;
                     z-index: -1;
+                    print-color-adjust: exact;
+                    -webkit-print-color-adjust: exact;
+                    forced-color-adjust: none;
                 `
                 
                 // HTMLコンテンツを直接設定（downloadPDFと同じ内容）
@@ -447,17 +457,21 @@ const CustomerBillingPDFPage = () => {
                 filename: 'invoice.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
-                    scale: 2,
+                    scale: isMobile ? 1.5 : 2,
                     useCORS: true,
                     letterRendering: true,
                     logging: false,
                     windowWidth: 794,
-                    windowHeight: 1123
+                    windowHeight: 1123,
+                    backgroundColor: '#ffffff',
+                    allowTaint: false,
+                    foreignObjectRendering: false
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
-                    orientation: 'portrait' 
+                    orientation: 'portrait',
+                    compress: true
                 }
             }
 

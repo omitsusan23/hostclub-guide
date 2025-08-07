@@ -60,6 +60,31 @@
   }
 }
 
+/* Forced Colors Mode（高コントラストモード）対応 */
+@media (forced-colors: active) {
+  * {
+    forced-color-adjust: none !important;
+  }
+  
+  /* テーブルの境界線を確実に表示 */
+  table, th, td {
+    border-color: CanvasText !important;
+  }
+  
+  /* 背景色を確実に設定 */
+  body, .bg-white {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+  }
+  
+  /* ボタンの色を調整 */
+  .bg-blue-600, .bg-gray-600 {
+    background-color: ButtonFace !important;
+    color: ButtonText !important;
+    border: 1px solid ButtonText !important;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
