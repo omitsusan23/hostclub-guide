@@ -17,11 +17,13 @@
   /* 背景色を白に */
   body {
     background: white !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
   }
   
-  /* ページの余白を調整（バランスの良い余白） */
+  /* ページの余白を最小化 */
   @page {
-    margin: 1cm;
+    margin: 0.3cm;
     size: A4;
   }
   
@@ -29,6 +31,32 @@
   .print\:avoid-break {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+  
+  /* 印刷時の追加調整 */
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  /* テーブルのセル間隔を調整 */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  /* フォントサイズを統一して余白を詰める */
+  .print\:text-2xs {
+    font-size: 10px !important;
+  }
+  
+  /* 行間を詰める */
+  .print\:leading-none {
+    line-height: 1 !important;
+  }
+  
+  .print\:leading-tight {
+    line-height: 1.1 !important;
   }
 }
 
