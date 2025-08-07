@@ -83,17 +83,18 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // 一時的なコンテナを作成
+            // 一時的なコンテナを作成（画面外に配置）
             const tempContainer = document.createElement('div')
-            tempContainer.style.position = 'fixed'
-            tempContainer.style.top = '0'
-            tempContainer.style.left = '0'
+            tempContainer.style.position = 'absolute'
+            tempContainer.style.top = '-9999px'
+            tempContainer.style.left = '-9999px'
             tempContainer.style.width = '210mm'
             tempContainer.style.minHeight = '297mm'
             tempContainer.style.backgroundColor = 'white'
-            tempContainer.style.zIndex = '99999'
             tempContainer.style.padding = '20mm'
             tempContainer.style.fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif'
+            tempContainer.style.visibility = 'visible'
+            tempContainer.style.display = 'block'
             
             // HTMLコンテンツを作成
             tempContainer.innerHTML = `
@@ -198,8 +199,8 @@ const CustomerBillingPDFPage = () => {
             
             document.body.appendChild(tempContainer)
             
-            // 少し待機してレンダリングを完了させる
-            await new Promise(resolve => setTimeout(resolve, 300))
+            // レンダリングを完全に完了させる
+            await new Promise(resolve => setTimeout(resolve, 1000))
             
             const opt = {
                 margin: 0,
@@ -209,18 +210,32 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: false
+                    logging: false,
+                    windowWidth: tempContainer.scrollWidth,
+                    windowHeight: tempContainer.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        // クローンされた要素を確実に表示
+                        const clonedElement = clonedDoc.body.querySelector('div')
+                        if (clonedElement) {
+                            clonedElement.style.display = 'block'
+                            clonedElement.style.visibility = 'visible'
+                            clonedElement.style.position = 'static'
+                        }
+                    }
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait' 
-                }
+                },
+                enableLinks: false
             }
 
+            // PDF生成を実行
             await html2pdf().set(opt).from(tempContainer).save()
             
-            // 一時要素を削除
+            // PDF生成が完全に終わってから削除
+            await new Promise(resolve => setTimeout(resolve, 1000))
             document.body.removeChild(tempContainer)
         } catch (error) {
             console.error('PDF生成エラー:', error)
@@ -235,17 +250,18 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // 一時的なコンテナを作成
+            // 一時的なコンテナを作成（画面外に配置）
             const tempContainer = document.createElement('div')
-            tempContainer.style.position = 'fixed'
-            tempContainer.style.top = '0'
-            tempContainer.style.left = '0'
+            tempContainer.style.position = 'absolute'
+            tempContainer.style.top = '-9999px'
+            tempContainer.style.left = '-9999px'
             tempContainer.style.width = '210mm'
             tempContainer.style.minHeight = '297mm'
             tempContainer.style.backgroundColor = 'white'
-            tempContainer.style.zIndex = '99999'
             tempContainer.style.padding = '20mm'
             tempContainer.style.fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif'
+            tempContainer.style.visibility = 'visible'
+            tempContainer.style.display = 'block'
             
             // HTMLコンテンツを作成（downloadPDFと同じ）
             tempContainer.innerHTML = `
@@ -350,8 +366,8 @@ const CustomerBillingPDFPage = () => {
             
             document.body.appendChild(tempContainer)
             
-            // 少し待機してレンダリングを完了させる
-            await new Promise(resolve => setTimeout(resolve, 300))
+            // レンダリングを完全に完了させる
+            await new Promise(resolve => setTimeout(resolve, 1000))
             
             const opt = {
                 margin: 0,
@@ -361,20 +377,33 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: false
+                    logging: false,
+                    windowWidth: tempContainer.scrollWidth,
+                    windowHeight: tempContainer.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        // クローンされた要素を確実に表示
+                        const clonedElement = clonedDoc.body.querySelector('div')
+                        if (clonedElement) {
+                            clonedElement.style.display = 'block'
+                            clonedElement.style.visibility = 'visible'
+                            clonedElement.style.position = 'static'
+                        }
+                    }
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait' 
-                }
+                },
+                enableLinks: false
             }
 
             const pdf = await html2pdf().set(opt).from(tempContainer).outputPdf('blob')
             const url = URL.createObjectURL(pdf)
             window.open(url, '_blank')
             
-            // 一時要素を削除
+            // PDF生成が完全に終わってから削除
+            await new Promise(resolve => setTimeout(resolve, 1000))
             document.body.removeChild(tempContainer)
         } catch (error) {
             console.error('PDF生成エラー:', error)
