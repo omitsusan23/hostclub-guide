@@ -90,7 +90,7 @@ const CustomerBillingPDFPageV2 = () => {
     <style>
         @page {
             size: A4;
-            margin: 10mm;
+            margin: 0;
         }
         
         * {
@@ -101,68 +101,68 @@ const CustomerBillingPDFPageV2 = () => {
         
         body {
             font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 11px;
+            line-height: 1.4;
             color: #000000;
             background: #ffffff;
-            padding: 20px;
+            padding: 10px;
         }
         
         .invoice-container {
-            max-width: 800px;
+            max-width: 210mm;
             margin: 0 auto;
             background: white;
-            padding: 40px;
+            padding: 15px;
         }
         
         .header-date {
             text-align: right;
-            margin-bottom: 24px;
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-size: 11px;
         }
         
         .title {
             text-align: center;
-            margin-bottom: 32px;
-        }
-        
-        .title h1 {
-            font-size: 36px;
-            font-weight: bold;
             margin-bottom: 16px;
         }
         
+        .title h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
         .customer-name {
-            margin-bottom: 24px;
+            margin-bottom: 12px;
         }
         
         .customer-name h2 {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
         }
         
         .description {
-            margin-bottom: 32px;
-            font-size: 16px;
+            margin-bottom: 16px;
+            font-size: 12px;
         }
         
         .amount-header {
             background-color: #1f2937;
             color: white;
             text-align: center;
-            padding: 12px;
-            margin-bottom: 24px;
+            padding: 8px;
+            margin-bottom: 12px;
         }
         
         .amount-header h3 {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 32px;
+            margin-bottom: 16px;
         }
         
         thead tr {
@@ -171,7 +171,8 @@ const CustomerBillingPDFPageV2 = () => {
         }
         
         th, td {
-            padding: 12px 8px;
+            padding: 6px 4px;
+            font-size: 11px;
         }
         
         th {
@@ -197,7 +198,7 @@ const CustomerBillingPDFPageV2 = () => {
         }
         
         .total-row td {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
         }
         
@@ -206,53 +207,67 @@ const CustomerBillingPDFPageV2 = () => {
         }
         
         .payment-info {
-            margin-bottom: 32px;
+            margin-bottom: 16px;
         }
         
         .payment-info p {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+            font-size: 11px;
         }
         
         .warning {
             color: #dc2626;
             font-weight: 600;
-            margin-top: 16px;
+            margin-top: 8px;
         }
         
         .bank-info {
             background-color: #f3f4f6;
-            padding: 24px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 4px;
         }
         
         .bank-info h4 {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
         
         .bank-info p {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            font-size: 11px;
         }
         
         .footer {
             text-align: center;
-            margin-top: 32px;
-            font-size: 12px;
+            margin-top: 16px;
+            font-size: 10px;
             color: #6b7280;
         }
         
         @media print {
             body {
                 padding: 0;
+                margin: 0;
             }
             
             .invoice-container {
-                padding: 0;
+                padding: 10mm;
+                width: 210mm;
+                min-height: 297mm;
+                page-break-after: avoid;
             }
             
             .no-print {
                 display: none !important;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+            
+            .bank-info {
+                page-break-inside: avoid;
             }
         }
     </style>
