@@ -320,7 +320,7 @@ const CustomerDashboardV2 = () => {
         </div>
 
         {/* リアルタイム発信機能（近日公開） */}
-        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 border border-orange-200">
+        {/* <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 border border-orange-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <span className="text-2xl sm:text-3xl mr-2 sm:mr-3">🔥</span>
@@ -345,7 +345,7 @@ const CustomerDashboardV2 = () => {
               近日公開予定
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* 今月の案内実績 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
