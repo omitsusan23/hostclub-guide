@@ -19,9 +19,16 @@
     background: white !important;
   }
   
-  /* ページの余白を調整 */
+  /* ページの余白を調整（より小さく） */
   @page {
-    margin: 1cm;
+    margin: 0.5cm;
+    size: A4;
+  }
+  
+  /* 改ページを防ぐ */
+  .print\:avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 
