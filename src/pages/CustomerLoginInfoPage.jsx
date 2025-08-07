@@ -140,7 +140,7 @@ const CustomerLoginInfoPage = () => {
                     </div>
 
                     {/* アクションボタン */}
-                    <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                    <div className="mt-8">
                         <Link
                             to="/customer/password-change"
                             className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -150,19 +150,6 @@ const CustomerLoginInfoPage = () => {
                             </svg>
                             パスワードを変更
                         </Link>
-                        
-                        <button
-                            onClick={() => {
-                                const allInfo = `ログイン情報\n\nURL: ${window.location.protocol}//${window.location.host}/login\nメール: ${storeId}@hostclub.local\nパスワード: ${storeId && storeId.charAt(0).toUpperCase()}${storeId && storeId.slice(1)}@Club2025!\n店舗ID: ${storeId}`
-                                copyToClipboard(allInfo)
-                            }}
-                            className="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                            </svg>
-                            すべての情報をコピー
-                        </button>
                     </div>
                 </div>
             </div>

@@ -240,7 +240,7 @@ const CustomerDashboardV2 = () => {
           {store.name}
         </h1>
         <p className="text-xs sm:text-sm lg:text-base text-gray-600">
-          店舗管理ダッシュボード
+          管理ダッシュボード
         </p>
       </div>
 
