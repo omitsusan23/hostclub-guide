@@ -102,20 +102,14 @@ const CustomerPreviousMonthPage = () => {
 
             {/* サマリーカード */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="text-center">
-                        <p className="text-sm text-gray-600">月間案内人数</p>
-                        <p className="text-3xl font-bold text-blue-600">{totalVisitors}人</p>
+                        <p className="text-sm text-gray-600">月間本数</p>
+                        <p className="text-3xl font-bold text-blue-600">{totalVisitors}本</p>
                     </div>
                     <div className="text-center">
-                        <p className="text-sm text-gray-600">案内回数</p>
-                        <p className="text-3xl font-bold text-green-600">{visitRecords.length}回</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-sm text-gray-600">平均案内人数</p>
-                        <p className="text-3xl font-bold text-purple-600">
-                            {visitRecords.length > 0 ? (totalVisitors / visitRecords.length).toFixed(1) : 0}人
-                        </p>
+                        <p className="text-sm text-gray-600">組数</p>
+                        <p className="text-3xl font-bold text-green-600">{visitRecords.length}組</p>
                     </div>
                 </div>
             </div>
@@ -128,19 +122,11 @@ const CustomerPreviousMonthPage = () => {
                     <div className="space-y-4">
                         {visitRecords.map((record) => (
                             <div key={record.id} className="border-b pb-4 last:border-b-0">
-                                <div className="flex justify-between items-start">
+                                <div className="flex justify-between items-center">
                                     <div>
                                         <p className="font-medium text-gray-900">
                                             {formatDate(record.guided_at)}
                                         </p>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            案内担当: {record.staff_name || '未記録'}
-                                        </p>
-                                        {record.staff_type === 'outstaff' && (
-                                            <span className="inline-block mt-1 px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">
-                                                外案内
-                                            </span>
-                                        )}
                                     </div>
                                     <div className="text-right">
                                         <span className="text-2xl font-bold text-blue-600">
