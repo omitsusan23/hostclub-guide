@@ -8,7 +8,7 @@ import StaffDashboard from './pages/StaffDashboard'
 import OutstaffDashboard from './pages/OutstaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import CustomerBillingPage from './pages/CustomerBillingPage'
-import CustomerBillingPDFPageV2 from './pages/CustomerBillingPDFPageV2'
+import CustomerBillingPDFPageV3 from './pages/CustomerBillingPDFPageV3'
 import CustomerLoginInfoPage from './pages/CustomerLoginInfoPage'
 import CustomerPreviousMonthPage from './pages/CustomerPreviousMonthPage'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
@@ -269,7 +269,7 @@ const AppRoutes = () => {
           path="/customer/billing-pdf" 
           element={
             <ProtectedRoute allowedRoles={['customer']}>
-              <CustomerBillingPDFPageV2 />
+              <CustomerBillingPDFPageV3 />
             </ProtectedRoute>
           } 
         />
