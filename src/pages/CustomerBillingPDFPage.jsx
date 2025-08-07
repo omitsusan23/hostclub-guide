@@ -84,6 +84,11 @@ const CustomerBillingPDFPage = () => {
         
         setGeneratingPDF(true)
         
+        // モバイルの場合、少し待機してDOMが準備されるのを待つ
+        if (isMobile) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
         try {
             const opt = {
                 margin: 10,
@@ -93,7 +98,9 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: false
+                    logging: false,
+                    windowWidth: isMobile ? 794 : 1024, // A4幅に合わせる
+                    windowHeight: isMobile ? 1123 : 1448
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -117,6 +124,11 @@ const CustomerBillingPDFPage = () => {
         
         setGeneratingPDF(true)
         
+        // モバイルの場合、少し待機してDOMが準備されるのを待つ
+        if (isMobile) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
         try {
             const opt = {
                 margin: 10,
@@ -126,7 +138,9 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: false
+                    logging: false,
+                    windowWidth: isMobile ? 794 : 1024, // A4幅に合わせる
+                    windowHeight: isMobile ? 1123 : 1448
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -354,12 +368,13 @@ const CustomerBillingPDFPage = () => {
                 {/* 請求書プレビュー（デスクトップ表示用、モバイルではPDF生成用） */}
                 <div 
                     ref={invoiceRef}
-                    className={`max-w-4xl mx-auto bg-white p-8 ${isMobile ? 'sr-only' : ''}`}
+                    className={`max-w-4xl mx-auto bg-white p-8 ${isMobile ? 'absolute left-[-9999px]' : ''}`}
                     style={{ 
                         fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif',
                         fontSize: '14px',
                         lineHeight: '1.5',
-                        color: '#333'
+                        color: '#333',
+                        width: isMobile ? '210mm' : 'auto'
                     }}
                 >
                     <InvoiceContent />
