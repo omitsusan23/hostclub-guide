@@ -22,10 +22,12 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
       // 7月（先月）のデータを取得
       const julyData = await getMonthlyVisitRecords(store.store_id, 2025, 7, 'both');
       const julyCount = julyData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
+      console.log(`${store.name} - 7月データ:`, julyData.length, '件, 合計:', julyCount, '本');
       
       // 8月（今月）のデータを取得
       const augustData = await getMonthlyVisitRecords(store.store_id, 2025, 8, 'both');
       const augustCount = augustData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
+      console.log(`${store.name} - 8月データ:`, augustData.length, '件, 合計:', augustCount, '本');
       
       // 7月、8月の順番で追加（古い月から新しい月へ）
       records.push({

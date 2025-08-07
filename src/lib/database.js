@@ -254,7 +254,8 @@ export const getSpecificDateVisitRecords = async (targetDate, storeId = null, st
 export const getMonthlyVisitRecords = async (storeId = null, year = null, month = null, staffTypeFilter = 'both') => {
   const now = new Date()
   const targetYear = year || now.getFullYear()
-  const targetMonth = month !== null ? month : now.getMonth()
+  // monthが渡された場合は1ベース（1-12）として扱い、JavaScriptの0ベース（0-11）に変換
+  const targetMonth = month !== null ? month - 1 : now.getMonth()
   
   const startOfMonth = new Date(targetYear, targetMonth, 1).toISOString()
   const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString()
