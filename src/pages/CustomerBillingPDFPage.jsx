@@ -84,8 +84,45 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // モバイルの場合は非表示の要素を使用、デスクトップは表示されている要素を使用
-            const targetElement = isMobile && hiddenInvoiceRef.current ? hiddenInvoiceRef.current : invoiceRef.current
+            // モバイルの場合、一時的に表示用の要素を作成
+            let targetElement = null
+            let tempContainer = null
+            
+            if (isMobile) {
+                // DevTools対応: 一時的なDOM要素を作成
+                tempContainer = document.createElement('div')
+                tempContainer.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 210mm;
+                    background: white;
+                    padding: 20mm;
+                    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    color: #333;
+                    z-index: -9999;
+                    visibility: hidden;
+                    opacity: 1;
+                `
+                
+                // React要素を一時的なコンテナにレンダリング
+                const tempDiv = document.createElement('div')
+                tempDiv.innerHTML = hiddenInvoiceRef.current ? hiddenInvoiceRef.current.innerHTML : ''
+                tempContainer.appendChild(tempDiv)
+                document.body.appendChild(tempContainer)
+                
+                targetElement = tempContainer
+                
+                console.log('モバイル用PDF要素作成:', {
+                    container: tempContainer,
+                    hasContent: tempDiv.innerHTML.length > 0,
+                    userAgent: navigator.userAgent
+                })
+            } else {
+                targetElement = invoiceRef.current
+            }
             
             if (!targetElement) {
                 console.error('PDF生成対象の要素が見つかりません')
@@ -94,9 +131,11 @@ const CustomerBillingPDFPage = () => {
             }
 
             console.log('PDF生成開始:', {
+                isMobile,
                 element: targetElement,
                 store: store?.name,
-                total
+                total,
+                elementHTML: targetElement.innerHTML.substring(0, 200)
             })
 
             const opt = {
@@ -107,7 +146,9 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: true // デバッグ用にログを有効化
+                    logging: true,
+                    windowWidth: 1024,
+                    windowHeight: 768
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -118,6 +159,11 @@ const CustomerBillingPDFPage = () => {
 
             await html2pdf().set(opt).from(targetElement).save()
             console.log('PDF生成完了')
+            
+            // 一時的な要素を削除
+            if (tempContainer) {
+                document.body.removeChild(tempContainer)
+            }
         } catch (error) {
             console.error('PDF生成エラー:', error)
             alert('PDF生成に失敗しました。もう一度お試しください。')
@@ -131,8 +177,39 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // モバイルの場合は非表示の要素を使用、デスクトップは表示されている要素を使用
-            const targetElement = isMobile && hiddenInvoiceRef.current ? hiddenInvoiceRef.current : invoiceRef.current
+            // モバイルの場合、一時的に表示用の要素を作成
+            let targetElement = null
+            let tempContainer = null
+            
+            if (isMobile) {
+                // DevTools対応: 一時的なDOM要素を作成
+                tempContainer = document.createElement('div')
+                tempContainer.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 210mm;
+                    background: white;
+                    padding: 20mm;
+                    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    color: #333;
+                    z-index: -9999;
+                    visibility: hidden;
+                    opacity: 1;
+                `
+                
+                // React要素を一時的なコンテナにレンダリング
+                const tempDiv = document.createElement('div')
+                tempDiv.innerHTML = hiddenInvoiceRef.current ? hiddenInvoiceRef.current.innerHTML : ''
+                tempContainer.appendChild(tempDiv)
+                document.body.appendChild(tempContainer)
+                
+                targetElement = tempContainer
+            } else {
+                targetElement = invoiceRef.current
+            }
             
             if (!targetElement) {
                 console.error('PDF生成対象の要素が見つかりません')
@@ -148,7 +225,9 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: true
+                    logging: true,
+                    windowWidth: 1024,
+                    windowHeight: 768
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -160,6 +239,11 @@ const CustomerBillingPDFPage = () => {
             const pdf = await html2pdf().set(opt).from(targetElement).outputPdf('blob')
             const url = URL.createObjectURL(pdf)
             window.open(url, '_blank')
+            
+            // 一時的な要素を削除
+            if (tempContainer) {
+                document.body.removeChild(tempContainer)
+            }
         } catch (error) {
             console.error('PDF生成エラー:', error)
             alert('PDF生成に失敗しました。もう一度お試しください。')
