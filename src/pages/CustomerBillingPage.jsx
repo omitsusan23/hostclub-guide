@@ -215,60 +215,6 @@ const CustomerBillingPage = () => {
                     </h2>
                 </div>
 
-                {/* 明細 */}
-                <div className="mb-8">
-                    <h3 className="text-lg font-semibold mb-4">明細</h3>
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="border-b-2 border-gray-300">
-                                <th className="text-left py-2">項目</th>
-                                <th className="text-center py-2">数量</th>
-                                <th className="text-right py-2">単価</th>
-                                <th className="text-right py-2">金額</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {/* 基本料金 */}
-                            <tr className="border-b border-gray-200">
-                                <td className="py-3">基本料金</td>
-                                <td className="text-center py-3">1</td>
-                                <td className="text-right py-3">¥{baseFee.toLocaleString()}</td>
-                                <td className="text-right py-3">¥{baseFee.toLocaleString()}</td>
-                            </tr>
-                            
-                            {/* 案内料金 */}
-                            <tr className="border-b border-gray-200">
-                                <td className="py-3">
-                                    案内料
-                                    <span className="text-sm text-gray-600 ml-2">
-                                        （保証{guaranteeCount}名を超えた分）
-                                    </span>
-                                </td>
-                                <td className="text-center py-3">{billableCount}名</td>
-                                <td className="text-right py-3">¥{unitPrice.toLocaleString()}</td>
-                                <td className="text-right py-3">¥{additionalFee.toLocaleString()}</td>
-                            </tr>
-
-                            {/* 小計 */}
-                            <tr className="border-b border-gray-200">
-                                <td colSpan="3" className="text-right py-3 font-medium">小計</td>
-                                <td className="text-right py-3 font-medium">¥{subtotal.toLocaleString()}</td>
-                            </tr>
-
-                            {/* 消費税 */}
-                            <tr className="border-b border-gray-200">
-                                <td colSpan="3" className="text-right py-3">消費税（10%）</td>
-                                <td className="text-right py-3">¥{tax.toLocaleString()}</td>
-                            </tr>
-
-                            {/* 合計 */}
-                            <tr className="border-b-2 border-gray-300">
-                                <td colSpan="3" className="text-right py-3 font-bold text-lg">合計</td>
-                                <td className="text-right py-3 font-bold text-lg">¥{total.toLocaleString()}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
 
 
                 <hr className="mb-8" />
