@@ -295,14 +295,14 @@ const CustomerBillingPage = () => {
                 <hr className="mb-8 print:mb-6" />
 
                 {/* 振込先情報 */}
-                <div className="bg-gray-50 p-6 rounded print:p-4">
+                <div className="bg-gray-50 p-6 rounded print:p-4 print:break-inside-avoid">
                     <h3 className="font-bold mb-4 print:mb-3">■振込先口座：</h3>
                     <div className="ml-4 space-y-1 print:space-y-1">
                         <p>　銀行名：北洋銀行</p>
                         <p>　支店名：札幌南支店（030）</p>
                         <p>　種別：普通</p>
                         <p>　口座番号：7210596</p>
-                        <p>　口座名義：（カ）リプレイ センザキ マサミツ</p>
+                        <p className="print:break-inside-avoid">　口座名義：（カ）リプレイ センザキ マサミツ</p>
                     </div>
                 </div>
             </div>
