@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createRoot } from 'react-dom/client'
 import html2pdf from 'html2pdf.js'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
@@ -12,7 +13,6 @@ const CustomerBillingPDFPage = () => {
     const [isMobile, setIsMobile] = useState(false)
     const [generatingPDF, setGeneratingPDF] = useState(false)
     const invoiceRef = useRef()
-    const hiddenInvoiceRef = useRef()
 
     const storeId = getUserStoreId() || getStoreIdFromSubdomain()
 
@@ -87,38 +87,41 @@ const CustomerBillingPDFPage = () => {
             // モバイルの場合、一時的に表示用の要素を作成
             let targetElement = null
             let tempContainer = null
+            let root = null
             
             if (isMobile) {
-                // DevTools対応: 一時的なDOM要素を作成
+                // DevTools対応: 一時的なDOM要素を作成して実際のReactコンポーネントをレンダリング
                 tempContainer = document.createElement('div')
+                tempContainer.id = 'pdf-temp-container'
                 tempContainer.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 210mm;
+                    position: absolute;
+                    top: -10000px;
+                    left: -10000px;
+                    width: 794px;
+                    min-height: 1123px;
                     background: white;
-                    padding: 20mm;
+                    padding: 40px;
                     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
                     font-size: 14px;
                     line-height: 1.5;
                     color: #333;
-                    z-index: -9999;
-                    visibility: hidden;
-                    opacity: 1;
+                    overflow: visible;
                 `
-                
-                // React要素を一時的なコンテナにレンダリング
-                const tempDiv = document.createElement('div')
-                tempDiv.innerHTML = hiddenInvoiceRef.current ? hiddenInvoiceRef.current.innerHTML : ''
-                tempContainer.appendChild(tempDiv)
                 document.body.appendChild(tempContainer)
+                
+                // Reactコンポーネントを実際にレンダリング
+                root = createRoot(tempContainer)
+                root.render(<InvoiceContent />)
+                
+                // レンダリング完了を待つ
+                await new Promise(resolve => setTimeout(resolve, 500))
                 
                 targetElement = tempContainer
                 
-                console.log('モバイル用PDF要素作成:', {
+                console.log('モバイル用PDF要素作成完了:', {
                     container: tempContainer,
-                    hasContent: tempDiv.innerHTML.length > 0,
-                    userAgent: navigator.userAgent
+                    hasContent: tempContainer.innerHTML.length > 0,
+                    contentLength: tempContainer.innerHTML.length
                 })
             } else {
                 targetElement = invoiceRef.current
@@ -146,9 +149,17 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: true,
-                    windowWidth: 1024,
-                    windowHeight: 768
+                    logging: false,
+                    windowWidth: 794,
+                    windowHeight: 1123,
+                    onclone: (clonedDoc) => {
+                        const clonedElement = clonedDoc.getElementById('pdf-temp-container') || clonedDoc.getElementById('pdf-temp-container-tab')
+                        if (clonedElement) {
+                            clonedElement.style.position = 'static'
+                            clonedElement.style.top = '0'
+                            clonedElement.style.left = '0'
+                        }
+                    }
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -161,7 +172,10 @@ const CustomerBillingPDFPage = () => {
             console.log('PDF生成完了')
             
             // 一時的な要素を削除
-            if (tempContainer) {
+            if (root) {
+                root.unmount()
+            }
+            if (tempContainer && tempContainer.parentNode) {
                 document.body.removeChild(tempContainer)
             }
         } catch (error) {
@@ -180,31 +194,34 @@ const CustomerBillingPDFPage = () => {
             // モバイルの場合、一時的に表示用の要素を作成
             let targetElement = null
             let tempContainer = null
+            let root = null
             
             if (isMobile) {
-                // DevTools対応: 一時的なDOM要素を作成
+                // DevTools対応: 一時的なDOM要素を作成して実際のReactコンポーネントをレンダリング
                 tempContainer = document.createElement('div')
+                tempContainer.id = 'pdf-temp-container-tab'
                 tempContainer.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 210mm;
+                    position: absolute;
+                    top: -10000px;
+                    left: -10000px;
+                    width: 794px;
+                    min-height: 1123px;
                     background: white;
-                    padding: 20mm;
+                    padding: 40px;
                     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif;
                     font-size: 14px;
                     line-height: 1.5;
                     color: #333;
-                    z-index: -9999;
-                    visibility: hidden;
-                    opacity: 1;
+                    overflow: visible;
                 `
-                
-                // React要素を一時的なコンテナにレンダリング
-                const tempDiv = document.createElement('div')
-                tempDiv.innerHTML = hiddenInvoiceRef.current ? hiddenInvoiceRef.current.innerHTML : ''
-                tempContainer.appendChild(tempDiv)
                 document.body.appendChild(tempContainer)
+                
+                // Reactコンポーネントを実際にレンダリング
+                root = createRoot(tempContainer)
+                root.render(<InvoiceContent />)
+                
+                // レンダリング完了を待つ
+                await new Promise(resolve => setTimeout(resolve, 500))
                 
                 targetElement = tempContainer
             } else {
@@ -225,9 +242,17 @@ const CustomerBillingPDFPage = () => {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    logging: true,
-                    windowWidth: 1024,
-                    windowHeight: 768
+                    logging: false,
+                    windowWidth: 794,
+                    windowHeight: 1123,
+                    onclone: (clonedDoc) => {
+                        const clonedElement = clonedDoc.getElementById('pdf-temp-container') || clonedDoc.getElementById('pdf-temp-container-tab')
+                        if (clonedElement) {
+                            clonedElement.style.position = 'static'
+                            clonedElement.style.top = '0'
+                            clonedElement.style.left = '0'
+                        }
+                    }
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -241,7 +266,10 @@ const CustomerBillingPDFPage = () => {
             window.open(url, '_blank')
             
             // 一時的な要素を削除
-            if (tempContainer) {
+            if (root) {
+                root.unmount()
+            }
+            if (tempContainer && tempContainer.parentNode) {
                 document.body.removeChild(tempContainer)
             }
         } catch (error) {
@@ -471,27 +499,6 @@ const CustomerBillingPDFPage = () => {
                     </div>
                 )}
 
-                {/* モバイル用の非表示請求書（PDF生成用） */}
-                {isMobile && (
-                    <div 
-                        ref={hiddenInvoiceRef}
-                        className="sr-only"
-                        style={{ 
-                            position: 'absolute',
-                            left: '-9999px',
-                            width: '210mm',
-                            backgroundColor: 'white',
-                            padding: '20mm',
-                            fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif',
-                            fontSize: '14px',
-                            lineHeight: '1.5',
-                            color: '#333'
-                        }}
-                        aria-hidden="true"
-                    >
-                        <InvoiceContent />
-                    </div>
-                )}
 
                 {/* ダウンロードボタン */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
@@ -554,8 +561,7 @@ const CustomerBillingPDFPage = () => {
                         baseFee,
                         totalVisitors,
                         total,
-                        hasInvoiceRef: !!invoiceRef.current,
-                        hasHiddenInvoiceRef: !!hiddenInvoiceRef.current
+                        hasInvoiceRef: !!invoiceRef.current
                     }, null, 2)}</pre>
                 </div>
             )}
