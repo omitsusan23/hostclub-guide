@@ -109,21 +109,6 @@ const CustomerLoginInfoPage = () => {
                                 ※ セキュリティのため、初回ログイン後は必ずパスワードを変更してください
                             </p>
                         </div>
-
-                        {/* 店舗ID */}
-                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                            <label className="block text-sm font-medium text-gray-600 mb-2">
-                                店舗ID（システム内部ID）
-                            </label>
-                            <div className="bg-white rounded p-3">
-                                <span className="text-sm sm:text-base text-gray-700 font-mono">
-                                    {storeId}
-                                </span>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                                ※ この ID は自動的に割り当てられたもので、変更できません
-                            </p>
-                        </div>
                     </div>
 
                     {/* セキュリティ注意事項 */}
