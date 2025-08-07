@@ -82,6 +82,10 @@ const Layout = ({ children }) => {
 
   // display nameの省略処理
   const getDisplayName = () => {
+    // Customerロールの場合は名前を表示しない
+    if (getUserRole() === 'customer') {
+      return ''
+    }
     const name = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'ユーザー'
     if (name.length > 8) {
       return name.substring(0, 8) + '...'
@@ -134,9 +138,11 @@ const Layout = ({ children }) => {
                     {getUserRole() === 'outstaff' && 'アウト'}
                     {getUserRole() === 'customer' && '店舗'}
                   </span>
-                  <span className="ml-1 text-[10px] xs:text-xs text-gray-700 truncate max-w-[45px] xs:max-w-[60px]">
-                    {getDisplayName()}
-                  </span>
+                  {getUserRole() !== 'customer' && (
+                    <span className="ml-1 text-[10px] xs:text-xs text-gray-700 truncate max-w-[45px] xs:max-w-[60px]">
+                      {getDisplayName()}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
