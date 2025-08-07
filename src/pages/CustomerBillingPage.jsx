@@ -25,8 +25,10 @@ const CustomerBillingPage = () => {
                 const storeData = allStores.find(s => s.store_id === storeId)
                 setStore(storeData)
 
-                // 今月の案内記録取得
-                const records = await getVisitRecords(storeId)
+                // 7月1日〜7月31日の案内記録取得
+                const startDate = new Date(2025, 6, 1).toISOString() // 2025年7月1日
+                const endDate = new Date(2025, 6, 31, 23, 59, 59).toISOString() // 2025年7月31日
+                const records = await getVisitRecords(storeId, startDate, endDate)
                 setVisitRecords(records)
 
             } catch (error) {
@@ -78,11 +80,10 @@ const CustomerBillingPage = () => {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     }
 
-    // 請求書の日付を取得（翌月4日）
+    // 請求書の日付を取得（毎月5日）
     const getInvoiceDate = () => {
-        const now = new Date()
-        const invoiceDate = new Date(now.getFullYear(), now.getMonth() + 1, 4)
-        return invoiceDate
+        // 今回は8月5日を固定で返す（7月分の請求書）
+        return new Date(2025, 7, 5) // 2025年8月5日
     }
 
     // 支払期日（翌月25日）
