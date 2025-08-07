@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 印刷時のスタイル */
+@media print {
+  /* ナビゲーション、ヘッダー、フッターを非表示 */
+  nav, header, footer {
+    display: none !important;
+  }
+  
+  /* Layoutコンポーネントの余白を削除 */
+  .min-h-screen {
+    min-height: auto !important;
+  }
+  
+  /* 背景色を白に */
+  body {
+    background: white !important;
+  }
+  
+  /* ページの余白を調整 */
+  @page {
+    margin: 1cm;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;

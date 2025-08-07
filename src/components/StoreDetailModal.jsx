@@ -20,8 +20,8 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
       const currentDate = new Date();
       const records = [];
       
-      // 過去6ヶ月分のデータを取得（現在月から）
-      for (let i = 0; i < 6; i++) {
+      // 現在月と前月のデータを取得（8月と7月）
+      for (let i = 0; i < 2; i++) {
         const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
         const year = targetDate.getFullYear();
         const month = targetDate.getMonth() + 1;
@@ -30,13 +30,12 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
         const monthData = await getMonthlyVisitRecords(store.store_id, year, month, 'both');
         const totalCount = monthData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
         
-        if (totalCount > 0) {
-          records.push({
-            year,
-            month,
-            count: totalCount
-          });
-        }
+        // データがない月も0として表示
+        records.push({
+          year,
+          month,
+          count: totalCount
+        });
       }
       
       setMonthlyRecords(records);

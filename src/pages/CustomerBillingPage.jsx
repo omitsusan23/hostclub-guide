@@ -159,7 +159,7 @@ const CustomerBillingPage = () => {
     return (
         <Layout>
             {/* ページヘッダー */}
-            <div className="mb-8">
+            <div className="mb-8 print:hidden">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
                     請求書
                 </h2>
@@ -169,7 +169,7 @@ const CustomerBillingPage = () => {
             </div>
 
             {/* ログイン情報カード */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6 print:hidden">
                 <h3 className="text-lg font-semibold text-blue-900 mb-4">
                     🔐 このページのログイン情報
                 </h3>
@@ -197,7 +197,7 @@ const CustomerBillingPage = () => {
             </div>
 
             {/* 請求書本体 */}
-            <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto print:shadow-none print:rounded-none print:max-w-none">
                 <div className="text-right mb-4 text-gray-700">
                     {formatDate(getInvoiceDate())}
                 </div>
@@ -308,7 +308,7 @@ const CustomerBillingPage = () => {
             </div>
 
             {/* 印刷ボタン */}
-            <div className="mt-8 text-center">
+            <div className="mt-8 text-center print:hidden">
                 <button
                     onClick={() => window.print()}
                     className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
