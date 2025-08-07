@@ -118,7 +118,7 @@ const CustomerBillingPage = () => {
 
     // 請求計算
     const baseFee = store.panel_fee || store.base_fee || store.base_price || 30000 // 掲載料金（パネル料）
-    const unitPrice = store.unit_price || 3000 // 案内料の単価
+    const unitPrice = store.charge_per_person || store.unit_price || 3000 // 紹介料の単価
     const guaranteeCount = store.guarantee_count || 8 // 保証人数
     
     // 今月の案内人数（請求書なので今月のデータを使用）
