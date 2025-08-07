@@ -6,7 +6,7 @@ import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import OutstaffDashboard from './pages/OutstaffDashboard'
-import CustomerDashboard from './pages/CustomerDashboard'
+import CustomerDashboardV2 from './pages/CustomerDashboardV2'
 import CustomerBillingPage from './pages/CustomerBillingPage'
 import CustomerBillingPDFPageV3 from './pages/CustomerBillingPDFPageV3'
 import CustomerLoginInfoPage from './pages/CustomerLoginInfoPage'
@@ -213,7 +213,7 @@ const AppRoutes = () => {
           path="/customer" 
           element={
             <ProtectedRoute allowedRoles={['customer']}>
-              <CustomerDashboard />
+              <CustomerDashboardV2 />
             </ProtectedRoute>
           } 
         />
@@ -229,7 +229,7 @@ const AppRoutes = () => {
           path="/store/:storeId" 
           element={
             <ProtectedRoute allowedRoles={['customer']}>
-              <CustomerDashboard />
+              <CustomerDashboardV2 />
             </ProtectedRoute>
           } 
         />
