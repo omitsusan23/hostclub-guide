@@ -274,40 +274,7 @@ const CustomerBillingPage = () => {
                     </table>
                 </div>
 
-                {/* 明細テーブル - テキストベースの罫線風 */}
-                <div className="mb-8 font-mono text-sm bg-gray-50 p-4 rounded">
-                    <pre className="whitespace-pre overflow-x-auto">
-{`┌──────────────────────────┬──────┬──────┬────────┐
-│ 項目                         │ 数量   │ 単価   │ 金額     │
-├──────────────────────────┼──────┼──────┼────────┤`}
-{items.map((item, index) => {
-    const label = item.label.padEnd(28, '　')
-    const quantity = item.quantity > 0 ? item.quantity.toString().padStart(6, ' ') : '      '
-    const unitPrice = item.unitPrice > 0 ? formatNumber(item.unitPrice).padStart(6, ' ') : item.unitPrice < 0 ? '-' + formatNumber(Math.abs(item.unitPrice)).padStart(5, ' ') : '      '
-    const amount = item.amount > 0 ? formatNumber(item.amount).padStart(8, ' ') + '円' : item.amount < 0 ? '-' + formatNumber(Math.abs(item.amount)).padStart(7, ' ') + '円' : '         '
-    return `
-│ ${label} │ ${quantity} │ ${unitPrice} │ ${amount} │`
-}).join('')}
-{`
-└──────────────────────────┴──────┴──────┴────────┘`}
-                    </pre>
-                </div>
 
-                {/* 合計金額 */}
-                <div className="mb-8 text-lg">
-                    <div className="flex justify-between mb-2">
-                        <span>■ 小計：</span>
-                        <span>{formatNumber(subtotal)} 円</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                        <span>■ 消費税：</span>
-                        <span>{formatNumber(tax)} 円</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-xl">
-                        <span>■ 合計：</span>
-                        <span>{formatNumber(total)} 円</span>
-                    </div>
-                </div>
 
                 <hr className="mb-8" />
 
