@@ -8,6 +8,8 @@ import StaffDashboard from './pages/StaffDashboard'
 import OutstaffDashboard from './pages/OutstaffDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
 import CustomerBillingPage from './pages/CustomerBillingPage'
+import CustomerBillingPDFPage from './pages/CustomerBillingPDFPage'
+import CustomerLoginInfoPage from './pages/CustomerLoginInfoPage'
 import CustomerPreviousMonthPage from './pages/CustomerPreviousMonthPage'
 import StoreHolidaysPage from './pages/StoreHolidaysPage'
 import TodayOpenStoresPage from './pages/TodayOpenStoresPage'
@@ -258,6 +260,26 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <CustomerBillingPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 請求書PDFページ */}
+        <Route 
+          path="/customer/billing-pdf" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerBillingPDFPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* ログイン情報設定ページ */}
+        <Route 
+          path="/customer/login-info" 
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerLoginInfoPage />
             </ProtectedRoute>
           } 
         />
