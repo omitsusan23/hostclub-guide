@@ -244,14 +244,17 @@ const CustomerBillingPage = () => {
                             </tr>
 
                             {/* 保証割料金 */}
-                            {totalVisitors < guaranteeCount && (
-                                <tr className="border-b border-gray-200">
-                                    <td className="py-3">保証割料金</td>
-                                    <td className="text-center py-3">{guaranteeCount - totalVisitors}名</td>
-                                    <td className="text-right py-3">-¥{unitPrice.toLocaleString()}</td>
-                                    <td className="text-right py-3 text-red-600">-¥{((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</td>
-                                </tr>
-                            )}
+                            <tr className="border-b border-gray-200">
+                                <td className="py-3">保証割料金</td>
+                                <td className="text-center py-3"></td>
+                                <td className="text-right py-3"></td>
+                                <td className={`text-right py-3 ${totalVisitors < guaranteeCount ? 'text-red-600' : ''}`}>
+                                    {totalVisitors < guaranteeCount 
+                                        ? `-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}`
+                                        : '¥0'
+                                    }
+                                </td>
+                            </tr>
 
                             {/* 小計 */}
                             <tr className="border-b border-gray-200">
