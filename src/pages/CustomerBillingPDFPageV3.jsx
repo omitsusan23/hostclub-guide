@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { getStores, getVisitRecords } from '../lib/database'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 
 const CustomerBillingPDFPageV3 = () => {
     const { getUserStoreId, getStoreIdFromSubdomain } = useApp()
@@ -81,6 +79,12 @@ const CustomerBillingPDFPageV3 = () => {
                 alert('請求書の生成に失敗しました。')
                 return
             }
+
+            // 動的インポートでライブラリを遅延読み込み
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import('html2canvas'),
+                import('jspdf')
+            ])
 
             // html2canvasでキャンバスに変換
             const canvas = await html2canvas(element, {

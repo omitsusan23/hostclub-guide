@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import html2pdf from 'html2pdf.js'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { getStores, getVisitRecords } from '../lib/database'
@@ -267,6 +266,9 @@ const CustomerBillingPDFPage = () => {
                 }
             }
 
+            // 動的インポートでhtml2pdfを遅延読み込み
+            const { default: html2pdf } = await import('html2pdf.js')
+            
             await html2pdf().set(opt).from(targetElement).save()
             console.log('PDF生成完了')
             
@@ -473,6 +475,9 @@ const CustomerBillingPDFPage = () => {
                 }
             }
 
+            // 動的インポートでhtml2pdfを遅延読み込み
+            const { default: html2pdf } = await import('html2pdf.js')
+            
             const pdf = await html2pdf().set(opt).from(targetElement).outputPdf('blob')
             const url = URL.createObjectURL(pdf)
             window.open(url, '_blank')
