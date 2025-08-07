@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createRoot } from 'react-dom/client'
 import html2pdf from 'html2pdf.js'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
@@ -84,19 +83,17 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // モバイルの場合、一時的に表示用の要素を作成
             let targetElement = null
             let tempContainer = null
-            let root = null
             
             if (isMobile) {
-                // DevTools対応: 一時的なDOM要素を作成して実際のReactコンポーネントをレンダリング
+                // モバイル用にHTMLを直接生成
                 tempContainer = document.createElement('div')
                 tempContainer.id = 'pdf-temp-container'
                 tempContainer.style.cssText = `
-                    position: absolute;
-                    top: -10000px;
-                    left: -10000px;
+                    position: fixed;
+                    top: 0;
+                    left: -9999px;
                     width: 794px;
                     min-height: 1123px;
                     background: white;
@@ -105,24 +102,137 @@ const CustomerBillingPDFPage = () => {
                     font-size: 14px;
                     line-height: 1.5;
                     color: #333;
-                    overflow: visible;
+                    z-index: -1;
                 `
+                
+                // HTMLコンテンツを直接設定
+                tempContainer.innerHTML = `
+                    <!-- ヘッダー -->
+                    <div style="text-align: right; margin-bottom: 24px;">
+                        <div style="font-size: 14px;">
+                            ${formatDate(getInvoiceDate())}
+                        </div>
+                    </div>
+
+                    <!-- タイトル -->
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <h1 style="font-size: 36px; font-weight: bold; margin-bottom: 16px;">請求書</h1>
+                    </div>
+
+                    <!-- 宛名 -->
+                    <div style="margin-bottom: 24px;">
+                        <h2 style="font-size: 20px; font-weight: 600;">${store.name} 様</h2>
+                    </div>
+
+                    <!-- 説明文 -->
+                    <div style="margin-bottom: 32px;">
+                        <p style="font-size: 16px;">下記の通りご請求申し上げます</p>
+                    </div>
+
+                    <!-- 請求金額ヘッダー -->
+                    <div style="background-color: #1f2937; color: white; text-align: center; padding: 12px; margin-bottom: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 600;">■■ ご請求金額 ■■</h3>
+                    </div>
+
+                    <!-- 明細テーブル -->
+                    <div style="margin-bottom: 32px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937;">
+                                    <th style="text-align: left; padding: 12px 8px;">項目</th>
+                                    <th style="text-align: center; padding: 12px 8px;">数量</th>
+                                    <th style="text-align: right; padding: 12px 8px;">単価</th>
+                                    <th style="text-align: right; padding: 12px 8px;">金額</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 掲載料金 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">掲載料金</td>
+                                    <td style="text-align: center; padding: 12px 8px;">1</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${baseFee.toLocaleString()}</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${baseFee.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 紹介料 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">紹介料</td>
+                                    <td style="text-align: center; padding: 12px 8px;">${totalVisitors}名</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${unitPrice.toLocaleString()}</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${(totalVisitors * unitPrice).toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 保証割料金 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">保証割料金</td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;">
+                                        ${totalVisitors < guaranteeCount ? 
+                                            `<span style="color: #dc2626;">-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</span>` : 
+                                            '¥0'
+                                        }
+                                    </td>
+                                </tr>
+                                
+                                <!-- 小計 -->
+                                <tr style="border-top: 1px solid #9ca3af;">
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px; font-weight: 600;">小計</td>
+                                    <td style="text-align: right; padding: 12px 8px; font-weight: 600;">¥${subtotal.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 消費税 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;">消費税（10%）</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${tax.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 合計 -->
+                                <tr style="border-top: 2px solid #1f2937;">
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px; font-size: 18px; font-weight: bold;">合計</td>
+                                    <td style="text-align: right; padding: 12px 8px; font-size: 18px; font-weight: bold;">¥${total.toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 説明文 -->
+                    <div style="margin-bottom: 32px;">
+                        <p style="margin-bottom: 8px;">いつもお世話になっております。</p>
+                        <p style="margin-bottom: 8px;">お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
+                        <p style="margin-bottom: 8px;">・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
+                        <p style="margin-bottom: 8px;">・ご入金期日：${getMonthName(getDueDate())}25日</p>
+                        <p style="color: #dc2626; font-weight: 600; margin-top: 16px;">
+                            なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。
+                        </p>
+                    </div>
+
+                    <!-- 振込先情報 -->
+                    <div style="background-color: #f3f4f6; padding: 24px; border-radius: 8px;">
+                        <h4 style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">■振込先口座：</h4>
+                        <div style="font-size: 14px; line-height: 1.5;">
+                            <p style="margin-bottom: 4px;">　銀行名：北洋銀行</p>
+                            <p style="margin-bottom: 4px;">　支店名：札幌南支店（030）</p>
+                            <p style="margin-bottom: 4px;">　種別：普通</p>
+                            <p style="margin-bottom: 4px;">　口座番号：7210596</p>
+                            <p style="margin-bottom: 4px;">　口座名義：（カ）リプレイ センザキ マサミツ</p>
+                        </div>
+                    </div>
+
+                    <!-- フッター -->
+                    <div style="text-align: center; margin-top: 32px; font-size: 12px; color: #6b7280;">
+                        ホストクラブ案内所システム
+                    </div>
+                `
+                
                 document.body.appendChild(tempContainer)
-                
-                // Reactコンポーネントを実際にレンダリング
-                root = createRoot(tempContainer)
-                root.render(<InvoiceContent />)
-                
-                // レンダリング完了を待つ
-                await new Promise(resolve => setTimeout(resolve, 500))
-                
                 targetElement = tempContainer
-                
-                console.log('モバイル用PDF要素作成完了:', {
-                    container: tempContainer,
-                    hasContent: tempContainer.innerHTML.length > 0,
-                    contentLength: tempContainer.innerHTML.length
-                })
             } else {
                 targetElement = invoiceRef.current
             }
@@ -132,14 +242,6 @@ const CustomerBillingPDFPage = () => {
                 alert('PDF生成に失敗しました。ページを再読み込みしてください。')
                 return
             }
-
-            console.log('PDF生成開始:', {
-                isMobile,
-                element: targetElement,
-                store: store?.name,
-                total,
-                elementHTML: targetElement.innerHTML.substring(0, 200)
-            })
 
             const opt = {
                 margin: 10,
@@ -151,15 +253,7 @@ const CustomerBillingPDFPage = () => {
                     letterRendering: true,
                     logging: false,
                     windowWidth: 794,
-                    windowHeight: 1123,
-                    onclone: (clonedDoc) => {
-                        const clonedElement = clonedDoc.getElementById('pdf-temp-container') || clonedDoc.getElementById('pdf-temp-container-tab')
-                        if (clonedElement) {
-                            clonedElement.style.position = 'static'
-                            clonedElement.style.top = '0'
-                            clonedElement.style.left = '0'
-                        }
-                    }
+                    windowHeight: 1123
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -172,9 +266,6 @@ const CustomerBillingPDFPage = () => {
             console.log('PDF生成完了')
             
             // 一時的な要素を削除
-            if (root) {
-                root.unmount()
-            }
             if (tempContainer && tempContainer.parentNode) {
                 document.body.removeChild(tempContainer)
             }
@@ -191,19 +282,17 @@ const CustomerBillingPDFPage = () => {
         setGeneratingPDF(true)
         
         try {
-            // モバイルの場合、一時的に表示用の要素を作成
             let targetElement = null
             let tempContainer = null
-            let root = null
             
             if (isMobile) {
-                // DevTools対応: 一時的なDOM要素を作成して実際のReactコンポーネントをレンダリング
+                // モバイル用にHTMLを直接生成
                 tempContainer = document.createElement('div')
                 tempContainer.id = 'pdf-temp-container-tab'
                 tempContainer.style.cssText = `
-                    position: absolute;
-                    top: -10000px;
-                    left: -10000px;
+                    position: fixed;
+                    top: 0;
+                    left: -9999px;
                     width: 794px;
                     min-height: 1123px;
                     background: white;
@@ -212,17 +301,136 @@ const CustomerBillingPDFPage = () => {
                     font-size: 14px;
                     line-height: 1.5;
                     color: #333;
-                    overflow: visible;
+                    z-index: -1;
                 `
+                
+                // HTMLコンテンツを直接設定（downloadPDFと同じ内容）
+                tempContainer.innerHTML = `
+                    <!-- ヘッダー -->
+                    <div style="text-align: right; margin-bottom: 24px;">
+                        <div style="font-size: 14px;">
+                            ${formatDate(getInvoiceDate())}
+                        </div>
+                    </div>
+
+                    <!-- タイトル -->
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <h1 style="font-size: 36px; font-weight: bold; margin-bottom: 16px;">請求書</h1>
+                    </div>
+
+                    <!-- 宛名 -->
+                    <div style="margin-bottom: 24px;">
+                        <h2 style="font-size: 20px; font-weight: 600;">${store.name} 様</h2>
+                    </div>
+
+                    <!-- 説明文 -->
+                    <div style="margin-bottom: 32px;">
+                        <p style="font-size: 16px;">下記の通りご請求申し上げます</p>
+                    </div>
+
+                    <!-- 請求金額ヘッダー -->
+                    <div style="background-color: #1f2937; color: white; text-align: center; padding: 12px; margin-bottom: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 600;">■■ ご請求金額 ■■</h3>
+                    </div>
+
+                    <!-- 明細テーブル -->
+                    <div style="margin-bottom: 32px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-top: 2px solid #1f2937; border-bottom: 2px solid #1f2937;">
+                                    <th style="text-align: left; padding: 12px 8px;">項目</th>
+                                    <th style="text-align: center; padding: 12px 8px;">数量</th>
+                                    <th style="text-align: right; padding: 12px 8px;">単価</th>
+                                    <th style="text-align: right; padding: 12px 8px;">金額</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 掲載料金 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">掲載料金</td>
+                                    <td style="text-align: center; padding: 12px 8px;">1</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${baseFee.toLocaleString()}</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${baseFee.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 紹介料 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">紹介料</td>
+                                    <td style="text-align: center; padding: 12px 8px;">${totalVisitors}名</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${unitPrice.toLocaleString()}</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${(totalVisitors * unitPrice).toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 保証割料金 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;">保証割料金</td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;">
+                                        ${totalVisitors < guaranteeCount ? 
+                                            `<span style="color: #dc2626;">-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</span>` : 
+                                            '¥0'
+                                        }
+                                    </td>
+                                </tr>
+                                
+                                <!-- 小計 -->
+                                <tr style="border-top: 1px solid #9ca3af;">
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px; font-weight: 600;">小計</td>
+                                    <td style="text-align: right; padding: 12px 8px; font-weight: 600;">¥${subtotal.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 消費税 -->
+                                <tr>
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px;">消費税（10%）</td>
+                                    <td style="text-align: right; padding: 12px 8px;">¥${tax.toLocaleString()}</td>
+                                </tr>
+                                
+                                <!-- 合計 -->
+                                <tr style="border-top: 2px solid #1f2937;">
+                                    <td style="padding: 12px 8px;"></td>
+                                    <td style="text-align: center; padding: 12px 8px;"></td>
+                                    <td style="text-align: right; padding: 12px 8px; font-size: 18px; font-weight: bold;">合計</td>
+                                    <td style="text-align: right; padding: 12px 8px; font-size: 18px; font-weight: bold;">¥${total.toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 説明文 -->
+                    <div style="margin-bottom: 32px;">
+                        <p style="margin-bottom: 8px;">いつもお世話になっております。</p>
+                        <p style="margin-bottom: 8px;">お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
+                        <p style="margin-bottom: 8px;">・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
+                        <p style="margin-bottom: 8px;">・ご入金期日：${getMonthName(getDueDate())}25日</p>
+                        <p style="color: #dc2626; font-weight: 600; margin-top: 16px;">
+                            なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。
+                        </p>
+                    </div>
+
+                    <!-- 振込先情報 -->
+                    <div style="background-color: #f3f4f6; padding: 24px; border-radius: 8px;">
+                        <h4 style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">■振込先口座：</h4>
+                        <div style="font-size: 14px; line-height: 1.5;">
+                            <p style="margin-bottom: 4px;">　銀行名：北洋銀行</p>
+                            <p style="margin-bottom: 4px;">　支店名：札幌南支店（030）</p>
+                            <p style="margin-bottom: 4px;">　種別：普通</p>
+                            <p style="margin-bottom: 4px;">　口座番号：7210596</p>
+                            <p style="margin-bottom: 4px;">　口座名義：（カ）リプレイ センザキ マサミツ</p>
+                        </div>
+                    </div>
+
+                    <!-- フッター -->
+                    <div style="text-align: center; margin-top: 32px; font-size: 12px; color: #6b7280;">
+                        ホストクラブ案内所システム
+                    </div>
+                `
+                
                 document.body.appendChild(tempContainer)
-                
-                // Reactコンポーネントを実際にレンダリング
-                root = createRoot(tempContainer)
-                root.render(<InvoiceContent />)
-                
-                // レンダリング完了を待つ
-                await new Promise(resolve => setTimeout(resolve, 500))
-                
                 targetElement = tempContainer
             } else {
                 targetElement = invoiceRef.current
@@ -244,15 +452,7 @@ const CustomerBillingPDFPage = () => {
                     letterRendering: true,
                     logging: false,
                     windowWidth: 794,
-                    windowHeight: 1123,
-                    onclone: (clonedDoc) => {
-                        const clonedElement = clonedDoc.getElementById('pdf-temp-container') || clonedDoc.getElementById('pdf-temp-container-tab')
-                        if (clonedElement) {
-                            clonedElement.style.position = 'static'
-                            clonedElement.style.top = '0'
-                            clonedElement.style.left = '0'
-                        }
-                    }
+                    windowHeight: 1123
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -266,9 +466,6 @@ const CustomerBillingPDFPage = () => {
             window.open(url, '_blank')
             
             // 一時的な要素を削除
-            if (root) {
-                root.unmount()
-            }
             if (tempContainer && tempContainer.parentNode) {
                 document.body.removeChild(tempContainer)
             }
