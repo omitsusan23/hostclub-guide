@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import jsPDF from 'jspdf'
+import React, { useState, useEffect, useRef } from 'react'
+import html2pdf from 'html2pdf.js'
 import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { getStores, getVisitRecords } from '../lib/database'
@@ -9,16 +9,9 @@ const CustomerBillingPDFPage = () => {
     const [store, setStore] = useState(null)
     const [visitRecords, setVisitRecords] = useState([])
     const [loading, setLoading] = useState(true)
-    const [pdfUrl, setPdfUrl] = useState(null)
+    const invoiceRef = useRef()
 
     const storeId = getUserStoreId() || getStoreIdFromSubdomain()
-
-    // フォント読み込み（日本語対応）
-    const loadFont = async () => {
-        // NotoSansJPフォントのBase64データを設定
-        // 実際の実装では、publicフォルダにフォントファイルを配置してfetchで読み込む
-        return Promise.resolve()
-    }
 
     // データ取得
     useEffect(() => {
@@ -27,9 +20,6 @@ const CustomerBillingPDFPage = () => {
 
             try {
                 setLoading(true)
-                
-                // フォント読み込み
-                await loadFont()
                 
                 // 店舗データ取得
                 const allStores = await getStores()
@@ -52,170 +42,79 @@ const CustomerBillingPDFPage = () => {
         fetchData()
     }, [storeId])
 
-    // PDF生成
-    useEffect(() => {
-        if (!store || loading) return
+    // 日付フォーマット関数
+    const formatDate = (date) => {
+        const year = date.getFullYear()
+        const month = date.getMonth() + 1
+        const day = date.getDate()
+        return `${year}年${month}月${day}日`
+    }
+    
+    const getInvoiceDate = () => new Date(2025, 7, 5)
+    const getDueDate = () => {
+        const now = new Date()
+        return new Date(now.getFullYear(), now.getMonth() + 1, 25)
+    }
+    const getMonthName = (date) => `${date.getMonth() + 1}月`
 
-        const generatePDF = () => {
-            const doc = new jsPDF('p', 'mm', 'a4')
-            
-            // 日付関連の関数
-            const formatDate = (date) => {
-                const year = date.getFullYear()
-                const month = date.getMonth() + 1
-                const day = date.getDate()
-                return `${year}年${month}月${day}日`
-            }
-            
-            const getInvoiceDate = () => new Date(2025, 7, 5)
-            const getDueDate = () => {
-                const now = new Date()
-                return new Date(now.getFullYear(), now.getMonth() + 1, 25)
-            }
-            const getMonthName = (date) => `${date.getMonth() + 1}月`
-            
-            // 請求計算
-            const baseFee = store.panel_fee || store.base_fee || store.base_price || 30000
-            const unitPrice = store.charge_per_person || store.unit_price || 3000
-            const guaranteeCount = store.guarantee_count || 8
-            const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
-            const subtotal = baseFee + (totalVisitors * unitPrice) - (totalVisitors < guaranteeCount ? (guaranteeCount - totalVisitors) * unitPrice : 0)
-            const tax = Math.floor(subtotal * 0.1)
-            const total = subtotal + tax
+    // 請求計算
+    const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 30000
+    const unitPrice = store?.charge_per_person || store?.unit_price || 3000
+    const guaranteeCount = store?.guarantee_count || 8
+    const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
+    const subtotal = baseFee + (totalVisitors * unitPrice) - (totalVisitors < guaranteeCount ? (guaranteeCount - totalVisitors) * unitPrice : 0)
+    const tax = Math.floor(subtotal * 0.1)
+    const total = subtotal + tax
 
-            // ヘッダー
-            doc.setFontSize(10)
-            doc.text(formatDate(getInvoiceDate()), 190, 20, { align: 'right' })
-            
-            // タイトル
-            doc.setFontSize(24)
-            doc.text('請 求 書', 105, 40, { align: 'center' })
-            
-            // 宛名
-            doc.setFontSize(14)
-            doc.text(`${store.name} 様`, 20, 60)
-            
-            // 説明文
-            doc.setFontSize(11)
-            doc.text('下記の通りご請求申し上げます', 20, 75)
-            
-            // 請求金額ヘッダー
-            doc.setFillColor(50, 50, 50)
-            doc.rect(20, 85, 170, 10, 'F')
-            doc.setTextColor(255, 255, 255)
-            doc.setFontSize(12)
-            doc.text('■■ ご請求金額 ■■', 105, 91, { align: 'center' })
-            doc.setTextColor(0, 0, 0)
-            
-            // 明細テーブル
-            let y = 105
-            doc.setFontSize(10)
-            
-            // テーブルヘッダー
-            doc.line(20, y, 190, y)
-            doc.text('項目', 25, y + 6)
-            doc.text('数量', 85, y + 6, { align: 'center' })
-            doc.text('単価', 125, y + 6, { align: 'right' })
-            doc.text('金額', 185, y + 6, { align: 'right' })
-            y += 10
-            doc.line(20, y, 190, y)
-            
-            // 掲載料金
-            y += 8
-            doc.text('掲載料金', 25, y)
-            doc.text('1', 85, y, { align: 'center' })
-            doc.text(`¥${baseFee.toLocaleString()}`, 125, y, { align: 'right' })
-            doc.text(`¥${baseFee.toLocaleString()}`, 185, y, { align: 'right' })
-            
-            // 紹介料
-            y += 8
-            doc.text('紹介料', 25, y)
-            doc.text(`${totalVisitors}名`, 85, y, { align: 'center' })
-            doc.text(`¥${unitPrice.toLocaleString()}`, 125, y, { align: 'right' })
-            doc.text(`¥${(totalVisitors * unitPrice).toLocaleString()}`, 185, y, { align: 'right' })
-            
-            // 保証割料金
-            y += 8
-            doc.text('保証割料金', 25, y)
-            if (totalVisitors < guaranteeCount) {
-                doc.setTextColor(255, 0, 0)
-                doc.text(`-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}`, 185, y, { align: 'right' })
-                doc.setTextColor(0, 0, 0)
-            } else {
-                doc.text('¥0', 185, y, { align: 'right' })
+    // PDFダウンロード
+    const downloadPDF = () => {
+        if (!invoiceRef.current) return
+
+        const opt = {
+            margin: 10,
+            filename: `請求書_${store?.name}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
             }
-            
-            // 小計
-            y += 8
-            doc.line(20, y, 190, y)
-            y += 6
-            doc.text('小計', 125, y, { align: 'right' })
-            doc.text(`¥${subtotal.toLocaleString()}`, 185, y, { align: 'right' })
-            
-            // 消費税
-            y += 8
-            doc.text('消費税（10%）', 125, y, { align: 'right' })
-            doc.text(`¥${tax.toLocaleString()}`, 185, y, { align: 'right' })
-            
-            // 合計
-            y += 8
-            doc.line(20, y, 190, y)
-            y += 6
-            doc.setFontSize(12)
-            doc.setFont(undefined, 'bold')
-            doc.text('合計', 125, y, { align: 'right' })
-            doc.text(`¥${total.toLocaleString()}`, 185, y, { align: 'right' })
-            doc.setFont(undefined, 'normal')
-            
-            // 説明文
-            y += 15
-            doc.setFontSize(10)
-            doc.text('いつもお世話になっております。', 20, y)
-            y += 6
-            doc.text('お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。', 20, y)
-            y += 6
-            doc.text('・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。', 20, y)
-            y += 6
-            doc.text(`・ご入金期日：${getMonthName(getDueDate())}25日`, 20, y)
-            y += 8
-            doc.setTextColor(255, 0, 0)
-            doc.setFont(undefined, 'bold')
-            doc.text('なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。', 20, y)
-            doc.setFont(undefined, 'normal')
-            doc.setTextColor(0, 0, 0)
-            
-            // 振込先情報
-            y += 15
-            doc.setFillColor(240, 240, 240)
-            doc.rect(20, y - 5, 170, 35, 'F')
-            doc.setFontSize(11)
-            doc.setFont(undefined, 'bold')
-            doc.text('■振込先口座：', 25, y + 2)
-            doc.setFont(undefined, 'normal')
-            doc.setFontSize(10)
-            y += 8
-            doc.text('　銀行名：北洋銀行', 30, y)
-            y += 5
-            doc.text('　支店名：札幌南支店（030）', 30, y)
-            y += 5
-            doc.text('　種別：普通', 30, y)
-            y += 5
-            doc.text('　口座番号：7210596', 30, y)
-            y += 5
-            doc.text('　口座名義：（カ）リプレイ センザキ マサミツ', 30, y)
-            
-            // フッター
-            doc.setFontSize(8)
-            doc.text('ホストクラブ案内所システム', 105, 285, { align: 'center' })
-            
-            // PDFをBlob URLとして生成
-            const pdfBlob = doc.output('blob')
-            const url = URL.createObjectURL(pdfBlob)
-            setPdfUrl(url)
         }
 
-        generatePDF()
-    }, [store, visitRecords, loading])
+        html2pdf().set(opt).from(invoiceRef.current).save()
+    }
+
+    // 新しいタブで開く
+    const openInNewTab = () => {
+        if (!invoiceRef.current) return
+
+        const opt = {
+            margin: 10,
+            filename: 'invoice.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                letterRendering: true
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            }
+        }
+
+        html2pdf().set(opt).from(invoiceRef.current).outputPdf().then((pdf) => {
+            const blob = new Blob([pdf], { type: 'application/pdf' })
+            const url = URL.createObjectURL(blob)
+            window.open(url, '_blank')
+        })
+    }
 
     if (loading) {
         return (
@@ -253,47 +152,167 @@ const CustomerBillingPDFPage = () => {
                 </p>
             </div>
 
-            {/* PDFビューア */}
-            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-                {pdfUrl ? (
-                    <>
-                        <div className="mb-4">
-                            <iframe
-                                src={pdfUrl}
-                                className="w-full h-[600px] border border-gray-300 rounded"
-                                title="請求書PDF"
-                            />
+            {/* PDF請求書プレビュー */}
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6">
+                <div 
+                    ref={invoiceRef}
+                    className="max-w-4xl mx-auto bg-white p-8"
+                    style={{ 
+                        fontFamily: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "Yu Gothic Medium", "Meiryo", sans-serif',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        color: '#333'
+                    }}
+                >
+                    {/* ヘッダー */}
+                    <div className="flex justify-end mb-6">
+                        <div className="text-sm">
+                            {formatDate(getInvoiceDate())}
                         </div>
-                        
-                        {/* ダウンロードボタン */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a
-                                href={pdfUrl}
-                                download={`請求書_${store.name}_${new Date().toISOString().split('T')[0]}.pdf`}
-                                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                PDFをダウンロード
-                            </a>
-                            
-                            <button
-                                onClick={() => window.open(pdfUrl, '_blank')}
-                                className="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                新しいタブで開く
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="text-center py-8">
-                        <p className="text-gray-500">PDFを生成中...</p>
                     </div>
-                )}
+
+                    {/* タイトル */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold mb-4">請求書</h1>
+                    </div>
+
+                    {/* 宛名 */}
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold">{store.name} 様</h2>
+                    </div>
+
+                    {/* 説明文 */}
+                    <div className="mb-8">
+                        <p className="text-base">下記の通りご請求申し上げます</p>
+                    </div>
+
+                    {/* 請求金額ヘッダー */}
+                    <div className="bg-gray-800 text-white text-center py-3 mb-6">
+                        <h3 className="text-lg font-semibold">■■ ご請求金額 ■■</h3>
+                    </div>
+
+                    {/* 明細テーブル */}
+                    <div className="mb-8">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="border-t-2 border-b-2 border-gray-800">
+                                    <th className="text-left py-3 px-2">項目</th>
+                                    <th className="text-center py-3 px-2">数量</th>
+                                    <th className="text-right py-3 px-2">単価</th>
+                                    <th className="text-right py-3 px-2">金額</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* 掲載料金 */}
+                                <tr>
+                                    <td className="py-3 px-2">掲載料金</td>
+                                    <td className="text-center py-3 px-2">1</td>
+                                    <td className="text-right py-3 px-2">¥{baseFee.toLocaleString()}</td>
+                                    <td className="text-right py-3 px-2">¥{baseFee.toLocaleString()}</td>
+                                </tr>
+                                
+                                {/* 紹介料 */}
+                                <tr>
+                                    <td className="py-3 px-2">紹介料</td>
+                                    <td className="text-center py-3 px-2">{totalVisitors}名</td>
+                                    <td className="text-right py-3 px-2">¥{unitPrice.toLocaleString()}</td>
+                                    <td className="text-right py-3 px-2">¥{(totalVisitors * unitPrice).toLocaleString()}</td>
+                                </tr>
+                                
+                                {/* 保証割料金 */}
+                                <tr>
+                                    <td className="py-3 px-2">保証割料金</td>
+                                    <td className="text-center py-3 px-2"></td>
+                                    <td className="text-right py-3 px-2"></td>
+                                    <td className="text-right py-3 px-2">
+                                        {totalVisitors < guaranteeCount ? (
+                                            <span className="text-red-600">
+                                                -¥{((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}
+                                            </span>
+                                        ) : (
+                                            '¥0'
+                                        )}
+                                    </td>
+                                </tr>
+                                
+                                {/* 小計 */}
+                                <tr className="border-t border-gray-400">
+                                    <td className="py-3 px-2"></td>
+                                    <td className="text-center py-3 px-2"></td>
+                                    <td className="text-right py-3 px-2 font-semibold">小計</td>
+                                    <td className="text-right py-3 px-2 font-semibold">¥{subtotal.toLocaleString()}</td>
+                                </tr>
+                                
+                                {/* 消費税 */}
+                                <tr>
+                                    <td className="py-3 px-2"></td>
+                                    <td className="text-center py-3 px-2"></td>
+                                    <td className="text-right py-3 px-2">消費税（10%）</td>
+                                    <td className="text-right py-3 px-2">¥{tax.toLocaleString()}</td>
+                                </tr>
+                                
+                                {/* 合計 */}
+                                <tr className="border-t-2 border-gray-800">
+                                    <td className="py-3 px-2"></td>
+                                    <td className="text-center py-3 px-2"></td>
+                                    <td className="text-right py-3 px-2 text-lg font-bold">合計</td>
+                                    <td className="text-right py-3 px-2 text-lg font-bold">¥{total.toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* 説明文 */}
+                    <div className="mb-8 space-y-2">
+                        <p>いつもお世話になっております。</p>
+                        <p>お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
+                        <p>・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
+                        <p>・ご入金期日：{getMonthName(getDueDate())}25日</p>
+                        <p className="text-red-600 font-semibold mt-4">
+                            なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。
+                        </p>
+                    </div>
+
+                    {/* 振込先情報 */}
+                    <div className="bg-gray-100 p-6 rounded">
+                        <h4 className="text-base font-bold mb-3">■振込先口座：</h4>
+                        <div className="space-y-1 text-sm">
+                            <p>　銀行名：北洋銀行</p>
+                            <p>　支店名：札幌南支店（030）</p>
+                            <p>　種別：普通</p>
+                            <p>　口座番号：7210596</p>
+                            <p>　口座名義：（カ）リプレイ センザキ マサミツ</p>
+                        </div>
+                    </div>
+
+                    {/* フッター */}
+                    <div className="text-center mt-8 text-xs text-gray-500">
+                        ホストクラブ案内所システム
+                    </div>
+                </div>
+
+                {/* ダウンロードボタン */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                    <button
+                        onClick={downloadPDF}
+                        className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        PDFをダウンロード
+                    </button>
+                    
+                    <button
+                        onClick={openInNewTab}
+                        className="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        新しいタブで開く
+                    </button>
+                </div>
             </div>
         </Layout>
     )
