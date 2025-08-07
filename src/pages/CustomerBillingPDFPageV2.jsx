@@ -65,6 +65,9 @@ const CustomerBillingPDFPageV2 = () => {
     const tax = Math.floor(subtotal * 0.1)
     const total = subtotal + tax
 
+    // モバイル判定
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
     // 新しいウィンドウでPDFプレビューを開く（印刷用）
     const openPrintableVersion = () => {
         setGeneratingPDF(true)
@@ -254,8 +257,10 @@ const CustomerBillingPDFPageV2 = () => {
             .invoice-container {
                 padding: 10mm;
                 width: 210mm;
-                min-height: 297mm;
+                height: 297mm;
+                max-height: 297mm;
                 page-break-after: avoid;
+                overflow: hidden;
             }
             
             .no-print {
@@ -276,9 +281,14 @@ const CustomerBillingPDFPageV2 = () => {
     <div class="invoice-container">
         <!-- ボタン（印刷時は非表示） -->
         <div class="no-print" style="margin-bottom: 20px; text-align: center;">
-            <button onclick="window.print()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
-                印刷 / PDFとして保存
-            </button>
+            ${isMobile ? 
+                `<button onclick="window.print()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    PDFとして保存
+                </button>` :
+                `<button onclick="window.print()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    印刷 / PDFとして保存
+                </button>`
+            }
             <button onclick="window.close()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer;">
                 閉じる
             </button>
@@ -493,15 +503,17 @@ const CustomerBillingPDFPageV2 = () => {
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                請求書を開く（印刷/PDF保存）
+                                {isMobile ? '請求書を開く（PDF保存）' : '請求書を開く（印刷/PDF保存）'}
                             </>
                         )}
                     </button>
                     
                     <p className="text-xs text-gray-500 mt-4">
                         ※ 新しいウィンドウで請求書が開きます。<br />
-                        印刷ボタンまたはブラウザの印刷機能（Ctrl+P）から<br />
-                        PDFとして保存することができます。
+                        {isMobile ? 
+                            'ブラウザの印刷機能からPDFとして保存することができます。' :
+                            '印刷ボタンまたはブラウザの印刷機能（Ctrl+P）から印刷/PDFとして保存することができます。'
+                        }
                     </p>
                 </div>
             </div>
