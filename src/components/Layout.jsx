@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../contexts/AppContext'
 // import { useStaffChatNotifications } from '../hooks/useStaffChatNotifications'
@@ -9,7 +9,6 @@ const Layout = ({ children }) => {
   const { user, signOut, getUserRole } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
-  const previousLocation = useRef(null)
   
   // トップページかどうかを判定
   const isTopPage = () => {
@@ -17,20 +16,9 @@ const Layout = ({ children }) => {
     return topPaths.includes(location.pathname)
   }
   
-  // ナビゲーション履歴を管理
+  // ページ遷移時の処理（必要に応じて）
   useEffect(() => {
-    // 現在のパスを履歴に追加
-    const history = JSON.parse(sessionStorage.getItem('navigationHistory') || '[]')
-    
-    // 同じパスが連続しないように、かつトップページは除外
-    if (history[history.length - 1] !== location.pathname && !isTopPage()) {
-      history.push(location.pathname)
-      // 履歴は最大10件まで保持
-      if (history.length > 10) {
-        history.shift()
-      }
-      sessionStorage.setItem('navigationHistory', JSON.stringify(history))
-    }
+    // 将来的な拡張用
   }, [location])
   
   // スタッフ向け通知機能（staff, outstaff, adminのみ）
@@ -56,24 +44,7 @@ const Layout = ({ children }) => {
   }
 
   const handleBack = () => {
-    // セッションストレージから履歴を取得
-    const history = JSON.parse(sessionStorage.getItem('navigationHistory') || '[]')
-    
-    if (history.length > 0) {
-      // 現在のページを履歴から削除
-      const currentPath = location.pathname
-      const filteredHistory = history.filter(path => path !== currentPath)
-      
-      if (filteredHistory.length > 0) {
-        // 直前のページへ戻る
-        const previousPath = filteredHistory[filteredHistory.length - 1]
-        sessionStorage.setItem('navigationHistory', JSON.stringify(filteredHistory))
-        navigate(previousPath)
-        return
-      }
-    }
-    
-    // 履歴がない場合はロールに応じたダッシュボードへ
+    // 常にロールに応じたダッシュボードへ戻る
     const role = getUserRole()
     switch (role) {
       case 'admin':
