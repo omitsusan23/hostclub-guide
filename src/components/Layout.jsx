@@ -55,7 +55,8 @@ const Layout = ({ children }) => {
     if (storeMatch) {
       // URLパス方式の場合は /store/:storeId に戻る
       const storeId = storeMatch[1]
-      navigate(`/store/${storeId}`, { replace: true })
+      // window.locationで確実にページ遷移
+      window.location.href = `/store/${storeId}`
       return
     }
     
@@ -63,19 +64,19 @@ const Layout = ({ children }) => {
     const role = getUserRole()
     switch (role) {
       case 'admin':
-        navigate('/admin', { replace: true })
+        window.location.href = '/admin'
         break
       case 'staff':
-        navigate('/staff', { replace: true })
+        window.location.href = '/staff'
         break
       case 'outstaff':
-        navigate('/outstaff', { replace: true })
+        window.location.href = '/outstaff'
         break
       case 'customer':
-        navigate('/customer', { replace: true })
+        window.location.href = '/customer'
         break
       default:
-        navigate('/', { replace: true })
+        window.location.href = '/'
     }
   }
 
@@ -100,7 +101,7 @@ const Layout = ({ children }) => {
                 <button
                   onClick={handleBack}
                   className="p-0.5 xs:p-1 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-                  title="前のページに戻る"
+                  title="ダッシュボードに戻る"
                 >
                   <svg className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

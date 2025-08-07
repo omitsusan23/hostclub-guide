@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import Layout from '../components/LayoutV2'
+import Layout from '../components/Layout'
 import { useApp } from '../contexts/AppContext'
 import { 
   getStores,
