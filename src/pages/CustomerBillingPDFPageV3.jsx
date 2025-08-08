@@ -116,27 +116,46 @@ const CustomerBillingPDFPageV3 = () => {
         setGeneratingPDF(true)
         
         try {
+            // 動的インポートでライブラリを遅延読み込み（先に読み込む）
+            const html2canvas = (await import('html2canvas')).default
+            const { jsPDF } = await import('jspdf')
+            
+            // 少し待機してDOMが確実にレンダリングされるようにする
+            await new Promise(resolve => setTimeout(resolve, 100))
+            
             const element = invoiceRef.current
             if (!element) {
-                alert('請求書の生成に失敗しました。')
+                console.error('Invoice element not found')
+                alert('請求書の生成に失敗しました。ページを再読み込みしてください。')
                 return
             }
 
-            // 動的インポートでライブラリを遅延読み込み
-            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-                import('html2canvas'),
-                import('jspdf')
-            ])
+            // elementのスタイルを一時的に可視化
+            const originalStyles = {
+                position: element.style.position,
+                left: element.style.left,
+                visibility: element.style.visibility,
+                display: element.style.display
+            }
+            
+            // 一時的に要素を可視化（画面外に配置）
+            element.style.position = 'fixed'
+            element.style.left = '-9999px'
+            element.style.visibility = 'visible'
+            element.style.display = 'block'
 
             // html2canvasでキャンバスに変換
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
-                logging: false,
-                windowWidth: 794,
-                windowHeight: 1123
+                logging: true, // デバッグ用にログを有効化
+                allowTaint: true,
+                foreignObjectRendering: false
             })
+            
+            // スタイルを元に戻す
+            Object.assign(element.style, originalStyles)
             
             // PDFを生成
             const imgData = canvas.toDataURL('image/png')
@@ -151,11 +170,16 @@ const CustomerBillingPDFPageV3 = () => {
             const imgHeight = 297
             
             pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST')
-            pdf.save(`請求書_${store?.name}_${new Date().toISOString().split('T')[0]}.pdf`)
+            
+            // ファイル名を安全な形式に
+            const safeStoreName = store?.name ? store.name.replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g, '_') : 'invoice'
+            const fileName = `請求書_${safeStoreName}_${new Date().toISOString().split('T')[0]}.pdf`
+            
+            pdf.save(fileName)
             
         } catch (error) {
             console.error('PDF生成エラー:', error)
-            alert('PDF生成に失敗しました。もう一度お試しください。')
+            alert(`PDF生成に失敗しました。\nエラー: ${error.message}\n\nもう一度お試しください。`)
         } finally {
             setGeneratingPDF(false)
         }
@@ -780,8 +804,10 @@ const CustomerBillingPDFPageV3 = () => {
                 </div>
             </div>
 
-            {/* モバイル用の隠し請求書要素 */}
-            {isMobile && <InvoiceContent />}
+            {/* PDF生成用の隠し請求書要素（モバイル・デスクトップ両対応） */}
+            <div style={{ position: 'absolute', left: '-99999px', top: 0, visibility: 'hidden' }}>
+                <InvoiceContent />
+            </div>
         </Layout>
     )
 }
