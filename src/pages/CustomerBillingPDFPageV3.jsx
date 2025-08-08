@@ -89,9 +89,22 @@ const CustomerBillingPDFPageV3 = () => {
     const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 30000
     const unitPrice = store?.charge_per_person || store?.unit_price || 3000
     const guaranteeCount = store?.guarantee_count || 8
+    const underGuaranteePenalty = store?.under_guarantee_penalty || 0 // 保証割れ料金（契約で定められた金額）
     const visitRecords = selectedMonth?.records || []
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
-    const subtotal = baseFee + (totalVisitors * unitPrice) - (totalVisitors < guaranteeCount ? (guaranteeCount - totalVisitors) * unitPrice : 0)
+    
+    // 保証割れの計算
+    const isUnderGuarantee = totalVisitors < guaranteeCount
+    const shortfallCount = isUnderGuarantee ? guaranteeCount - totalVisitors : 0 // 不足人数
+    const shortfallPersonCharge = shortfallCount * 3000 // 不足人数分の料金（一律3000円）
+    
+    // 小計の計算
+    // 基本料金 + 紹介料 - 保証割れ料金（契約金額） - 保証割れ人数料金
+    let subtotal = baseFee + (totalVisitors * unitPrice)
+    if (isUnderGuarantee) {
+        subtotal = subtotal - underGuaranteePenalty - shortfallPersonCharge
+    }
+    
     const tax = Math.floor(subtotal * 0.1)
     const total = subtotal + tax
 
@@ -409,15 +422,20 @@ const CustomerBillingPDFPageV3 = () => {
                     <td>¥${unitPrice.toLocaleString()}</td>
                     <td>¥${(totalVisitors * unitPrice).toLocaleString()}</td>
                 </tr>
+                ${isUnderGuarantee ? `
                 <tr>
-                    <td>保証割料金</td>
+                    <td>保証割れ料金</td>
                     <td></td>
                     <td></td>
-                    <td>${totalVisitors < guaranteeCount ? 
-                        `<span class="negative">-¥${((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</span>` : 
-                        '¥0'
-                    }</td>
+                    <td><span class="negative">-¥${underGuaranteePenalty.toLocaleString()}</span></td>
                 </tr>
+                <tr>
+                    <td>保証割れ人数料金</td>
+                    <td>${shortfallCount}名分</td>
+                    <td>¥3,000</td>
+                    <td><span class="negative">-¥${shortfallPersonCharge.toLocaleString()}</span></td>
+                </tr>
+                ` : ''}
                 <tr class="subtotal-row">
                     <td></td>
                     <td></td>
@@ -575,17 +593,26 @@ const CustomerBillingPDFPageV3 = () => {
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{unitPrice.toLocaleString()}</td>
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{(totalVisitors * unitPrice).toLocaleString()}</td>
                         </tr>
-                        <tr>
-                            <td style={{ padding: '12px 8px' }}>保証割料金</td>
-                            <td style={{ textAlign: 'center', padding: '12px 8px' }}></td>
-                            <td style={{ textAlign: 'right', padding: '12px 8px' }}></td>
-                            <td style={{ textAlign: 'right', padding: '12px 8px' }}>
-                                {totalVisitors < guaranteeCount ? 
-                                    <span style={{ color: '#dc2626' }}>-¥{((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</span> : 
-                                    '¥0'
-                                }
-                            </td>
-                        </tr>
+                        {isUnderGuarantee && (
+                            <>
+                                <tr>
+                                    <td style={{ padding: '12px 8px' }}>保証割れ料金</td>
+                                    <td style={{ textAlign: 'center', padding: '12px 8px' }}></td>
+                                    <td style={{ textAlign: 'right', padding: '12px 8px' }}></td>
+                                    <td style={{ textAlign: 'right', padding: '12px 8px' }}>
+                                        <span style={{ color: '#dc2626' }}>-¥{underGuaranteePenalty.toLocaleString()}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '12px 8px' }}>保証割れ人数料金</td>
+                                    <td style={{ textAlign: 'center', padding: '12px 8px' }}>{shortfallCount}名分</td>
+                                    <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥3,000</td>
+                                    <td style={{ textAlign: 'right', padding: '12px 8px' }}>
+                                        <span style={{ color: '#dc2626' }}>-¥{shortfallPersonCharge.toLocaleString()}</span>
+                                    </td>
+                                </tr>
+                            </>
+                        )}
                         <tr style={{ borderTop: '1px solid #9ca3af' }}>
                             <td style={{ padding: '12px 8px' }}></td>
                             <td style={{ textAlign: 'center', padding: '12px 8px' }}></td>
@@ -701,11 +728,17 @@ const CustomerBillingPDFPageV3 = () => {
                                 <span className="text-gray-600">{selectedMonth?.introductionMonthName || '7月'}紹介料（{totalVisitors}名）：</span>
                                 <span className="font-medium">¥{(totalVisitors * unitPrice).toLocaleString()}</span>
                             </div>
-                            {totalVisitors < guaranteeCount && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">保証割：</span>
-                                    <span className="font-medium text-red-600">-¥{((guaranteeCount - totalVisitors) * unitPrice).toLocaleString()}</span>
-                                </div>
+                            {isUnderGuarantee && (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">保証割れ料金：</span>
+                                        <span className="font-medium text-red-600">-¥{underGuaranteePenalty.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">保証割れ人数料金（{shortfallCount}名分）：</span>
+                                        <span className="font-medium text-red-600">-¥{shortfallPersonCharge.toLocaleString()}</span>
+                                    </div>
+                                </>
                             )}
                             <div className="flex justify-between pt-2 border-t border-gray-200">
                                 <span className="text-gray-700 font-semibold">合計（税込）：</span>
