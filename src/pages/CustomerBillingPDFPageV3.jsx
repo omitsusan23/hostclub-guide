@@ -86,23 +86,32 @@ const CustomerBillingPDFPageV3 = () => {
     const getMonthName = (date) => `${date.getMonth() + 1}月`
 
     // 請求計算（選択された月のデータを使用）
-    const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 30000
+    const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 0
     const unitPrice = store?.charge_per_person || store?.unit_price || 3000
     const guaranteeCount = store?.guarantee_count || 8
     const underGuaranteePenalty = store?.under_guarantee_penalty || 0 // 保証割れ料金（契約で定められた金額）
     const visitRecords = selectedMonth?.records || []
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
     
-    // 保証割れの計算
-    const isUnderGuarantee = totalVisitors < guaranteeCount
+    // パネル料が0円の場合は紹介料のみ計算（保証割れ計算なし）
+    const isPanelFeeZero = baseFee === 0
+    
+    // 保証割れの計算（パネル料が0円の場合は適用しない）
+    const isUnderGuarantee = !isPanelFeeZero && totalVisitors < guaranteeCount
     const shortfallCount = isUnderGuarantee ? guaranteeCount - totalVisitors : 0 // 不足人数
     const shortfallPersonCharge = shortfallCount * 3000 // 不足人数分の料金（一律3000円）
     
     // 小計の計算
-    // 基本料金 + 紹介料 - 保証割れ料金（契約金額） - 保証割れ人数料金
-    let subtotal = baseFee + (totalVisitors * unitPrice)
-    if (isUnderGuarantee) {
-        subtotal = subtotal - underGuaranteePenalty - shortfallPersonCharge
+    let subtotal
+    if (isPanelFeeZero) {
+        // パネル料0円の場合：紹介料のみ
+        subtotal = totalVisitors * unitPrice
+    } else {
+        // 通常の場合：基本料金 + 紹介料 - 保証割れ料金
+        subtotal = baseFee + (totalVisitors * unitPrice)
+        if (isUnderGuarantee) {
+            subtotal = subtotal - underGuaranteePenalty - shortfallPersonCharge
+        }
     }
     
     const tax = Math.floor(subtotal * 0.1)
@@ -434,12 +443,14 @@ const CustomerBillingPDFPageV3 = () => {
                 </tr>
             </thead>
             <tbody>
+                ${!isPanelFeeZero ? `
                 <tr>
                     <td>${selectedMonth?.panelMonthName || '9月'}掲載料金</td>
                     <td>1</td>
                     <td>¥${baseFee.toLocaleString()}</td>
                     <td>¥${baseFee.toLocaleString()}</td>
                 </tr>
+                ` : ''}
                 <tr>
                     <td>${selectedMonth?.introductionMonthName || '7月'}紹介料</td>
                     <td>${totalVisitors}名</td>
@@ -605,12 +616,14 @@ const CustomerBillingPDFPageV3 = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style={{ padding: '12px 8px' }}>{selectedMonth?.panelMonthName || '9月'}掲載料金</td>
-                            <td style={{ textAlign: 'center', padding: '12px 8px' }}>1</td>
-                            <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
-                            <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
-                        </tr>
+                        {!isPanelFeeZero && (
+                            <tr>
+                                <td style={{ padding: '12px 8px' }}>{selectedMonth?.panelMonthName || '9月'}掲載料金</td>
+                                <td style={{ textAlign: 'center', padding: '12px 8px' }}>1</td>
+                                <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
+                                <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
+                            </tr>
+                        )}
                         <tr>
                             <td style={{ padding: '12px 8px' }}>{selectedMonth?.introductionMonthName || '7月'}紹介料</td>
                             <td style={{ textAlign: 'center', padding: '12px 8px' }}>{totalVisitors}名</td>
@@ -744,10 +757,12 @@ const CustomerBillingPDFPageV3 = () => {
                                 <span className="text-gray-600">宛先：</span>
                                 <span className="font-medium">{store.name} 様</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">{selectedMonth?.panelMonthName || '9月'}掲載料金：</span>
-                                <span className="font-medium">¥{baseFee.toLocaleString()}</span>
-                            </div>
+                            {!isPanelFeeZero && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">{selectedMonth?.panelMonthName || '9月'}掲載料金：</span>
+                                    <span className="font-medium">¥{baseFee.toLocaleString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between">
                                 <span className="text-gray-600">{selectedMonth?.introductionMonthName || '7月'}紹介料（{totalVisitors}名）：</span>
                                 <span className="font-medium">¥{(totalVisitors * unitPrice).toLocaleString()}</span>
