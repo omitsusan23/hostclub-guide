@@ -6,9 +6,10 @@ import { getStores, getVisitRecords } from '../lib/database'
 const CustomerBillingPDFPageV3 = () => {
     const { getUserStoreId, getStoreIdFromSubdomain } = useApp()
     const [store, setStore] = useState(null)
-    const [visitRecords, setVisitRecords] = useState([])
+    const [invoicesData, setInvoicesData] = useState([])
     const [loading, setLoading] = useState(true)
     const [generatingPDF, setGeneratingPDF] = useState(false)
+    const [selectedMonth, setSelectedMonth] = useState(null)
     const invoiceRef = useRef(null)
 
     const storeId = getUserStoreId() || getStoreIdFromSubdomain()
@@ -26,11 +27,39 @@ const CustomerBillingPDFPageV3 = () => {
                 const storeData = allStores.find(s => s.store_id === storeId)
                 setStore(storeData)
 
-                // 7月1日〜7月31日の案内記録取得
-                const startDate = new Date(2025, 6, 1).toISOString()
-                const endDate = new Date(2025, 6, 31, 23, 59, 59).toISOString()
-                const records = await getVisitRecords(storeId, startDate, endDate)
-                setVisitRecords(records)
+                // 過去3ヶ月分の請求書データを取得
+                const now = new Date()
+                const currentYear = now.getFullYear()
+                const currentMonth = now.getMonth()
+                
+                const invoices = []
+                
+                // 8月分のデータを取得（現在は8月なので今月のデータ）
+                for (let i = 0; i < 3; i++) {
+                    const targetMonth = currentMonth - i
+                    const targetYear = currentYear
+                    
+                    // 現在は8月なので、8月分のみ取得
+                    if (targetMonth === 7) { // 8月 (0-indexed)
+                        const startDate = new Date(targetYear, targetMonth, 1).toISOString()
+                        const endDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString()
+                        const records = await getVisitRecords(storeId, startDate, endDate)
+                        
+                        invoices.push({
+                            year: targetYear,
+                            month: targetMonth + 1, // 1-indexed for display
+                            monthName: `${targetMonth + 1}月`,
+                            records: records,
+                            invoiceDate: new Date(targetYear, targetMonth, 5), // 5日発行
+                            dueDate: new Date(targetYear, targetMonth, 25) // 25日締切
+                        })
+                    }
+                }
+                
+                setInvoicesData(invoices)
+                if (invoices.length > 0) {
+                    setSelectedMonth(invoices[0]) // デフォルトで最新月を選択
+                }
 
             } catch (error) {
                 console.error('データ取得エラー:', error)
@@ -50,17 +79,15 @@ const CustomerBillingPDFPageV3 = () => {
         return `${year}年${month}月${day}日`
     }
     
-    const getInvoiceDate = () => new Date(2025, 7, 5)
-    const getDueDate = () => {
-        const now = new Date()
-        return new Date(now.getFullYear(), now.getMonth() + 1, 25)
-    }
+    const getInvoiceDate = () => selectedMonth?.invoiceDate || new Date(2025, 7, 5)
+    const getDueDate = () => selectedMonth?.dueDate || new Date(2025, 7, 25)
     const getMonthName = (date) => `${date.getMonth() + 1}月`
 
-    // 請求計算
+    // 請求計算（選択された月のデータを使用）
     const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 30000
     const unitPrice = store?.charge_per_person || store?.unit_price || 3000
     const guaranteeCount = store?.guarantee_count || 8
+    const visitRecords = selectedMonth?.records || []
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
     const subtotal = baseFee + (totalVisitors * unitPrice) - (totalVisitors < guaranteeCount ? (guaranteeCount - totalVisitors) * unitPrice : 0)
     const tax = Math.floor(subtotal * 0.1)
@@ -414,7 +441,7 @@ const CustomerBillingPDFPageV3 = () => {
             <p>いつもお世話になっております。</p>
             <p>お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
             <p>・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
-            <p>・ご入金期日：${getMonthName(getDueDate())}25日</p>
+            <p>・ご入金期日：8月25日</p>
             <p class="warning">
                 なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。
             </p>
@@ -584,7 +611,7 @@ const CustomerBillingPDFPageV3 = () => {
                 <p style={{ marginBottom: '8px' }}>いつもお世話になっております。</p>
                 <p style={{ marginBottom: '8px' }}>お手数ですが本書面をもって下記口座宛にお振込みくださいますようお願い申し上げます。</p>
                 <p style={{ marginBottom: '8px' }}>・振込手数料：おそれいりますが貴社負担にてお願い申し上げます。</p>
-                <p style={{ marginBottom: '8px' }}>・ご入金期日：{getMonthName(getDueDate())}25日</p>
+                <p style={{ marginBottom: '8px' }}>・ご入金期日：8月25日</p>
                 <p style={{ color: '#dc2626', fontWeight: '600', marginTop: '16px' }}>
                     なお、当月までに振込が確認できない場合は、ご紹介の方を控えさせていただきます。
                 </p>
@@ -621,8 +648,35 @@ const CustomerBillingPDFPageV3 = () => {
                 </p>
             </div>
 
+            {/* 月選択タブ（将来的に複数月対応） */}
+            {invoicesData.length > 0 && (
+                <div className="mb-6">
+                    <div className="flex space-x-2 overflow-x-auto pb-2">
+                        {invoicesData.map((invoice) => (
+                            <button
+                                key={`${invoice.year}-${invoice.month}`}
+                                onClick={() => setSelectedMonth(invoice)}
+                                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                                    selectedMonth?.month === invoice.month 
+                                        ? 'bg-blue-600 text-white' 
+                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                {invoice.year}年{invoice.monthName}分
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* 請求書サマリー */}
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6">
+                {/* 月表示バッジ */}
+                <div className="text-center mb-4">
+                    <span className="inline-block px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                        {selectedMonth?.year}年{selectedMonth?.monthName}分 請求書
+                    </span>
+                </div>
                 <div className="text-center py-8">
                     <svg className="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
