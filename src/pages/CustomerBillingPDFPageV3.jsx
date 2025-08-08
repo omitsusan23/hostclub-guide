@@ -86,10 +86,14 @@ const CustomerBillingPDFPageV3 = () => {
     const getMonthName = (date) => `${date.getMonth() + 1}月`
 
     // 請求計算（選択された月のデータを使用）
-    const baseFee = store?.panel_fee || store?.base_fee || store?.base_price || 0
-    const unitPrice = store?.charge_per_person || store?.unit_price || 3000
-    const guaranteeCount = store?.guarantee_count || 8
-    const underGuaranteePenalty = store?.under_guarantee_penalty || 0 // 保証割れ料金（契約で定められた金額）
+    // パネル料の取得（0円も有効な値として扱う）
+    const baseFee = store?.panel_fee !== undefined ? store.panel_fee : 
+                    store?.base_fee !== undefined ? store.base_fee : 
+                    store?.base_price !== undefined ? store.base_price : 0
+    const unitPrice = store?.charge_per_person !== undefined ? store.charge_per_person : 
+                      store?.unit_price !== undefined ? store.unit_price : 3000
+    const guaranteeCount = store?.guarantee_count !== undefined ? store.guarantee_count : 8
+    const underGuaranteePenalty = store?.under_guarantee_penalty !== undefined ? store.under_guarantee_penalty : 0 // 保証割れ料金（契約で定められた金額）
     const visitRecords = selectedMonth?.records || []
     const totalVisitors = visitRecords.reduce((sum, record) => sum + (record.guest_count || 0), 0)
     
