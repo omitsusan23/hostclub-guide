@@ -34,27 +34,29 @@ const CustomerBillingPDFPageV3 = () => {
                 
                 const invoices = []
                 
-                // 8月分のデータを取得（現在は8月なので今月のデータ）
-                for (let i = 0; i < 3; i++) {
-                    const targetMonth = currentMonth - i
-                    const targetYear = currentYear
+                // 8月請求書 = 9月掲載料金 + 7月紹介料
+                // 現在は8月なので、8月分の請求書のみ取得
+                if (currentMonth === 7) { // 8月 (0-indexed)
+                    // 7月分の紹介料データを取得
+                    const julyStartDate = new Date(currentYear, 6, 1).toISOString() // 7月1日
+                    const julyEndDate = new Date(currentYear, 6, 31, 23, 59, 59).toISOString() // 7月31日
+                    const julyRecords = await getVisitRecords(storeId, julyStartDate, julyEndDate)
                     
-                    // 現在は8月なので、8月分のみ取得
-                    if (targetMonth === 7) { // 8月 (0-indexed)
-                        const startDate = new Date(targetYear, targetMonth, 1).toISOString()
-                        const endDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString()
-                        const records = await getVisitRecords(storeId, startDate, endDate)
-                        
-                        invoices.push({
-                            year: targetYear,
-                            month: targetMonth + 1, // 1-indexed for display
-                            monthName: `${targetMonth + 1}月`,
-                            records: records,
-                            invoiceDate: new Date(targetYear, targetMonth, 5), // 5日発行
-                            dueDate: new Date(targetYear, targetMonth, 25) // 25日締切
-                        })
-                    }
+                    invoices.push({
+                        year: currentYear,
+                        month: 8, // 8月請求
+                        invoiceMonthName: '8月',
+                        panelMonthName: '9月', // 9月分掲載料金
+                        introductionMonthName: '7月', // 7月分紹介料
+                        records: julyRecords, // 7月の案内記録
+                        invoiceDate: new Date(currentYear, 7, 5), // 8月5日発行
+                        dueDate: new Date(currentYear, 7, 25) // 8月25日締切
+                    })
                 }
+                
+                // 将来的に9月、10月の請求書も追加される
+                // 9月請求書 = 10月掲載料金 + 8月紹介料
+                // 10月請求書 = 11月掲載料金 + 9月紹介料
                 
                 setInvoicesData(invoices)
                 if (invoices.length > 0) {
@@ -396,13 +398,13 @@ const CustomerBillingPDFPageV3 = () => {
             </thead>
             <tbody>
                 <tr>
-                    <td>掲載料金</td>
+                    <td>${selectedMonth?.panelMonthName || '9月'}掲載料金</td>
                     <td>1</td>
                     <td>¥${baseFee.toLocaleString()}</td>
                     <td>¥${baseFee.toLocaleString()}</td>
                 </tr>
                 <tr>
-                    <td>紹介料</td>
+                    <td>${selectedMonth?.introductionMonthName || '7月'}紹介料</td>
                     <td>${totalVisitors}名</td>
                     <td>¥${unitPrice.toLocaleString()}</td>
                     <td>¥${(totalVisitors * unitPrice).toLocaleString()}</td>
@@ -562,13 +564,13 @@ const CustomerBillingPDFPageV3 = () => {
                     </thead>
                     <tbody>
                         <tr>
-                            <td style={{ padding: '12px 8px' }}>掲載料金</td>
+                            <td style={{ padding: '12px 8px' }}>{selectedMonth?.panelMonthName || '9月'}掲載料金</td>
                             <td style={{ textAlign: 'center', padding: '12px 8px' }}>1</td>
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{baseFee.toLocaleString()}</td>
                         </tr>
                         <tr>
-                            <td style={{ padding: '12px 8px' }}>紹介料</td>
+                            <td style={{ padding: '12px 8px' }}>{selectedMonth?.introductionMonthName || '7月'}紹介料</td>
                             <td style={{ textAlign: 'center', padding: '12px 8px' }}>{totalVisitors}名</td>
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{unitPrice.toLocaleString()}</td>
                             <td style={{ textAlign: 'right', padding: '12px 8px' }}>¥{(totalVisitors * unitPrice).toLocaleString()}</td>
@@ -662,7 +664,7 @@ const CustomerBillingPDFPageV3 = () => {
                                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                 }`}
                             >
-                                {invoice.year}年{invoice.monthName}分
+                                {invoice.year}年{invoice.invoiceMonthName}分請求
                             </button>
                         ))}
                     </div>
@@ -674,7 +676,7 @@ const CustomerBillingPDFPageV3 = () => {
                 {/* 月表示バッジ */}
                 <div className="text-center mb-4">
                     <span className="inline-block px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
-                        {selectedMonth?.year}年{selectedMonth?.monthName}分 請求書
+                        {selectedMonth?.year}年{selectedMonth?.invoiceMonthName}分 請求書
                     </span>
                 </div>
                 <div className="text-center py-8">
@@ -692,11 +694,11 @@ const CustomerBillingPDFPageV3 = () => {
                                 <span className="font-medium">{store.name} 様</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">掲載料金：</span>
+                                <span className="text-gray-600">{selectedMonth?.panelMonthName || '9月'}掲載料金：</span>
                                 <span className="font-medium">¥{baseFee.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">紹介料（{totalVisitors}名）：</span>
+                                <span className="text-gray-600">{selectedMonth?.introductionMonthName || '7月'}紹介料（{totalVisitors}名）：</span>
                                 <span className="font-medium">¥{(totalVisitors * unitPrice).toLocaleString()}</span>
                             </div>
                             {totalVisitors < guaranteeCount && (
