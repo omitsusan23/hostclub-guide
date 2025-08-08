@@ -4,6 +4,7 @@ import { getMonthlyVisitRecords } from '../lib/database';
 const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
   const [monthlyRecords, setMonthlyRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [invoiceData, setInvoiceData] = useState(null);
 
   // 月別の紹介履歴を取得
   useEffect(() => {
@@ -29,6 +30,9 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
       const augustCount = augustData.reduce((sum, record) => sum + (record.guest_count || 0), 0);
       console.log(`${store.name} - 8月データ:`, augustData.length, '件, 合計:', augustCount, '本');
       
+      // 8月請求書データを計算（9月掲載料金 + 7月紹介料）
+      calculateInvoice(julyCount);
+      
       // 7月、8月の順番で追加（古い月から新しい月へ）
       records.push({
         year: 2025,
@@ -48,6 +52,57 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 請求書データを計算
+  const calculateInvoice = (julyVisitors) => {
+    // パネル料の取得（0円も有効な値として扱う）
+    const baseFee = store?.panel_fee !== undefined ? store.panel_fee : 
+                    store?.base_fee !== undefined ? store.base_fee : 
+                    store?.base_price !== undefined ? store.base_price : 0;
+    const unitPrice = store?.charge_per_person !== undefined ? store.charge_per_person : 
+                      store?.unit_price !== undefined ? store.unit_price : 3000;
+    const guaranteeCount = store?.guarantee_count !== undefined ? store.guarantee_count : 8;
+    const underGuaranteePenalty = store?.under_guarantee_penalty !== undefined ? store.under_guarantee_penalty : 0;
+    
+    // パネル料が0円の場合は紹介料のみ計算（保証割れ計算なし）
+    const isPanelFeeZero = baseFee === 0;
+    
+    // 保証割れの計算（パネル料が0円の場合は適用しない）
+    const isUnderGuarantee = !isPanelFeeZero && julyVisitors < guaranteeCount;
+    const shortfallCount = isUnderGuarantee ? guaranteeCount - julyVisitors : 0;
+    const shortfallPersonCharge = shortfallCount * 3000;
+    
+    // 小計の計算
+    let subtotal;
+    if (isPanelFeeZero) {
+      // パネル料0円の場合：紹介料のみ
+      subtotal = julyVisitors * unitPrice;
+    } else {
+      // 通常の場合：基本料金 + 紹介料 - 保証割れ料金
+      subtotal = baseFee + (julyVisitors * unitPrice);
+      if (isUnderGuarantee) {
+        subtotal = subtotal - underGuaranteePenalty - shortfallPersonCharge;
+      }
+    }
+    
+    const tax = Math.floor(subtotal * 0.1);
+    const total = subtotal + tax;
+    
+    setInvoiceData({
+      baseFee,
+      unitPrice,
+      guaranteeCount,
+      underGuaranteePenalty,
+      julyVisitors,
+      isPanelFeeZero,
+      isUnderGuarantee,
+      shortfallCount,
+      shortfallPersonCharge,
+      subtotal,
+      tax,
+      total
+    });
   };
 
   if (!isOpen || !store) return null;
@@ -221,6 +276,70 @@ const StoreDetailModal = ({ isOpen, store, onClose, onEdit }) => {
               </div>
             ) : (
               <p className="text-sm text-gray-500">紹介履歴がありません</p>
+            )}
+          </div>
+
+          {/* 請求書情報 */}
+          <div className="bg-yellow-50 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-3">📄 8月分請求書</h3>
+            {invoiceData ? (
+              <div className="space-y-3">
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <div className="space-y-2">
+                    {/* 請求項目 */}
+                    {!invoiceData.isPanelFeeZero && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">9月掲載料金</span>
+                        <span className="text-sm font-medium">¥{invoiceData.baseFee.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700">7月紹介料（{invoiceData.julyVisitors}名）</span>
+                      <span className="text-sm font-medium">¥{(invoiceData.julyVisitors * invoiceData.unitPrice).toLocaleString()}</span>
+                    </div>
+                    {invoiceData.isUnderGuarantee && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-700">保証割れ料金</span>
+                          <span className="text-sm font-medium text-red-600">-¥{invoiceData.underGuaranteePenalty.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-700">保証割れ人数料金（{invoiceData.shortfallCount}名分）</span>
+                          <span className="text-sm font-medium text-red-600">-¥{invoiceData.shortfallPersonCharge.toLocaleString()}</span>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* 小計・税・合計 */}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">小計</span>
+                        <span className="text-sm font-medium">¥{invoiceData.subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">消費税（10%）</span>
+                        <span className="text-sm font-medium">¥{invoiceData.tax.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-base font-semibold text-gray-900">合計（税込）</span>
+                        <span className="text-lg font-bold text-gray-900">¥{invoiceData.total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 支払い情報 */}
+                <div className="bg-blue-50 rounded-lg p-3 text-xs">
+                  <p className="font-medium text-blue-900 mb-1">支払い情報</p>
+                  <p className="text-blue-800">入金期日：8月25日</p>
+                  <p className="text-blue-800">支払方法：{store.is_transfer ? '振込' : '現金'}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">請求書データを計算中...</p>
             )}
           </div>
         </div>
